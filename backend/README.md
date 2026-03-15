@@ -11,7 +11,9 @@ Tài liệu này hướng dẫn các thành viên trong nhóm cách cập nhật
 2. **Tạo và thực thi Migration:** Chạy lệnh sau trong terminal:
    ```bash
    npx prisma migrate dev --name <ten_mo_ta_thay_doi>
-
+3. **Trong trường hợp chưa muốn nó thực thi ngay:** Chạy lệnh sau trong terminal:
+   ```bash
+   npx prisma migrate dev --create-only --name <ten_mo_ta_thay_doi>
 
 
 ## B. Các bước cập nhật sự thay đổi cho mọi người
@@ -61,3 +63,7 @@ Tài liệu này hướng dẫn các thành viên trong nhóm cách cập nhật
    
    ```bash
    npx prisma db seed
+
+
+
+

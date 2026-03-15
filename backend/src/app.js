@@ -11,7 +11,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use("/disease-catgorize", diseaseCatgorizeRouter)
-app.use("/disease", diseaseCatgorizeRouter)
+app.use("/disease", diseaseRouter)
 app.use("/user-notification", diseaseCatgorizeRouter)
 
 

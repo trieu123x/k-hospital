@@ -156,6 +156,9 @@ CREATE INDEX "idx_disease_name" ON "diseases"("name");
 CREATE INDEX "idx_disease_specialty" ON "diseases"("specialty_id");
 
 -- CreateIndex
+CREATE INDEX "idx_disease_category" ON "diseases"("category_id");
+
+-- CreateIndex
 CREATE INDEX "idx_appointment_patient" ON "appointments"("patient_id");
 
 -- CreateIndex

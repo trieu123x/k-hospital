@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, Prisma } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 
 const globalForPrisma = global
@@ -12,3 +12,5 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") {
     globalForPrisma.prisma = prisma
 }
+
+export { Prisma }

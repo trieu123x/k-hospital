@@ -82,18 +82,24 @@ model Disease {
   categoryId    String?  @map("category_id") @db.Uuid
   specialtyId   String?  @map("specialty_id") @db.Uuid
   name          String
+  
+  nameClean     String?  @map("name_clean") 
+
   imageUrl      String?  @map("image_url")
   description   String?
   symptoms      String
   homeTreatment String?  @map("home_treatment")
-  embedding     String?  // Dùng cho AI Search
+  
+  embedding     Unsupported("vector(1536)")?
 
   category  DiseaseCategory? @relation(fields: [categoryId], references: [id])
   specialty Specialty?       @relation(fields: [specialtyId], references: [id])
   medicines DiseaseMedicine[]
 
-  @@index([name], name: "idx_disease_name")
+  @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_disease_name_clean_trgm")
   @@index([specialtyId], name: "idx_disease_specialty")
+  @@index([categoryId], name: "idx_disease_category")
+  
   @@map("diseases")
 }
 
