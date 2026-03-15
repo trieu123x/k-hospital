@@ -71,7 +71,7 @@ export const diseaseRepository = {
         `
 
         return diseases.map(disease => ({
-            diseaseId: disease.id,
+            id: disease.id,
             name: disease.name,
             imageUrl: disease.imageUrl,
             description: disease.description

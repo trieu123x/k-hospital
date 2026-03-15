@@ -9,7 +9,7 @@ export const diseaseCategoryService = {
         }
         
         return categories.map(cat => ({
-            categoryId: cat.id,
+            id: cat.id,
             name: cat.name,
             description: cat.description
         }))
@@ -23,7 +23,7 @@ export const diseaseCategoryService = {
         }
         
         return {
-            categoryId: category.id,
+            id: category.id,
             name: category.name,
             description: category.description
         }
