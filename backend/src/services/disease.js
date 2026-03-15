@@ -50,7 +50,7 @@ export const diseaseService = {
     getDiseaseDetail: async (id) => {
         const disease = await diseaseRepository.findById(id)
         if (!disease) {
-            throw new Error("Không tìm thấy thông tin bệnh!")
+            throw Object.assign(new Error("Không tìm thấy thông tin bệnh!"), { statusCode: 404 })
         }
         return disease
     },

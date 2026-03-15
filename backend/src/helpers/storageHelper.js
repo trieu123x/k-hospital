@@ -27,7 +27,7 @@ export const uploadHelper = {
             return publicUrlData.publicUrl
         } catch (error) {
             console.error('Lỗi Upload Helper:', error.message)
-            throw new Error('Không thể upload ảnh lên hệ thống.')
+            throw Object.assign(new Error('Không thể upload ảnh lên hệ thống.'), { statusCode: 500 })
         }
     },
 
