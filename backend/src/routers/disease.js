@@ -1,4 +1,4 @@
-import express from 'express'
+import express from 'express' 
 import multer from 'multer'
 import { createDisease, deleteDisease, diagnoseSymptoms, getDiseaseById, getDiseases, updateDisease } from '../controllers/disease.js'
 import { diseaseSchema } from '../validates/disease.js'

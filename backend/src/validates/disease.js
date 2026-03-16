@@ -10,7 +10,7 @@ export const diseaseSchema = {
         specialtyId: z.uuid().optional(),
         name: z.string().optional(),
         lastId: z.uuid().optional(),
-        limit: z.string()
+        limit: z.string() 
             .optional()
             .transform((val) => val ? parseInt(val) : 60)
             .pipe(z.number().min(1).max(100))
