@@ -4,13 +4,6 @@ import { notificationService } from "../services/user-notification.js"
 export const createNotification = catchError(async (req, res) => {
     const { userId, appointmentId, title, message } = req.body
 
-    if (!userId || !title || !message) {
-        throw Object.assign(
-            new Error("Thiếu thông tin: userId, title và message là bắt buộc"), 
-            { statusCode: 400 }
-        )
-    }
-
     const newNotification = await notificationService.sendNotification({
         userId,
         appointmentId,
