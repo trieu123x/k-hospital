@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ================================
+// MASTER DATA
+// ================================
+
+model Specialty {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  basePrice   Decimal   @map("base_price")
+  description String?
+  doctors     Doctor[]
+  diseases    Disease[]
+
+  @@map("specialties")
+}
+
+model DiseaseCategory {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  description String?
+  diseases    Disease[]
+
+  @@map("disease_categories")
+}
+
+// ================================
+// USERS
+// ================================
+
+model Profile {
+  id        String    @id @default(uuid()) @db.Uuid
+  fullName  String    @map("full_name")
+  phone     String    @unique
+  avatarUrl String?   @map("avatar_url")
+  role      String?   // 'admin', 'doctor', 'patient'
+  dob       DateTime? @db.Date
+  address   String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  doctor                Doctor?
+  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
+  notifications         Notification[]
+  chatSessions          ChatSession[]
+
+  @@map("profiles")
+}
+
+// ================================
+// DOCTORS
+// ================================
+
+model Doctor {
+  id           String   @id @db.Uuid
+  specialtyId  String?  @map("specialty_id") @db.Uuid
+  degree       String?
+  experience   String?
+  education    String?
+  achievements String?
+
+  profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
+  specialty Specialty? @relation(fields: [specialtyId], references: [id])
+
+  @@index([specialtyId], name: "idx_doctor_specialty")
+  @@map("doctors")
+}
+
+// ================================
+// MEDICAL KNOWLEDGE
+// ================================
+
+model Disease {
+  id            String   @id @default(uuid()) @db.Uuid
+  categoryId    String?  @map("category_id") @db.Uuid
+  specialtyId   String?  @map("specialty_id") @db.Uuid
+  name          String
+  imageUrl      String?  @map("image_url")
+  description   String?
+  symptoms      String
+  homeTreatment String?  @map("home_treatment")
+  embedding     String?  // Dùng cho AI Search
+
+  category  DiseaseCategory? @relation(fields: [categoryId], references: [id])
+  specialty Specialty?       @relation(fields: [specialtyId], references: [id])
+  medicines DiseaseMedicine[]
+
+  @@index([name], name: "idx_disease_name")
+  @@index([specialtyId], name: "idx_disease_specialty")
+  @@map("diseases")
+}
+
+model Medicine {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String
+  imageUrl         String?           @map("image_url")
+  medicineType     String?           @map("medicine_type") // 'uống','ngậm','bôi','tiêm'
+  ingredients      String?
+  dosage           String?
+  usageInstruction String?           @map("usage_instruction")
+  sideEffects      String?           @map("side_effects")
+  diseases         DiseaseMedicine[]
+
+  @@map("medicines")
+}
+
+model DiseaseMedicine {
+  diseaseId  String @map("disease_id") @db.Uuid
+  medicineId String @map("medicine_id") @db.Uuid
+
+  disease  Disease  @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@id([diseaseId, medicineId])
+  @@map("disease_medicine")
+}
+
+// ================================
+// APPOINTMENTS
+// ================================
+
+model Appointment {
+  id              String   @id @default(uuid()) @db.Uuid
+  patientId       String?  @map("patient_id") @db.Uuid
+  doctorId        String?  @map("doctor_id") @db.Uuid
+  slotTime        DateTime @map("slot_time") @db.Timestamptz
+  status          String   @default("pending") // 'pending', 'confirmed', 'denied', 'completed', 'cancelled'
+  diagnosisResult String?  @map("diagnosis_result")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patient  Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor   Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  notifications Notification[]
+
+  @@index([patientId], name: "idx_appointment_patient")
+  @@index([doctorId], name: "idx_appointment_doctor")
+  @@map("appointments")
+}
+
+// ================================
+// NOTIFICATIONS
+// ================================
+
+model Notification {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String?  @map("user_id") @db.Uuid
+  appointmentId String?  @map("appointment_id") @db.Uuid
+  title         String?
+  message       String?
+  isRead        Boolean  @default(false) @map("is_read")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user        Profile?     @relation(fields: [userId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@index([userId], name: "idx_notification_user")
+  @@map("notifications")
+}
+
+// ================================
+// NEWS
+// ================================
+
+model News {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  newUrl    String?  @map("new_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("news")
+}
+
+// ================================
+// AI CHAT SYSTEM
+// ================================
+
+model ChatSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz
+  isActive  Boolean  @default(true) @map("is_active")
+  
+  user     Profile?      @relation(fields: [userId], references: [id])
+  messages ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  sessionId      String?  @map("session_id") @db.Uuid
+  contentSummary String   @map("content_summary")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  session ChatSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}

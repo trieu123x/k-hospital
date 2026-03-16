@@ -10,5 +10,6 @@
             "database": "khospital_db",
             "username": "postgres"
         }
-    ]
+    ],
+    "postman.settings.dotenv-detection-notification-visibility": false
 }
