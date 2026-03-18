@@ -1,3 +1,22 @@
+
+
+/* ================================
+ DROP TABLES (RESET DATABASE)
+ ================================ */
+DROP TABLE IF EXISTS chat_messages CASCADE;
+DROP TABLE IF EXISTS chat_sessions CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS appointments CASCADE;
+DROP TABLE IF EXISTS disease_medicine CASCADE;
+DROP TABLE IF EXISTS medicines CASCADE;
+DROP TABLE IF EXISTS diseases CASCADE;
+DROP TABLE IF EXISTS doctors CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS disease_categories CASCADE;
+DROP TABLE IF EXISTS specialties CASCADE;
+DROP TABLE IF EXISTS news CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- CreateTable
 CREATE TABLE "specialties" (
     "id" UUID NOT NULL,
@@ -26,6 +45,7 @@ CREATE TABLE "profiles" (
     "role" TEXT,
     "dob" DATE,
     "address" TEXT,
+    "status" TEXT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "profiles_pkey" PRIMARY KEY ("id")
