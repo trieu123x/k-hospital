@@ -1,4 +1,4 @@
-import { uploadHelper } from "../helpers/storageHelper.js"
+import { uploadHelper } from "../helpers/storage-helper.js"
 import { diseaseRepository } from "../repositories/disease.js"
 
 export const diseaseService = {

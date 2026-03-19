@@ -66,4 +66,30 @@ Tài liệu này hướng dẫn các thành viên trong nhóm cách cập nhật
 
 
 
+# QUY TRÌNH CI VỚI GIT ACTION:
 
+## A. Thao tác với file cấu hình .github/workflows/ci.yml
+*Áp dụng khi cần chỉnh sửa quy trình kiểm tra tự động hoặc thêm các bước check mới.*
+
+1. **Vị trí file:** Mọi cấu hình CI phải nằm chính xác tại đường dẫn `.github/workflows/ci.yml` 
+2. **Cập nhật quy trình:** Khi thêm thư viện mới hoặc thêm bộ test mới, bạn cần mở file này và cập nhật các dòng lệnh trong mục steps.
+3. **Đồng bộ hóa:** Sau khi sửa, cần phải git push lên GitHub thì quy trình mới có hiệu lực.
+
+## B. Cách kiểm tra và theo dõi hoạt động
+*Hệ thống CI sẽ tự động kích hoạt dựa trên các sự kiện (Events) được cấu hình trong file.*
+
+1. **Cách kiểm tra** Truy cập vào kho lưu trữ trên GitHub.com, chọn tab Actions 
+
+
+
+# QUY TRÌNH TESTING BẰNG VITEST:
+
+## A. Cấu trúc và Quy tắc đặt tên file
+*Áp dụng để giữ cho dự án ngăn nắp và dễ quản lý khi số lượng file test tăng lên.*
+
+1. **Vị trí thư mục:** Tất cả file test của Backend phải nằm trong thư mục `backend/test/`
+2. **Quy tắc đặt tên:** Tên file test phải trùng với tên file gốc và thêm hậu tố `.test.js`
+3. **Lệnh thực thi test:** Để chạy 1 loạt các file test đã viết, ta chạy lệnh:
+
+   ```bash
+   npm run test

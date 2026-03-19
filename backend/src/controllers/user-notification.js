@@ -1,4 +1,4 @@
-import { catchError } from "../helpers/catchError.js"
+import { catchError } from "../helpers/catch-error.js"
 import { notificationService } from "../services/user-notification.js"
 
 export const createNotification = catchError(async (req, res) => {

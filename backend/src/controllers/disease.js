@@ -1,5 +1,5 @@
 import { diseaseService } from "../services/disease.js"
-import { catchError } from "../helpers/catchError.js"
+import { catchError } from "../helpers/catch-error.js"
 
 export const createDisease = catchError(async (req, res) => {
     const diseaseData = req.body
