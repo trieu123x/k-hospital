@@ -63,8 +63,6 @@ export const diseaseRepository = {
                         OR name_clean % ${nameLower}
                     )` : Prisma.empty}
             ORDER BY 
-                /* Lưu ý: Nếu có search name thì similarity quan trọng hơn, 
-                nhưng để cuộn chuẩn thì id ASC/DESC cuối cùng là bắt buộc */
                 ${name ? Prisma.sql`similarity(name_clean, ${nameLower}) DESC,` : Prisma.empty} 
                 id ASC
             LIMIT ${limit}
