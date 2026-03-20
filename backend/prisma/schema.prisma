@@ -129,25 +129,49 @@ model DiseaseMedicine {
 }
 
 // ================================
-// APPOINTMENTS
+// APPOINTMENTS & MEDICAL RECORDS
 // ================================
 
 model Appointment {
-  id              String   @id @default(uuid()) @db.Uuid
-  patientId       String?  @map("patient_id") @db.Uuid
-  doctorId        String?  @map("doctor_id") @db.Uuid
-  slotTime        DateTime @map("slot_time") @db.Timestamptz
-  status          String   @default("pending") // 'pending', 'confirmed', 'denied', 'completed', 'cancelled'
-  diagnosisResult String?  @map("diagnosis_result")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id          String   @id @default(uuid()) @db.Uuid
+  patientId   String?  @map("patient_id") @db.Uuid
+  doctorId    String?  @map("doctor_id") @db.Uuid
+  
+  // THÊM 2 CỘT NÀY ĐỂ THAY CHO BẢNG SCHEDULE:
+  date        DateTime @db.Date // Ngày khám (VD: 2026-03-25)
+  shift       Int      // Ca khám: 1, 2, 3, 4
+  
+  status      String   @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
+  reason      String?  @db.Text
+  
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient  Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor   Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient       Profile?       @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor        Profile?       @relation("DoctorAppointments", fields: [doctorId], references: [id])
   notifications Notification[]
+  
+  // 1 Cuộc hẹn đẻ ra 1 hồ sơ bệnh án
+  medicalRecord MedicalRecord?
 
   @@index([patientId], name: "idx_appointment_patient")
   @@index([doctorId], name: "idx_appointment_doctor")
   @@map("appointments")
+}
+
+model MedicalRecord {
+  id            String   @id @default(uuid()) @db.Uuid
+  appointmentId String   @unique @map("appointment_id") @db.Uuid
+  diagnosis     String   @db.Text
+  prescription  String?  @db.Text
+  note          String?  @db.Text
+  
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("medical_records")
 }
 
 // ================================
