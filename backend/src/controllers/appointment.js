@@ -13,6 +13,24 @@ export const bookAppointment = catchError(async (req, res) => {
     })
 })
 
+export const getAllAppointments = catchError(async (req, res) => {
+    const { date, status, lastId, limit, desc } = req.query
+    
+    const data = await appointmentService.getAllAppointments({ 
+        date,
+        status,
+        lastId,
+        limit: limit ? parseInt(limit) : 30,
+        desc: desc === 'false' ? false : true 
+    })
+
+    res.status(200).json({
+        success: true,
+        message: "Lấy danh sách toàn bộ lịch khám thành công",
+        data
+    })
+})
+
 export const getAvailableSlots = catchError(async (req, res) => {
     const { date, doctorId, specialtyId } = req.query
     
@@ -55,6 +73,25 @@ export const getPatientHistory = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Lấy danh sách lịch khám thành công",
+        data
+    })
+})
+
+export const getDoctorSchedule = catchError(async (req, res) => {
+    const { doctorId } = req.params 
+    const { date, lastId, limit, desc } = req.query
+    
+    const data = await appointmentService.getDoctorSchedule({ 
+        doctorId,
+        date,
+        lastId,
+        limit: limit ? parseInt(limit) : 30,
+        desc: desc === 'false' ? false : true 
+    })
+
+    res.status(200).json({
+        success: true,
+        message: "Lấy danh sách lịch khám của bác sĩ thành công",
         data
     })
 })

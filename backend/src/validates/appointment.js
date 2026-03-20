@@ -11,6 +11,16 @@ export const appointmentSchema = {
         })
     },
 
+    getAll: {
+        query: z.object({
+            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày phải đúng định dạng YYYY-MM-DD" }).optional(),
+            status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+            lastId: z.string().uuid({ message: "lastId phải là UUID" }).optional(),
+            limit: z.string().regex(/^\d+$/, { message: "Limit phải là số" }).optional(),
+            desc: z.enum(['true', 'false']).optional()
+        })
+    },
+
     getSlots: {
         query: z.object({
             date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày khám phải đúng định dạng YYYY-MM-DD" }),
@@ -30,6 +40,18 @@ export const appointmentSchema = {
             lastId: z.string().uuid({ message: "lastId phải là UUID" }).optional(),
             limit: z.string().regex(/^\d+$/, { message: "Limit phải là số" }).optional(),
             desc: z.enum(['true', 'false'], { message: "Desc chỉ được là 'true' hoặc 'false'" }).optional()
+        })
+    },
+
+    getDoctorSchedule: {
+        params: z.object({
+            doctorId: z.string().uuid({ message: "ID bác sĩ không hợp lệ" })
+        }),
+        query: z.object({
+            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày phải đúng định dạng YYYY-MM-DD" }).optional(),
+            lastId: z.string().uuid({ message: "lastId phải là UUID" }).optional(),
+            limit: z.string().regex(/^\d+$/, { message: "Limit phải là số" }).optional(),
+            desc: z.enum(['true', 'false']).optional()
         })
     },
 

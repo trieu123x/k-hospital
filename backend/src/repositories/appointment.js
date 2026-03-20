@@ -34,6 +34,47 @@ export const appointmentRepository = {
         })
     },
 
+    getAllAppointments: async ({ date, status, lastId, limit = 30, desc = true }) => {
+        const cursorCondition = lastId ? { id: lastId } : undefined
+        const skip = lastId ? 1 : 0 
+        const whereClause = {}
+
+        if (date) {
+            whereClause.date = new Date(date)
+        }
+        if (status) {
+            whereClause.status = status
+        }
+
+        return await prisma.appointment.findMany({
+            where: whereClause,
+            take: limit,
+            skip: skip,
+            cursor: cursorCondition,
+            orderBy: [
+                { date: desc ? 'desc' : 'asc' },
+                { shift: 'asc' }
+            ],
+            select: {
+                id: true,
+                date: true,
+                shift: true,
+                status: true,
+                reason: true,
+                patient: { 
+                    select: {
+                        id: true
+                    }
+                },
+                doctor: { 
+                    select: {
+                        id: true
+                    }
+                }
+            }
+        })
+    },
+
     findById: async (id) => {
         return await prisma.appointment.findUnique({
             where: { id },
@@ -112,6 +153,43 @@ export const appointmentRepository = {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        })
+    },
+
+    findByDoctorId: async ({ doctorId, date, lastId, limit = 30, desc = true }) => {
+        const cursorCondition = lastId ? { id: lastId } : undefined
+        const skip = lastId ? 1 : 0 
+        const whereClause = { doctorId: doctorId }
+
+        if (date) {
+            whereClause.date = new Date(date)
+        }
+
+        return await prisma.appointment.findMany({
+            where: whereClause,
+            take: limit,
+            skip: skip,
+            cursor: cursorCondition,
+            orderBy: [
+                { date: desc ? 'desc' : 'asc' }, 
+                { shift: 'asc' }                 
+            ],
+            select: {
+                id: true,
+                date: true,
+                shift: true,
+                status: true,
+                reason: true,
+                patient: { 
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        dob: true,
+                        avatarUrl: true
                     }
                 }
             }
