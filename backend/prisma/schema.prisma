@@ -43,6 +43,7 @@ model Profile {
   dob       DateTime? @db.Date
   address   String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  isActive  Boolean   @default(true) @map("is_active")
 
   // Relations
   doctor                Doctor?

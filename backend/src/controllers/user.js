@@ -52,5 +52,37 @@ export const userController = {
         } catch (error) {
             next(error)
         }
+    },
+
+    toggleBlockUser: async (req, res, next) => {
+        try {
+            const { id } = req.params
+            const { isActive } = req.body
+            
+            const updatedUser = await userService.toggleBlockUser(id, isActive)
+            
+            res.status(200).json({
+                success: true,
+                message: isActive ? "Đã mở khóa tài khoản" : "Đã khóa tài khoản",
+                data: updatedUser
+            })
+        } catch (error) {
+            next(error)
+        }
+    },
+
+    deleteUser: async (req, res, next) => {
+        try {
+            const { id } = req.params
+            
+            await userService.deleteUser(id)
+            
+            res.status(200).json({
+                success: true,
+                message: "Đã xóa người dùng thành công"
+            })
+        } catch (error) {
+            next(error)
+        }
     }
 }

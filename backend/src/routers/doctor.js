@@ -16,4 +16,12 @@ router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), d
 // Accessible only by doctor, specifically their own profile handled in service
 router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), doctorController.updateDoctorInfo)
 
+// POST /doctors: Create a new doctor account
+// Accessible only by admin
+router.post("/", authenticate, authorizeRoles('admin'), doctorController.createDoctor)
+
+// PUT /doctors/:id: Full update of a doctor profile by admin
+// Accessible only by admin
+router.put("/:id", authenticate, authorizeRoles('admin'), doctorController.updateDoctorByAdmin)
+
 export default router

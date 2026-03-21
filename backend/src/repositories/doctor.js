@@ -36,5 +36,15 @@ export const doctorRepository = {
                 specialty: true
             }
         })
+    },
+
+    createDoctor: async (data) => {
+        return await prisma.doctor.create({
+            data,
+            include: {
+                profile: true,
+                specialty: true
+            }
+        })
     }
 }

@@ -16,4 +16,12 @@ router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), u
 // Accessible by all roles, allowed only for own profile
 router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), userController.updateUser)
 
+// PATCH /users/:id/block: Block or unblock a user
+// Accessible only by admin
+router.patch("/:id/block", authenticate, authorizeRoles('admin'), userController.toggleBlockUser)
+
+// DELETE /users/:id: Delete a user
+// Accessible only by admin
+router.delete("/:id", authenticate, authorizeRoles('admin'), userController.deleteUser)
+
 export default router

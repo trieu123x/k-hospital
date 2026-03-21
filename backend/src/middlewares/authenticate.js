@@ -62,6 +62,13 @@ export const authorizeRoles = (...allowedRoles) => {
             // Gắn thông tin profile vào req.user tiện cho các middleware/controller sau sử dụng
             req.user.profile = profile
 
+            if (profile.isActive === false) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Tài khoản của bạn đã bị khóa"
+                })
+            }
+
             if (!profile.role || !allowedRoles.includes(profile.role)) {
                 return res.status(403).json({
                     success: false,

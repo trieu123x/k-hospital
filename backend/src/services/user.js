@@ -63,5 +63,36 @@ export const userService = {
 
         const updatedUser = await userRepository.update(id, allowedData)
         return updatedUser
+    },
+
+    toggleBlockUser: async (id, isActive) => {
+        const user = await userRepository.findById(id)
+        if (!user) {
+            throw Object.assign(new Error("Không tìm thấy người dùng"), { statusCode: 404 })
+        }
+        
+        return await userRepository.update(id, { isActive: !!isActive })
+    },
+
+    deleteUser: async (id) => {
+        const user = await userRepository.findById(id)
+        if (!user) {
+            throw Object.assign(new Error("Không tìm thấy người dùng"), { statusCode: 404 })
+        }
+
+        // Try deleting from Supabase if configured (optional advanced feature)
+        // Dynamically resolving to avoid changing file structure unnecessarily
+        try {
+            const { supabaseAdmin } = await import("../configs/supabase-config.js")
+            if (supabaseAdmin) {
+                await supabaseAdmin.auth.admin.deleteUser(id)
+            }
+        } catch (err) {
+            console.error("Supabase Admin user deletion failed or not configured:", err.message)
+            // Proceed with prisma deletion anyway
+        }
+
+        // Cascade will delete related DB entities (doctor, appointments, etc.)
+        return await userRepository.delete(id)
     }
 }
