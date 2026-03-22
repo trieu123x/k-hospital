@@ -1,5 +1,5 @@
 import { authService } from "../services/auth.js"
-import { catchError } from "../helpers/catchError.js"
+import { catchError } from "../helpers/catch-error.js"
 
 /**
  * POST /auth/register

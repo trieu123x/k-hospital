@@ -9,7 +9,6 @@ const router = express.Router()
 
 // POST /appointments/:appointmentId/medical-record: Add medical record
 // Accessible only by Doctor
-router.post("/:appointmentId/medical-record", authenticate, authorizeRoles('doctor'), appointmentController.addMedicalRecord)
 
 router.post("/book", validate(appointmentSchema.bookAppointment), bookAppointment)
 router.get("/slots", validate(appointmentSchema.getSlots), getAvailableSlots)

@@ -66,7 +66,7 @@ model Doctor {
   experience   String?
   education    String?
   achievements String?
-
+  
   profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
   specialty Specialty? @relation(fields: [specialtyId], references: [id])
 

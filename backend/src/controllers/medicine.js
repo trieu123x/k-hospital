@@ -1,5 +1,5 @@
 import { medicineService } from "../services/medicine.js"
-import { catchError } from "../helpers/catchError.js"
+import { catchError } from "../helpers/catch-error.js"
 
 export const getAllMedicines = catchError(async (req, res) => {
     const { page = 1, limit = 10, ...filters } = req.query
