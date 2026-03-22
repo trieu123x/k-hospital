@@ -9,6 +9,7 @@ import doctorRouter from "./routers/doctor.js"
 import appointmentRouter from "./routers/appointment.js"
 import specialtyRouter from "./routers/specialty.js"
 import medicineRouter from "./routers/medicine.js"
+import newsRouter from "./routers/news.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
 
 const app = express()
@@ -25,6 +26,7 @@ app.use("/disease-catgorize", diseaseCatgorizeRouter)
 app.use("/disease", diseaseRouter)
 app.use("/user-notification", userNotificationRouter)
 app.use("/medicines", medicineRouter)
+app.use("/news", newsRouter)
 
 app.use(globalErrorHandler)
 

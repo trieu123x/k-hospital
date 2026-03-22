@@ -1,0 +1,4 @@
+﻿backend/node_modules/.package-lock.json
+backend/src/app.js
+backend/src/configs/prisma-config.js
+database/createTable.sql

@@ -1,0 +1,62 @@
+﻿On branch merged-code
+Your branch is up to date with 'origin/main'.
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+	new file:   backend/check_db.js
+	new file:   backend/list_dbs.js
+	new file:   backend/list_tables.js
+	modified:   backend/package-lock.json
+	modified:   backend/package.json
+	modified:   backend/prisma/migrations/20260314083955_init_medicare_db/migration.sql
+	modified:   backend/prisma/schema.prisma
+	modified:   backend/prisma/seed.js
+	new file:   backend/prisma_out.txt
+	new file:   backend/src/configs/supabase-config.js
+	new file:   backend/src/controllers/appointment.js
+	new file:   backend/src/controllers/auth.js
+	new file:   backend/src/controllers/doctor.js
+	new file:   backend/src/controllers/medicine.js
+	new file:   backend/src/controllers/specialty.js
+	new file:   backend/src/controllers/user.js
+	new file:   backend/src/middlewares/authenticate.js
+	new file:   backend/src/repositories/appointment.js
+	new file:   backend/src/repositories/auth.js
+	new file:   backend/src/repositories/doctor.js
+	new file:   backend/src/repositories/medicine.js
+	new file:   backend/src/repositories/specialty.js
+	new file:   backend/src/repositories/user.js
+	new file:   backend/src/routers/appointment.js
+	new file:   backend/src/routers/auth.js
+	new file:   backend/src/routers/doctor.js
+	new file:   backend/src/routers/medicine.js
+	new file:   backend/src/routers/specialty.js
+	new file:   backend/src/routers/user.js
+	new file:   backend/src/services/appointment.js
+	new file:   backend/src/services/auth.js
+	new file:   backend/src/services/doctor.js
+	new file:   backend/src/services/medicine.js
+	new file:   backend/src/services/specialty.js
+	new file:   backend/src/services/user.js
+	new file:   backend/temp_resp.json
+	modified:   frontend/package-lock.json
+	modified:   frontend/package.json
+
+Unmerged paths:
+  (use "git add/rm <file>..." as appropriate to mark resolution)
+	deleted by us:   backend/node_modules/.package-lock.json
+	deleted by us:   backend/src/app.js
+	deleted by us:   backend/src/configs/prisma-config.js
+	deleted by us:   database/createTable.sql
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.gitignore
+	.next/
+	status.txt
+	status_utf8.txt
+	unmerged.txt
+
