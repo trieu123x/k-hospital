@@ -1,0 +1,1 @@
+{"success":false,"status":"error","message":"\nInvalid `prisma.medicine.findMany()` invocation:\n\n{\n  where: {},\n  skip: 0,\n  take: 10,\n  include: {\n    pharmacy: true,\n    ~~~~~~~~\n?   diseases?: true\n  }\n}\n\nUnknown field `pharmacy` for include statement on model `Medicine`. Available options are marked with ?."}
