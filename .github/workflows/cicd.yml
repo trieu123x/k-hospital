@@ -2,11 +2,11 @@ name: MediCare CI System
 
 on:
   push:
-    branches: [ main, dung ]
+    branches: [ main, dung,trieu,dev,tung ]
     paths-ignore:
       - '**.md'
   pull_request:
-    branches: [ main ]
+    branches: [ main,dev ]
 
 jobs:
   # --- KIỂM TRA BACKEND ---
