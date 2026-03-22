@@ -1,0 +1,99 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/Users/admin/Downloads/code_web/medi_assist/backend[39m
+
+ [31mΓ¥»[39m test/services/doctor.test.js [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 25[2mms[22m[39m
+       [32mΓ£ô[39m should return doctors and pagination info[32m 7[2mms[22m[39m
+       [32mΓ£ô[39m should throw if doctor not found[32m 2[2mms[22m[39m
+       [32mΓ£ô[39m should return doctor[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should throw if requester is not the doctor[39m[32m 10[2mms[22m[39m
+       [32mΓ£ô[39m should update and return doctor info[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should return new doctor from transaction[32m 2[2mms[22m[39m
+npx : 
+At line:1 char:13
++ cd backend; npx 
+vitest run test/servic
+es/doctor.test.js 
+2>&1 | Out-Fi ...
++             ~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (:String) [   
+ ], RemoteExceptio    
+n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ
+»ΓÄ»[39m[1m[41m 
+Failed Tests 1 [49m[
+22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ
+»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL 
+[22m[49m test/servic
+es/doctor.test.js[2m 
+> [22mdoctorService[
+2m > [22mupdateDoctor
+Info[2m > 
+[22mshould throw if 
+requester is not the 
+doctor
+[31m[1mAssertionErro
+r[22m: expected 
+'Chß╗ë c├│ thß╗â 
+cß║¡p nhß║¡t th├┤ng 
+tin cß╗ºa ch├¡ΓÇª' to 
+contain 'Ch├¡nh 
+m├¼nh'[39m
+
+Expected: 
+[32m"Ch├¡nh 
+m├¼nh"[39m
+Received: 
+[31m"Ch[7mß╗ë c├│ 
+thß╗â cß║¡p nhß║¡t 
+th├┤ng tin cß╗ºa 
+ch[27m├¡nh 
+m├¼nh"[39m
+
+[36m [2mΓ¥»[22m tes
+t/services/doctor.test
+.js:[2m73:29[22m[39
+m
+    [90m 71|[39m    
+     expect[33m.[39m
+[34mfail[39m([32m'S
+hould have thrown an 
+error'[39m)
+    [90m 72|[39m    
+   } [35mcatch[39m 
+(err) {
+    [90m 73|[39m    
+     [34mexpect[39m(
+err[33m.[39mmessage)
+[33m.[39m[34mtoCont
+ain[39m([32m'Ch├¡nh 
+m├¼nh'[39m)
+    [90m   |[39m    
+                      
+   [31m^[39m
+    [90m 74|[39m    
+   }
+    [90m 75|[39m    
+ })
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ
+»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ
+»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 16:04:18
+[2m   Duration [22m 483ms[2m (transform 85ms, setup 0ms, import 121ms, tests 25ms, environment 0ms)[22m
+

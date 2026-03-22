@@ -1,0 +1,30 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/Users/admin/Downloads/code_web/medi_assist/backend[39m
+
+ [32mΓ£ô[39m test/middlewares/error-handler.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m test/services/appointment.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32mΓ£ô[39m test/services/disease.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [31mΓ¥»[39m test/services/doctor.test.js [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 39[2mms[22m[39m
+       [32mΓ£ô[39m should return doctors and pagination info[32m 10[2mms[22m[39m
+       [32mΓ£ô[39m should throw if doctor not found[32m 4[2mms[22m[39m
+       [32mΓ£ô[39m should return doctor[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should throw if requester is not the doctor[39m[32m 17[2mms[22m[39m
+       [32mΓ£ô[39m should update and return doctor info[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should return new doctor from transaction[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m test/services/user.test.js [2m([22m[2m13 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32mΓ£ô[39m test/helpers/storage-helper.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m test/helpers/catch-error.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m test/services/user-notification.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m test/services/auth.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32mΓ£ô[39m test/services/news.test.js [2m([22m[2m9 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mΓ£ô[39m test/services/medicine.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m test/services/specialty.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m test/services/disease-categorizes.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m test/services/medical-record.test.js [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m test/middlewares/validate-handler.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m14 passed[39m[22m[90m (15)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m86 passed[39m[22m[90m (87)[39m
+[2m   Start at [22m 16:02:39
+[2m   Duration [22m 979ms[2m (transform 2.71s, setup 0ms, import 3.81s, tests 358ms, environment 4ms)[22m
+

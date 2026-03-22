@@ -1,0 +1,16 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/Users/admin/Downloads/code_web/medi_assist/backend[39m
+
+ [31mΓ¥»[39m test/services/doctor.test.js [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 31[2mms[22m[39m
+       [32mΓ£ô[39m should return doctors and pagination info[32m 9[2mms[22m[39m
+       [32mΓ£ô[39m should throw if doctor not found[32m 3[2mms[22m[39m
+       [32mΓ£ô[39m should return doctor[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should throw if requester is not the doctor[39m[32m 13[2mms[22m[39m
+       [32mΓ£ô[39m should update and return doctor info[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should return new doctor from transaction[32m 2[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 16:03:30
+[2m   Duration [22m 506ms[2m (transform 84ms, setup 0ms, import 122ms, tests 31ms, environment 0ms)[22m
+
