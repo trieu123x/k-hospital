@@ -3,6 +3,8 @@ import cors from "cors"
 import diseaseCatgorizeRouter from "./routers/disease-categorizes.js"
 import diseaseRouter from "./routers/disease.js"
 import userNotificationRouter from "./routers/user-notification.js"
+import eventRouter from "./routers/event.js"
+import reportRouter from "./routers/report.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
 
 const app = express()
@@ -13,6 +15,8 @@ app.use(express.json())
 app.use("/disease-catgorize", diseaseCatgorizeRouter)
 app.use("/disease", diseaseRouter)
 app.use("/user-notification", userNotificationRouter)
+app.use("/event", eventRouter)
+app.use("/report", reportRouter)
 
 app.use(globalErrorHandler)
 

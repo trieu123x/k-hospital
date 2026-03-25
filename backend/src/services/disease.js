@@ -1,5 +1,6 @@
 import { uploadHelper } from "../helpers/storage-helper.js"
 import { diseaseRepository } from "../repositories/disease.js"
+import { eventService } from "./event.js"
 
 export const diseaseService = {
     createDisease: async (data, file) => {
@@ -43,15 +44,24 @@ export const diseaseService = {
         return updatedDisease
     },
 
-    getDiseases: async (filters) => {
-        return await diseaseRepository.findWithFilter(filters)
+    getDiseases: async (filters, userId = null) => {
+        const diseases = await diseaseRepository.findWithFilter(filters)
+
+        if (filters.name) {
+            eventService.track(userId, 'SEARCH_DISEASE', null, { keyword: filters.name })
+        }
+
+        return diseases
     },
 
-    getDiseaseDetail: async (id) => {
+    getDiseaseDetail: async (id, userId = null) => {
         const disease = await diseaseRepository.findById(id)
         if (!disease) {
             throw Object.assign(new Error("Không tìm thấy thông tin bệnh!"), { statusCode: 404 })
         }
+
+        eventService.track(userId, 'VIEW_DISEASE', id)
+
         return disease
     },
 

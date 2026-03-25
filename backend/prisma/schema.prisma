@@ -39,15 +39,15 @@ model Profile {
   fullName  String    @map("full_name")
   phone     String    @unique
   avatarUrl String?   @map("avatar_url")
-  role      String?   // 'admin', 'doctor', 'patient'
+  role      String? // 'admin', 'doctor', 'patient'
   dob       DateTime? @db.Date
   address   String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   // Relations
   doctor                Doctor?
-  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
-  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
   notifications         Notification[]
   chatSessions          ChatSession[]
 
@@ -59,8 +59,8 @@ model Profile {
 // ================================
 
 model Doctor {
-  id           String   @id @db.Uuid
-  specialtyId  String?  @map("specialty_id") @db.Uuid
+  id           String  @id @db.Uuid
+  specialtyId  String? @map("specialty_id") @db.Uuid
   degree       String?
   experience   String?
   education    String?
@@ -78,28 +78,27 @@ model Doctor {
 // ================================
 
 model Disease {
-  id            String   @id @default(uuid()) @db.Uuid
-  categoryId    String?  @map("category_id") @db.Uuid
-  specialtyId   String?  @map("specialty_id") @db.Uuid
-  name          String
-  
-  nameClean     String?  @map("name_clean") 
+  id          String  @id @default(uuid()) @db.Uuid
+  categoryId  String? @map("category_id") @db.Uuid
+  specialtyId String? @map("specialty_id") @db.Uuid
+  name        String
 
-  imageUrl      String?  @map("image_url")
+  nameClean String? @map("name_clean")
+
+  imageUrl      String? @map("image_url")
   description   String?
   symptoms      String
-  homeTreatment String?  @map("home_treatment")
-  
-  embedding     Unsupported("vector(1536)")?
+  homeTreatment String? @map("home_treatment")
 
-  category  DiseaseCategory? @relation(fields: [categoryId], references: [id])
-  specialty Specialty?       @relation(fields: [specialtyId], references: [id])
+  embedding Unsupported("vector(1536)")?
+
+  category  DiseaseCategory?  @relation(fields: [categoryId], references: [id])
+  specialty Specialty?        @relation(fields: [specialtyId], references: [id])
   medicines DiseaseMedicine[]
 
   @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_disease_name_clean_trgm")
   @@index([specialtyId], name: "idx_disease_specialty")
   @@index([categoryId], name: "idx_disease_category")
-  
   @@map("diseases")
 }
 
@@ -141,8 +140,8 @@ model Appointment {
   diagnosisResult String?  @map("diagnosis_result")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  patient  Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor   Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient       Profile?       @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor        Profile?       @relation("DoctorAppointments", fields: [doctorId], references: [id])
   notifications Notification[]
 
   @@index([patientId], name: "idx_appointment_patient")
@@ -187,13 +186,22 @@ model News {
 // ================================
 // AI CHAT SYSTEM
 // ================================
+// Khai báo Enum để phân biệt ai đang nói
+enum MessageRole {
+  USER // Bệnh nhân
+  AI // Trợ lý MediCare
+  SYSTEM // Prompt ẩn gài vào hệ thống (Không hiện lên UI)
+}
 
 model ChatSession {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String?  @map("user_id") @db.Uuid
-  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz
-  isActive  Boolean  @default(true) @map("is_active")
-  
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  title     String?   @db.VarChar(255)
+  topic     String?   @db.VarChar(100) // VD: "Tim mạch", "Tiêu hóa", "Da liễu"
+  startedAt DateTime  @default(now()) @map("started_at") @db.Timestamptz
+  endedAt   DateTime? @map("ended_at") @db.Timestamptz
+  isActive  Boolean   @default(true) @map("is_active")
+
   user     Profile?      @relation(fields: [userId], references: [id])
   messages ChatMessage[]
 
@@ -201,12 +209,58 @@ model ChatSession {
 }
 
 model ChatMessage {
-  id             String   @id @default(uuid()) @db.Uuid
-  sessionId      String?  @map("session_id") @db.Uuid
-  contentSummary String   @map("content_summary")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id        String      @id @default(uuid()) @db.Uuid
+  sessionId String      @map("session_id") @db.Uuid
+  role      MessageRole
+  content   String      @db.Text
+  metadata  Json?
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  session ChatSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
+  @@index([sessionId, createdAt])
   @@map("chat_messages")
+}
+
+// ================================
+// USER EVENTS
+// ================================
+
+enum EventType {
+  VIEW_DOCTOR
+  SEARCH_DOCTOR
+  BOOK_APPOINTMENT
+  CANCEL_APPOINTMENT
+  VIEW_DISEASE
+  SEARCH_DISEASE
+  CHAT_AI_TOPIC
+}
+
+model UserEvent {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  eventType EventType @map("event_type")
+  entityId  String?   @map("entity_id") @db.Uuid
+  metadata  Json?     @default("{}")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([entityId])
+  @@map("user_events")
+}
+
+// ================================
+// ETL REPORTS
+// ================================
+
+model EtlReports {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mode        String   @db.VarChar(50) // 'daily', 'weekly', 'monthly'
+  startDate   DateTime @map("start_date") @db.Date
+  endDate     DateTime @map("end_date") @db.Date
+  totalEvents Int?     @default(0) @map("total_events")
+  reports     Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("etl_reports")
 }
