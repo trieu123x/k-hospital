@@ -10,6 +10,8 @@ import appointmentRouter from "./routers/appointment.js"
 import specialtyRouter from "./routers/specialty.js"
 import medicineRouter from "./routers/medicine.js"
 import newsRouter from "./routers/news.js"
+import eventRouter from "./routers/event.js"
+import reportRouter from "./routers/report.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
 
 const app = express()
@@ -27,6 +29,8 @@ app.use("/disease", diseaseRouter)
 app.use("/user-notification", userNotificationRouter)
 app.use("/medicines", medicineRouter)
 app.use("/news", newsRouter)
+app.use("/event", eventRouter)
+app.use("/report", reportRouter)
 
 app.use(globalErrorHandler)
 

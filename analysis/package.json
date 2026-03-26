@@ -1,0 +1,28 @@
+{
+  "name": "k-hospital-analysis",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ETL Data Pipeline — DuckDB + Supabase Storage + Parquet",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "etl": "node src/index.js",
+    "etl:schedule": "node src/index.js --schedule",
+    "etl:date": "node src/index.js --date"
+  },
+  "keywords": [
+    "etl",
+    "duckdb",
+    "parquet",
+    "analytics"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "dotenv": "^17.3.1",
+    "duckdb-async": "^1.4.2",
+    "node-cron": "^4.2.1",
+    "pg": "^8.20.0"
+  }
+}

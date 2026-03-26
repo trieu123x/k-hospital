@@ -72,22 +72,22 @@ async function main() {
     const doctorProfile1 = await prisma.profile.upsert({
         where: { phone: '0900000003' },
         update: {},
-        create: { 
-            id: '11111111-1111-1111-1111-111111111111', 
-            fullName: 'Bác sĩ Lê Minh', 
-            phone: '0900000003', 
-            role: 'doctor' 
+        create: {
+            id: '11111111-1111-1111-1111-111111111111',
+            fullName: 'Bác sĩ Lê Minh',
+            phone: '0900000003',
+            role: 'doctor'
         },
     });
 
     const doctorProfile2 = await prisma.profile.upsert({
         where: { phone: '0900000004' },
         update: {},
-        create: { 
-            id: '22222222-2222-2222-2222-222222222222', 
-            fullName: 'Bác sĩ Phạm Hùng', 
-            phone: '0900000004', 
-            role: 'doctor' 
+        create: {
+            id: '22222222-2222-2222-2222-222222222222',
+            fullName: 'Bác sĩ Phạm Hùng',
+            phone: '0900000004',
+            role: 'doctor'
         },
     });
 
@@ -122,7 +122,7 @@ async function main() {
 
     // 5. DISEASES (DANH MỤC BỆNH)
     // Xóa dữ liệu cũ để tránh lỗi trùng lặp khi seed lại vì Disease không có field unique trong schema hiện tại
-    await prisma.disease.deleteMany({}); 
+    await prisma.disease.deleteMany({});
 
     const camCum = await prisma.disease.create({
         data: {
@@ -171,13 +171,17 @@ async function main() {
     console.log("✅ Đã nạp Thuốc và liên kết");
 
     // 7. APPOINTMENTS (LỊCH HẸN)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     await prisma.appointment.deleteMany({});
     await prisma.appointment.create({
         data: {
             patientId: patient1.id,
             doctorId: doctorProfile1.id,
-            slotTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 ngày
-            status: 'pending',
+            date: tomorrow,
+            shift: 1,
+            status: 'pending'
         }
     });
 
@@ -191,6 +195,98 @@ async function main() {
     });
 
     console.log("✅ Đã nạp Tin tức và Lịch hẹn");
+
+    // 9. USER EVENTS 
+    await prisma.userEvent.deleteMany({});
+
+    const today = new Date();
+    const morning = new Date(today.setHours(8, 30));
+    const noon = new Date(today.setHours(12, 15));
+    const afternoon = new Date(today.setHours(15, 45));
+    const evening = new Date(today.setHours(20, 0));
+    const midnight = new Date(today.setHours(23, 30));
+
+    const testEvents = [
+        {
+            userId: patient1.id,
+            eventType: 'VIEW_DOCTOR',
+            entityId: doctorProfile1.id,
+            metadata: { specialty: 'Da liễu', source: 'homepage' },
+            createdAt: morning
+        },
+        {
+            userId: patient1.id,
+            eventType: 'CHAT_AI_TOPIC',
+            metadata: { topic: 'Da liễu', question: 'Dấu hiệu viêm da dị ứng' },
+            createdAt: morning
+        },
+        {
+            userId: patient1.id,
+            eventType: 'BOOK_APPOINTMENT',
+            entityId: doctorProfile1.id,
+            metadata: { shift: 1, price: 200000 },
+            createdAt: noon
+        },
+        {
+            userId: null, // Khách vãng lai
+            eventType: 'VIEW_DISEASE',
+            entityId: camCum.id,
+            metadata: { device: 'Mobile', browser: 'Safari' },
+            createdAt: afternoon
+        },
+        {
+            userId: patient2.id,
+            eventType: 'CHAT_AI_TOPIC',
+            metadata: { topic: 'Hô hấp', question: 'Làm sao để hết ho khan?' },
+            createdAt: afternoon
+        },
+        {
+            userId: patient1.id,
+            eventType: 'CANCEL_APPOINTMENT',
+            entityId: null, // Giả sử hủy lịch vừa đặt
+            metadata: { reason: 'Đổi lịch sang tuần sau' },
+            createdAt: evening
+        },
+        {
+            userId: patient2.id,
+            eventType: 'CHAT_AI_TOPIC',
+            metadata: { topic: 'Hô hấp', question: 'Cảm cúm uống thuốc gì?' },
+            createdAt: evening
+        },
+        {
+            userId: patient2.id,
+            eventType: 'VIEW_DOCTOR',
+            entityId: doctorProfile2.id,
+            metadata: { specialty: 'Hô hấp', source: 'search' },
+            createdAt: midnight
+        },
+        {
+            userId: null,
+            eventType: 'CHAT_AI_TOPIC',
+            metadata: { topic: 'Nội tổng quát', question: 'Lịch khám tổng quát K-Hospital' },
+            createdAt: midnight
+        },
+        {
+            userId: patient1.id,
+            eventType: 'CHAT_AI_TOPIC',
+            metadata: { topic: 'Da liễu', question: 'Kem bôi Hydrocortisone dùng thế nào?' },
+            createdAt: midnight
+        }
+    ];
+
+    for (const ev of testEvents) {
+        await prisma.userEvent.create({
+            data: {
+                userId: ev.userId,
+                eventType: ev.eventType,
+                entityId: ev.entityId,
+                metadata: ev.metadata,
+                createdAt: ev.createdAt
+            }
+        });
+    }
+
+    console.log("✅ Đã nạp 10 User Events khớp với dữ liệu hệ thống");
     console.log("🎉 SEEDING HOÀN TẤT!");
 }
 
