@@ -8,6 +8,15 @@ class ChatRequest(BaseModel):
 class TopicPredictRequest(BaseModel):
     session_id: str
 
+class TitlePredictRequest(BaseModel):
+    first_message: str
+
+class TitlePredictResponse(BaseModel):
+    title: str
+
 class DiseaseRequest(BaseModel):
     content: str
+
+class DiseaseResponse(BaseModel):
+    vector: List[float]
 

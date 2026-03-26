@@ -1,3 +1,4 @@
+import asyncio
 from google import genai
 from app.config.config import settings
 
@@ -13,14 +14,19 @@ class AIProvider:
         thay vì trả 1 lần cho chân thật 
         (Dùng cho chat là hợp lý)
         """
-        response = await self.client.aio.models.generate_content_stream(
-            model=self.model_name,
-            contents=prompt
-        )
-        
-        async for texts in response:
-            if texts.text:
-                yield texts.text
+        try:
+            response = await self.client.aio.models.generate_content_stream(
+                model=self.model_name,
+                contents=prompt
+            )
+            
+            async for texts in response:
+                if texts.text:
+                    yield texts.text
+                    
+        except asyncio.CancelledError:
+            print("[CẢNH BÁO] User đã ngắt kết nối. Đã hủy tiến trình tạo chữ của AI!")
+            raise
 
     async def generate_full_text(self, prompt: str) -> str:
         """

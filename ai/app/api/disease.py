@@ -1,13 +1,15 @@
 from fastapi import APIRouter
-from app.models.models import DiseaseRequest
+from app.models.models import DiseaseRequest, DiseaseResponse
 
 router = APIRouter()
 
-@router.post("/disease")
-async def disease_to_vector(request: DiseaseRequest):
+@router.post("")
+async def disease_to_vector(request: DiseaseRequest) -> DiseaseResponse:
     """
         Thêm logic xử lý để tạo vector của bệnh và lưu nó vào posgres
-        Có thể trả về gì đó ở đây để thông báo cho back end
+        Trả về vector để back end lưu vào posgres
     """
     
-    return 
+    vector = []
+
+    return DiseaseResponse(vector=vector)

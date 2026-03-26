@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import diseaseCatgorizeRouter from "./routers/disease-categorizes.js"
 import diseaseRouter from "./routers/disease.js"
+import chatRouter from "./routers/chat.js"
 import userNotificationRouter from "./routers/user-notification.js"
 import authRouter from "./routers/auth.js"
 import userRouter from "./routers/user.js"
@@ -26,6 +27,7 @@ app.use("/appointments", appointmentRouter)
 app.use("/specialties", specialtyRouter)
 app.use("/disease-catgorize", diseaseCatgorizeRouter)
 app.use("/disease", diseaseRouter)
+app.use("/chat", chatRouter)
 app.use("/user-notification", userNotificationRouter)
 app.use("/medicines", medicineRouter)
 app.use("/news", newsRouter)
