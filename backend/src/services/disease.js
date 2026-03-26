@@ -1,6 +1,9 @@
 import { uploadHelper } from "../helpers/storage-helper.js"
 import { diseaseRepository } from "../repositories/disease.js"
 import { eventService } from "./event.js"
+import axios from "axios"
+
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000'
 
 export const diseaseService = {
     createDisease: async (data, file) => {
@@ -11,11 +14,18 @@ export const diseaseService = {
 
         const newDisease = await diseaseRepository.create(data)
         try {
-            // Thêm logic/ gọi service biến đổi symtons thành embedding vector vào đây
-            // const vector = []
-            // await diseaseRepository.updateEmbedding(newDisease.id, vector)
+            if (data.symptoms) {
+                const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
+                    content: data.symptoms
+                })
+
+                const vector = res.data?.vector
+                if (vector && Array.isArray(vector) && vector.length > 0) {
+                    await diseaseRepository.updateEmbedding(newDisease.id, vector)
+                }
+            }
         } catch (error) {
-            console.error("Lỗi tạo Embedding Vector:", error)
+            console.error("Lỗi tạo Embedding Vector:", error.message)
         }
 
         return newDisease
@@ -36,9 +46,18 @@ export const diseaseService = {
         const updatedDisease = await diseaseRepository.update(id, data)
 
         if (data.symptoms) {
-            // Ở đây chứa logic cập nhật embedding vector nếu thay đổi symptoms ok
-            // const vector = []
-            // await diseaseRepository.updateEmbedding(newDisease.id, vector)
+            try {
+                const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
+                    content: data.symptoms
+                })
+
+                const vector = res.data?.vector
+                if (vector && Array.isArray(vector) && vector.length > 0) {
+                    await diseaseRepository.updateEmbedding(id, vector)
+                }
+            } catch (error) {
+                console.error("Lỗi Cập nhật Embedding Vector:", error.message)
+            }
         }
 
         return updatedDisease

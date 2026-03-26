@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.config import settings
 
-from app.api import chat, topic, disease
+from app.api import chat, predict, disease
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(chat.router, prefix="/ai/chat", tags=["chat"])
-app.include_router(topic.router, prefix="/ai/topic", tags=["topic"])
+app.include_router(predict.router, prefix="/ai/predict", tags=["predict"])
 app.include_router(disease.router, prefix="/ai/disease", tags=["disease"])
 
 @app.get("/")

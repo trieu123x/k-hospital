@@ -5,7 +5,7 @@ from app.services.rag import RAGService
 
 router = APIRouter()
 
-@router.post("/chat")
+@router.post("")
 async def chat(request: ChatRequest):
     """
     Thực thi logic của chat, nhận vào session_id và prompt, trả về response
