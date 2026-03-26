@@ -10,13 +10,19 @@
     "etl:schedule": "node src/index.js --schedule",
     "etl:date": "node src/index.js --date"
   },
-  "keywords": ["etl", "duckdb", "parquet", "analytics"],
+  "keywords": [
+    "etl",
+    "duckdb",
+    "parquet",
+    "analytics"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
     "dotenv": "^17.3.1",
-    "duckdb": "^1.3.0",
-    "node-cron": "^4.2.1"
+    "duckdb-async": "^1.4.2",
+    "node-cron": "^4.2.1",
+    "pg": "^8.20.0"
   }
 }

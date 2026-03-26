@@ -30,13 +30,13 @@ export async function extractEvents(db, startDate, endDate) {
   await db.exec(`
     CREATE OR REPLACE TABLE doctor_events AS
     SELECT * FROM daily_events
-    WHERE event_type IN ('VIEW_DOCTOR', 'SEARCH_DOCTOR', 'BOOK_APPOINTMENT', 'CANCEL_APPOINTMENT');
+    WHERE event_type IN ('VIEW_DOCTOR', 'BOOK_APPOINTMENT', 'CANCEL_APPOINTMENT');
   `);
 
   await db.exec(`
     CREATE OR REPLACE TABLE disease_events AS
     SELECT * FROM daily_events
-    WHERE event_type IN ('VIEW_DISEASE', 'SEARCH_DISEASE');
+    WHERE event_type IN ('VIEW_DISEASE');
   `);
 
   await db.exec(`

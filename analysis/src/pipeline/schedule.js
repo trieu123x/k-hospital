@@ -47,6 +47,7 @@ export async function runScheduled(mode, startDate, endDate) {
     // ━━━ EXTRACT ━━━
     log.phase('PHASE 1: EXTRACT');
     await db.init();
+    log.success('DuckDB đã kết nối thành công!');
     await db.attachPg(dbUrl);
     log.success('DuckDB đã kết nối đến PostgreSQL (READ_ONLY)');
 
@@ -71,9 +72,27 @@ export async function runScheduled(mode, startDate, endDate) {
     log.phase('PHASE 3: LOAD');
 
     const exportedFiles = [];
+    const reportsList = []
     for (const report of REPORTS) {
       const filePath = await exportToParquet(db, report.table, report.name, dateStr);
       exportedFiles.push({ filePath, name: report.name });
+
+      const storagePath = `${dateStr}/${report.name}.parquet`;
+
+      const countRes = await db.query(`SELECT COUNT(*) as cnt FROM ${report.table}`);
+      const totalRows = Number(countRes[0].cnt);
+
+      const previewData = await db.query(`SELECT * FROM ${report.table} LIMIT 20`);
+
+      reportsList.push({
+        reportName: report.name,
+        data: {
+          totalRows: totalRows,
+          storagePath: storagePath,
+          previewData: previewData
+        }
+      })
+
       log.result('Exported', `${report.name}_${dateStr}.parquet`);
     }
 
@@ -84,7 +103,7 @@ export async function runScheduled(mode, startDate, endDate) {
     // ━━━ PURGE ━━━
     log.phase('PHASE 4: PURGE');
     log.info('Raw events đã lưu thành công. Bắt đầu xóa dữ liệu cũ trên PostgreSQL...');
-    const deletedCount = await purgeEvents(db, dateStr);
+    const deletedCount = await purgeEvents(dateStr);
 
     // ━━━ KẾT QUẢ ━━━
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -95,7 +114,7 @@ export async function runScheduled(mode, startDate, endDate) {
       endDate,
       totalEvents: stats.total,
       purgedEvents: deletedCount,
-      reports: REPORTS.map((r) => r.name),
+      reportsList: reportsList,
       elapsedSeconds: parseFloat(elapsed),
     };
 

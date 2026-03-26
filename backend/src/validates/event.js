@@ -2,14 +2,14 @@ import { z } from 'zod';
 
 export const eventSchema = {
     body: z.object({
-        userId: z.uuid("ID người dùng phải là UUID").optional().nullable(),
+        userId: z.uuid({ message: "ID người dùng phải là UUID" }).optional().nullable(),
         eventType: z.enum([
-            'VIEW_DOCTOR', 'SEARCH_DOCTOR', 'BOOK_APPOINTMENT',
-            'CANCEL_APPOINTMENT', 'VIEW_DISEASE', 'SEARCH_DISEASE',
+            'VIEW_DOCTOR', 'BOOK_APPOINTMENT',
+            'CANCEL_APPOINTMENT', 'VIEW_DISEASE',
             'CHAT_AI_TOPIC'
         ], { errorMap: () => ({ message: "Loại sự kiện không hợp lệ" }) }),
-        entityId: z.uuid("Entity ID phải là UUID").optional().nullable(),
-        metadata: z.record(z.any()).optional().nullable()
+        entityId: z.uuid({ message: "Entity ID phải là UUID" }).optional().nullable(),
+        metadata: z.any().optional().nullable()
     }),
 
     query: z.object({

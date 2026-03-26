@@ -1,17 +1,19 @@
 import { catchError } from "../helpers/catch-error.js"
 import { reportService } from "../services/report.js"
 
-export const getReports = catchError(async (req, res) => {
-    const reports = await reportService.getReports(req.query);
+export const getReportByTime = catchError(async (req, res) => {
+    const { reportName, mode, date } = req.query;
+    const report = await reportService.getReportByTime({ reportName, mode, date });
     res.status(200).json({
         success: true,
-        message: "Lấy danh sách báo cáo thành công",
-        data: reports
+        message: "Lấy báo cáo thành công",
+        data: report
     });
 });
 
 export const getReportById = catchError(async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params
+
     const report = await reportService.getReportById(id);
     res.status(200).json({
         success: true,

@@ -12,10 +12,10 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function uploadToStorage(bucketName, storagePath, fileBuffer) {
+export async function uploadToStorage(bucketName = "medicare", storagePath, fileBuffer) {
   const { data, error } = await supabase.storage
     .from(bucketName)
-    .upload(storagePath, fileBuffer, {
+    .upload('analytics/' + storagePath, fileBuffer, {
       contentType: 'application/octet-stream',
       upsert: true,
     });

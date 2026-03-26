@@ -1,21 +1,30 @@
+import pg from 'pg';
 import { log } from '../helpers/logger.js';
 
-// Xóa events đã được archive khỏi Postgres
-export async function purgeEvents(db, dateStr) {
-  log.info(`Đang chuyển sang chế độ writable để xóa events...`);
-  await db.reattachWritable();
+export async function purgeEvents(dateStr) {
+  const client = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+  });
 
-  log.info(`Đang xóa events ngày ${dateStr} khỏi PostgreSQL...`);
+  log.info(`[PG-Direct] Đang chuẩn bị xóa events ngày ${dateStr}...`);
 
-  const result = await db.query(`
-    DELETE FROM pg.public.user_events
-    WHERE created_at >= '${dateStr}'::TIMESTAMP
-      AND created_at <  '${dateStr}'::TIMESTAMP + INTERVAL '1 day'
-    RETURNING id;
-  `);
+  try {
+    await client.connect();
 
-  const deletedCount = result.length;
-  log.success(`Đã xóa ${deletedCount} events khỏi PostgreSQL`);
+    const query = `
+      DELETE FROM user_events 
+      WHERE created_at >= $1::TIMESTAMP 
+        AND created_at < $1::TIMESTAMP + INTERVAL '1 day'
+    `;
 
-  return deletedCount;
+    const res = await client.query(query, [dateStr]);
+
+    log.success(`[PG-Direct] Đã xóa thành công ${res.rowCount} events.`);
+    return res.rowCount;
+  } catch (err) {
+    log.error(`[PG-Direct] Lỗi khi xóa: ${err.message}`);
+    return 0;
+  } finally {
+    await client.end().catch(() => { });
+  }
 }

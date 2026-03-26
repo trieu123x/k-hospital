@@ -1,12 +1,10 @@
 // Scoring weights — dùng bởi aggregate queries
 export const SCORES = {
   VIEW_DOCTOR: 1,
-  SEARCH_DOCTOR: 2,
   BOOK_APPOINTMENT: 5,
   CANCEL_APPOINTMENT: -3,
 
   VIEW_DISEASE: 1,
-  SEARCH_DISEASE: 3,
   CHAT_AI_TOPIC: 4,
 };
 
@@ -21,4 +19,4 @@ export const REPORTS = [
 ];
 
 // Supabase Storage bucket
-export const STORAGE_BUCKET = process.env.SUPABASE_BUCKET || 'analytics';
+export const STORAGE_BUCKET = process.env.SUPABASE_BUCKET || 'medicare';

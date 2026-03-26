@@ -1,8 +1,14 @@
 import { reportRepository } from "../repositories/report.js"
 
 export const reportService = {
-    getReports: async (query) => {
-        return await reportRepository.getReports(query);
+    getReportByTime: async ({ reportName, mode, date }) => {
+        const report = await reportRepository.getReportByTime({ reportName, mode, date });
+        if (!report) {
+            const err = Object.assign(new Error("Không tìm thấy báo cáo cho thời gian này"), { statusCode: 404 });
+            throw err;
+        }
+
+        return report
     },
 
     getReportById: async (id) => {
@@ -11,6 +17,7 @@ export const reportService = {
             const err = Object.assign(new Error("Không tìm thấy báo cáo"), { statusCode: 404 });
             throw err;
         }
+
         return report;
     }
 }

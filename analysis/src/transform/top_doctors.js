@@ -10,12 +10,10 @@ export async function transformTopDoctors(db) {
         d.specialty_id                    AS specialty_id,
         s.name                            AS specialty_name,
         COUNT(*) FILTER (WHERE de.event_type = 'VIEW_DOCTOR')        AS view_count,
-        COUNT(*) FILTER (WHERE de.event_type = 'SEARCH_DOCTOR')      AS search_count,
         COUNT(*) FILTER (WHERE de.event_type = 'BOOK_APPOINTMENT')   AS booking_count,
         COUNT(*) FILTER (WHERE de.event_type = 'CANCEL_APPOINTMENT') AS cancel_count,
         (
           COUNT(*) FILTER (WHERE de.event_type = 'VIEW_DOCTOR')        * ${SCORES.VIEW_DOCTOR} +
-          COUNT(*) FILTER (WHERE de.event_type = 'SEARCH_DOCTOR')      * ${SCORES.SEARCH_DOCTOR} +
           COUNT(*) FILTER (WHERE de.event_type = 'BOOK_APPOINTMENT')   * ${SCORES.BOOK_APPOINTMENT} +
           COUNT(*) FILTER (WHERE de.event_type = 'CANCEL_APPOINTMENT') * ${SCORES.CANCEL_APPOINTMENT}
         ) AS popularity_score,
@@ -24,7 +22,7 @@ export async function transformTopDoctors(db) {
       LEFT JOIN pg.public.doctors d ON de.entity_id = d.id
       LEFT JOIN pg.public.specialties s ON d.specialty_id = s.id
       WHERE de.entity_id IS NOT NULL
-      GROUP BY de.entity_id, p.full_name, d.specialty_id, s.name
+      GROUP BY de.entity_id, d.specialty_id, s.name
     )
     SELECT
       *,

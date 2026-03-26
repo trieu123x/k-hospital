@@ -1,45 +1,41 @@
-import duckdb from 'duckdb';
+import { Database } from 'duckdb-async';
+import { log } from '../helpers/logger.js';
 
 export class DuckDB {
   constructor() {
     this.db = null;
-    this.conn = null;
   }
 
   async init() {
-    return new Promise((resolve, reject) => {
-      this.db = new duckdb.Database(':memory:', (err) => {
-        if (err) return reject(new Error(`DuckDB init failed: ${err.message}`));
-        this.db.connect((err, connection) => {
-          if (err) return reject(new Error(`DuckDB connect failed: ${err.message}`));
-          this.conn = connection;
-          resolve();
-        });
-      });
-    });
+    log.info('DuckDB đang khởi tạo (Async Mode)...');
+    try {
+      this.db = await Database.create(':memory:');
+      log.info("DuckDB connection established successfully.");
+    } catch (err) {
+      log.error("DuckDB init failed: ", err.message);
+      throw err;
+    }
   }
 
-  exec(sql) {
-    return new Promise((resolve, reject) => {
-      this.conn.run(sql, (err) => {
-        if (err) return reject(new Error(`SQL exec failed: ${err.message}\nQuery: ${sql.slice(0, 200)}`));
-        resolve();
-      });
-    });
+  async exec(sql) {
+    try {
+      await this.db.exec(sql);
+    } catch (err) {
+      throw new Error(`SQL exec failed: ${err.message}\nQuery: ${sql.slice(0, 200)}`);
+    }
   }
 
-  query(sql) {
-    return new Promise((resolve, reject) => {
-      this.conn.all(sql, (err, rows) => {
-        if (err) return reject(new Error(`SQL query failed: ${err.message}\nQuery: ${sql.slice(0, 200)}`));
-        resolve(rows);
-      });
-    });
+  async query(sql) {
+    try {
+      return await this.db.all(sql);
+    } catch (err) {
+      throw new Error(`SQL query failed: ${err.message}\nQuery: ${sql.slice(0, 200)}`);
+    }
   }
 
   async count(table) {
-    const [row] = await this.query(`SELECT COUNT(*) AS cnt FROM ${table};`);
-    return row.cnt;
+    const rows = await this.query(`SELECT COUNT(*) AS cnt FROM ${table};`);
+    return rows[0].cnt;
   }
 
   async attachPg(databaseUrl) {
@@ -60,20 +56,6 @@ export class DuckDB {
   }
 
   async close() {
-    try {
-      await this.exec('DETACH pg;').catch(() => {});
-    } catch (_) {}
-
-    return new Promise((resolve) => {
-      if (this.db) {
-        this.db.close(() => {
-          this.db = null;
-          this.conn = null;
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-    });
+    log.info('DuckDB connection closing...');
   }
 }

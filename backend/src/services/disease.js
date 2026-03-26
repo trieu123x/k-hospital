@@ -24,7 +24,7 @@ export const diseaseService = {
     updateDisease: async (id, data, file) => {
         if (file) {
             const existingDisease = await diseaseRepository.findById(id)
-            
+
             if (existingDisease?.imageUrl) {
                 await uploadHelper.deleteFile(existingDisease.imageUrl, 'medicare')
             }
@@ -44,12 +44,8 @@ export const diseaseService = {
         return updatedDisease
     },
 
-    getDiseases: async (filters, userId = null) => {
+    getDiseases: async (filters) => {
         const diseases = await diseaseRepository.findWithFilter(filters)
-
-        if (filters.name) {
-            eventService.track(userId, 'SEARCH_DISEASE', null, { keyword: filters.name })
-        }
 
         return diseases
     },
@@ -77,7 +73,7 @@ export const diseaseService = {
     },
 
     deleteDisease: async (id) => {
-        const existing = await diseaseRepository.findById(id) 
+        const existing = await diseaseRepository.findById(id)
         if (existing?.imageUrl) {
             await uploadHelper.deleteFile(existing.imageUrl, 'medicare')
         }
