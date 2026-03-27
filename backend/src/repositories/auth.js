@@ -7,6 +7,7 @@ export const profileRepository = {
             select: {
                 id: true,
                 fullName: true,
+                email: true,
                 phone: true,
                 avatarUrl: true,
                 role: true,
@@ -17,15 +18,21 @@ export const profileRepository = {
         })
     },
 
-    create: async ({ id, fullName, phone, role = "patient" }) => {
+    create: async ({ id, fullName, email, phone, role = "patient" }) => {
         return await prisma.profile.create({
-            data: { id, fullName, phone, role }
+            data: { id, fullName, email, phone, role }
         })
     },
 
     findByPhone: async (phone) => {
         return await prisma.profile.findUnique({
             where: { phone }
+        })
+    },
+
+    findByEmail: async (email) => {
+        return await prisma.profile.findUnique({
+            where: { email }
         })
     }
 }

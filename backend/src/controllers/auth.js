@@ -76,3 +76,29 @@ export const getMe = catchError(async (req, res) => {
         data
     })
 })
+
+/**
+ * POST /auth/forgot-password
+ * Body: { email }
+ */
+export const forgotPassword = catchError(async (req, res) => {
+    const { email } = req.body
+    if (!email) {
+        return res.status(400).json({ success: false, message: "Vui lòng cung cấp email" })
+    }
+    const data = await authService.forgotPassword({ email })
+    res.status(200).json({ success: true, ...data })
+})
+
+/**
+ * POST /auth/reset-password
+ * Body: { email, otp, newPassword }
+ */
+export const resetPassword = catchError(async (req, res) => {
+    const { email, otp, newPassword } = req.body
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ success: false, message: "Vui lòng cung cấp email, otp và mật khẩu mới" })
+    }
+    const data = await authService.resetPassword({ email, otp, newPassword })
+    res.status(200).json({ success: true, ...data })
+})
