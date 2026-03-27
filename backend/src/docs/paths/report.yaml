@@ -1,0 +1,97 @@
+paths:
+  /report/by-time:
+    get:
+      summary: Lấy báo cáo theo tên và mốc thời gian
+      tags: [Report]
+      description: Truy xuất các loại báo cáo thống kê dựa trên tên báo cáo, chế độ (ngày/tuần/tháng) và ngày bắt đầu.
+      parameters:
+        - in: query
+          name: reportName
+          required: true
+          description: Tên loại báo cáo cần lấy
+          schema:
+            type: string
+            enum: [raw_events, top_doctors, top_diseases, peak_hours, daily_summary, chat_topics]
+        - in: query
+          name: mode
+          required: true
+          description: Chế độ thống kê (theo ngày, tuần hoặc tháng)
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+        - in: query
+          name: date
+          required: true
+          description: Ngày bắt đầu thống kê (định dạng YYYY-MM-DD)
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+            example: 2026-03-27
+      responses:
+        '200':
+          description: Lấy dữ liệu báo cáo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy báo cáo thành công
+                  data:
+                    $ref: '#/components/schemas/ReportItem'
+        '400':
+          description: Tham số truy vấn (Query) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy dữ liệu báo cáo cho thời gian này
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /report/{id}:
+    get:
+      summary: Lấy chi tiết báo cáo theo ID
+      tags: [Report]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID của bản ghi báo cáo trong cơ sở dữ liệu
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lấy chi tiết báo cáo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy chi tiết báo cáo thành công
+                  data:
+                    $ref: '#/components/schemas/ReportItem'
+        '400':
+          description: ID không đúng định dạng (UUID)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy bản ghi báo cáo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

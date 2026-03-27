@@ -1,0 +1,285 @@
+paths:
+  /disease:
+    get:
+      summary: Lấy danh sách bệnh theo bộ lọc
+      tags: [Disease]
+      parameters:
+        - in: query
+          name: categoryId
+          description: ID của danh mục bệnh
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: specialtyId
+          description: ID của chuyên khoa
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: name
+          description: Tìm kiếm theo tên bệnh
+          schema:
+            type: string
+        - in: query
+          name: lastId
+          description: ID cuối cùng của trang trước (phục vụ phân trang cursor)
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 60
+      responses:
+        '200':
+          description: Lấy danh sách bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách bệnh thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiseaseSummary'
+        '400':
+          description: Truy vấn (Query) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Tạo bệnh mới
+      tags: [Disease]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [name, symptoms]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  example: Sốt xuất huyết
+                categoryId:
+                  type: string
+                  format: uuid
+                specialtyId:
+                  type: string
+                  format: uuid
+                symptoms:
+                  type: string
+                  minLength: 10
+                  example: Sốt cao đột ngột, đau đầu, phát ban...
+                description:
+                  type: string
+                  example: Bệnh truyền nhiễm cấp tính do virus Dengue gây ra.
+                homeTreatment:
+                  type: string
+                  example: Nghỉ ngơi, uống nhiều nước, dùng thuốc hạ sốt theo chỉ định.
+                image:
+                  type: string
+                  format: binary
+                  description: File hình ảnh minh họa của bệnh
+      responses:
+        '201':
+          description: Tạo bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Thêm bệnh mới thành công
+                  data:
+                    $ref: '#/components/schemas/DiseaseReference'
+        '400':
+          description: Dữ liệu gửi lên không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /disease/{diseaseId}:
+    get:
+      summary: Lấy chi tiết bệnh theo ID
+      tags: [Disease]
+      parameters:
+        - in: path
+          name: diseaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lấy chi tiết bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy chi tiết bệnh thành công
+                  data:
+                    $ref: '#/components/schemas/DiseaseDetail'
+        '400':
+          description: Tham số đường dẫn không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thông tin bệnh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Cập nhật thông tin bệnh
+      tags: [Disease]
+      parameters:
+        - in: path
+          name: diseaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [name, symptoms]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                categoryId:
+                  type: string
+                  format: uuid
+                specialtyId:
+                  type: string
+                  format: uuid
+                symptoms:
+                  type: string
+                  minLength: 10
+                description:
+                  type: string
+                homeTreatment:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Cập nhật bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cập nhật thông tin bệnh thành công
+                  data:
+                    $ref: '#/components/schemas/DiseaseReference'
+        '400':
+          description: Dữ liệu gửi lên hoặc tham số không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Xóa bệnh
+      tags: [Disease]
+      parameters:
+        - in: path
+          name: diseaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Xóa bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Xóa bệnh thành công
+        '400':
+          description: Tham số đường dẫn không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /disease/diagnose:
+    post:
+      summary: Gọi AI để phân tích triệu chứng
+      tags: [Disease]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symptoms]
+              properties:
+                symptoms:
+                  type: string
+                  minLength: 5
+                  example: Sốt, ho, đau họng và mệt mỏi
+      responses:
+        '200':
+          description: Phân tích triệu chứng thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Phân tích triệu chứng thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiagnosedDisease'
+        '400':
+          description: Dữ liệu triệu chứng không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

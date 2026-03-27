@@ -2,6 +2,7 @@ import express from 'express'
 import { clearReadNotifications, createNotification, deleteNotification, getMyNotifications, markAsRead } from '../controllers/user-notification.js'
 import { notificationSchema } from '../validates/user-notification.js'
 import { validate } from '../middlewares/validate-handler.js'
+
 const router = express.Router()
 
 router.get('', validate({ query: notificationSchema.query }), getMyNotifications)

@@ -1,0 +1,99 @@
+paths:
+  /event:
+    post:
+      summary: Tạo sự kiện theo dõi (Tracking event)
+      tags: [Event]
+      description: Ghi lại các hành động của người dùng như xem bác sĩ, đặt lịch, xem bệnh lý để phục vụ thống kê.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventType]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: ID người dùng (có thể để trống nếu khách chưa đăng nhập)
+                eventType:
+                  type: string
+                  description: Loại sự kiện
+                  enum: [VIEW_DOCTOR, BOOK_APPOINTMENT, CANCEL_APPOINTMENT, VIEW_DISEASE, CHAT_AI_TOPIC]
+                  example: VIEW_DISEASE
+                entityId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: ID của đối tượng liên quan (ID bác sĩ, ID bệnh lý, v.v.)
+                metadata:
+                  type: object
+                  nullable: true
+                  additionalProperties: true
+                  description: Các thông tin bổ sung đi kèm dưới dạng key-value
+      responses:
+        '201':
+          description: Tạo sự kiện thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tạo sự kiện thành công
+                  data:
+                    $ref: '#/components/schemas/EventCreated'
+        '400':
+          description: Dữ liệu (Body) gửi lên không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Lấy danh sách sự kiện theo ngày
+      tags: [Event]
+      parameters:
+        - in: query
+          name: date
+          required: true
+          description: Ngày cần lấy dữ liệu (định dạng YYYY-MM-DD)
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+            example: 2026-03-27
+      responses:
+        '200':
+          description: Lấy danh sách sự kiện thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Danh sách sự kiện ngày 2026-03-27
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        description: Tổng số sự kiện trong ngày
+                        example: 150
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventRecord'
+        '400':
+          description: Tham số ngày gửi lên không đúng định dạng hoặc bị thiếu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
