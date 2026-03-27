@@ -39,5 +39,8 @@ class AIProvider:
         )
         
         return response.text            
+    async def generate_text(self, prompt: str) -> str:
+        """Sinh ra text phản hồi trong 1 lần (dùng lại logic của generate_full_text để prediction_service gọi trúng tên)"""
+        return await self.generate_full_text(prompt)
 
 ai_provider = AIProvider()
