@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from "../configs/prisma-config.js"
 
 export const chatRepository = {
     createSession: async (userId, title = 'New Chat') => {

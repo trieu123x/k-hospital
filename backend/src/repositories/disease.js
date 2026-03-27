@@ -7,7 +7,7 @@ export const diseaseRepository = {
         return await prisma.disease.create({
             data: {
                 name,
-                categoryId,
+                categoryId,  
                 specialtyId,
                 symptoms,
                 description,

@@ -11,7 +11,7 @@ vi.mock('@/repositories/disease.js', () => ({
     update: vi.fn(),
     delete: vi.fn(),
     findWithFilter: vi.fn(),
-    findSimilarDiseases: vi.fn()
+    findSimilarDiseases: vi.fn() 
   }
 }))
 
@@ -68,7 +68,7 @@ describe('diseaseService', () => {
     it('nên gọi deleteFile nếu bệnh cần xóa có chứa imageUrl', async () => {
       const id = 10
       const existing = { id: 10, imageUrl: 'to-be-deleted.jpg' }
-      
+
       diseaseRepository.findById.mockResolvedValue(existing)
 
       await diseaseService.deleteDisease(id)
