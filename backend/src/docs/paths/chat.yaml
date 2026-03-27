@@ -1,0 +1,224 @@
+paths:
+  /chat:
+    post:
+      summary: Tạo phiên chat mới
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, content]
+              properties:
+                userId:                
+                  type: string
+                  format: uuid
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                content:
+                  type: string
+                  minLength: 1
+                  example: Tôi đang bị ho và sốt nhẹ
+      responses:
+        '201':
+          description: Tạo phiên chat thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tạo phiên chat thành công
+                  data:
+                    type: object
+                    properties:
+                      session:
+                        $ref: '#/components/schemas/ChatSession'
+                      message:
+                        $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: Dữ liệu (Body) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Lấy danh sách phiên chat
+      tags: [Chat]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Tham số validate hiện có, nhưng logic controller đang trả về toàn bộ session theo user đang đăng nhập
+      responses:
+        '200':
+          description: Lấy danh sách phiên chat thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách phiên chat thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatSession'
+        '400':
+          description: Query không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /chat/{id}/messages:
+    get:
+      summary: Lấy lịch sử tin nhắn của một phiên chat
+      tags: [Chat]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: lastId
+          schema:
+            type: string
+            format: uuid
+          description: Phục vụ phân trang theo cursor
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Lấy chi tiết phiên chat thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy chi tiết phiên chat thành công
+                  data:
+                    $ref: '#/components/schemas/ChatSessionDetail'
+        '400':
+          description: Tham số không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy phiên chat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Lưu tin nhắn vào phiên chat
+      tags: [Chat]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role, content]
+              properties:
+                role:
+                  type: string
+                  enum: [USER, AI, SYSTEM]
+                content:
+                  type: string
+                  minLength: 1
+                metadata:
+                  type: object
+                  nullable: true
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Lưu tin nhắn thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lưu tin nhắn thành công
+                  data:
+                    $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: Body hoặc params không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /chat/{id}/topic:
+    post:
+      summary: Cập nhật chủ đề phiên chat bằng AI
+      tags: [Chat]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cập nhật chủ đề thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cập nhật chủ đề thành công
+                  data:
+                    type: object
+                    properties:
+                      topic:
+                        type: string
+                        nullable: true
+                        example: Hô hấp
+        '400':
+          description: Tham số không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

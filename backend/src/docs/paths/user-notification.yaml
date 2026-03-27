@@ -1,0 +1,213 @@
+paths:
+  /user-notification:
+    get:
+      summary: Lấy danh sách thông báo của người dùng
+      tags: [User Notification]
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          description: ID của người dùng cần lấy thông báo
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: lastId
+          schema:
+            type: string
+            format: uuid
+            nullable: true
+          description: Con trỏ (Cursor) phục vụ phân trang
+      responses:
+        '200':
+          description: Lấy danh sách thông báo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách thông báo thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NotificationItem'
+        '400':
+          description: Truy vấn (Query) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Tạo thông báo mới
+      tags: [User Notification]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, title, message]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                appointmentId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: ID lịch hẹn liên quan (nếu có)
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  example: Nhắc nhở lịch hẹn
+                message:
+                  type: string
+                  minLength: 1
+                  example: Bạn có lịch hẹn khám vào lúc 8:00 sáng mai.
+      responses:
+        '201':
+          description: Tạo thông báo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tạo thông báo thành công
+                  data:
+                    $ref: '#/components/schemas/NotificationItem'
+        '400':
+          description: Dữ liệu (Body) gửi lên không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /user-notification/{notificationId}/read:
+    patch:
+      summary: Đánh dấu thông báo là đã đọc
+      tags: [User Notification]
+      parameters:
+        - in: path
+          name: notificationId
+          required: true
+          description: ID của thông báo
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Đánh dấu đã đọc thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Đã đánh dấu thông báo là đã đọc
+                  data:
+                    $ref: '#/components/schemas/NotificationItem'
+        '400':
+          description: Tham số đường dẫn (Params) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /user-notification/{notificationId}:
+    delete:
+      summary: Xóa một thông báo
+      tags: [User Notification]
+      parameters:
+        - in: path
+          name: notificationId
+          required: true
+          description: ID của thông báo cần xóa
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Xóa thông báo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Xóa thông báo thành công
+        '400':
+          description: Tham số đường dẫn không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /user-notification/clean/read:
+    delete:
+      summary: Xóa toàn bộ thông báo đã đọc của người dùng
+      tags: [User Notification]
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          description: ID của người dùng cần dọn dẹp thông báo
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: lastId
+          required: false
+          schema:
+            type: string
+            format: uuid
+            nullable: true
+          description: Tham số có trong schema validate nhưng không dùng trong logic dọn dẹp
+      responses:
+        '200':
+          description: Dọn dẹp thông báo đã đọc thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Đã dọn dẹp các thông báo đã đọc
+                  data:
+                    type: object
+                    properties:
+                      deletedCount:
+                        type: integer
+                        description: Số lượng thông báo đã xóa
+                        example: 5
+        '400':
+          description: Truy vấn (Query) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
