@@ -1,0 +1,63 @@
+paths:
+  /disease-catgorize/all:
+    get:
+      summary: Lấy toàn bộ danh mục bệnh
+      tags: [Disease Category]
+      responses:
+        '200':
+          description: Lấy danh sách danh mục bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách danh mục bệnh thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiseaseCategory'
+  /disease-catgorize/{categorizeId}:
+    get:
+      summary: Lấy chi tiết danh mục bệnh
+      tags: [Disease Category]
+      parameters:
+        - in: path
+          name: categorizeId
+          required: true
+          description: ID của danh mục bệnh (định dạng UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lấy thông tin danh mục bệnh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh mục bệnh thành công
+                  data:
+                    $ref: '#/components/schemas/DiseaseCategory'
+        '400':
+          description: Tham số (Params) không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy danh mục bệnh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

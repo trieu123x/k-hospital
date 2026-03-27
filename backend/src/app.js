@@ -14,7 +14,10 @@ import newsRouter from "./routers/news.js"
 import eventRouter from "./routers/event.js"
 import reportRouter from "./routers/report.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
+import dotenv from "dotenv"
+import { setupSwagger } from "./configs/swagger-config.js"
 
+dotenv.config()
 const app = express()
 
 app.use(cors())
@@ -35,5 +38,7 @@ app.use("/event", eventRouter)
 app.use("/report", reportRouter)
 
 app.use(globalErrorHandler)
+
+setupSwagger(app)
 
 export default app
