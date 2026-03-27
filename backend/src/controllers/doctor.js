@@ -5,8 +5,9 @@ export const doctorController = {
         try {
             const page = parseInt(req.query.page) || 1
             const limit = parseInt(req.query.limit) || 10
+            const { name, specialtyId } = req.query
             
-            const result = await doctorService.getAllDoctors(page, limit)
+            const result = await doctorService.getAllDoctors(page, limit, { name, specialtyId })
             
             res.status(200).json({
                 success: true,

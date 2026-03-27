@@ -1,10 +1,20 @@
 import { doctorRepository } from "../repositories/doctor.js"
 
 export const doctorService = {
-    getAllDoctors: async (page = 1, limit = 10) => {
+    getAllDoctors: async (page = 1, limit = 10, { name, specialtyId } = {}) => {
         const skip = (page - 1) * limit
-        // Anyone can see all doctors, no role filter needed for visibility
-        const { doctors, total } = await doctorRepository.findAllDoctors({}, skip, limit)
+
+        const filters = {}
+        if (name) {
+            filters.profile = {
+                fullName: { contains: name, mode: 'insensitive' }
+            }
+        }
+        if (specialtyId) {
+            filters.specialtyId = specialtyId
+        }
+
+        const { doctors, total } = await doctorRepository.findAllDoctors(filters, skip, limit)
         
         return {
             doctors,
