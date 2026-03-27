@@ -33,6 +33,9 @@ jobs:
       - name: Validate Prisma Schema
         run: npx prisma validate
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Run Backend Unit Tests (Vitest)
         run: npm run test
 
