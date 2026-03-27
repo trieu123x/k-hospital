@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('nodemailer', () => ({
   default: {
     createTransport: vi.fn().mockReturnValue({
-      sendMail: vi.fn().mockResolvedValue({ messageId: 'test-id' })
+      sendMail: vi.fn().mockResolvedValue({ messageId: 'test-id' }),
+      verify: vi.fn().mockImplementation((cb) => cb(null, true))
     })
   }
 }))
@@ -18,8 +19,8 @@ describe('Email Service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env = { ...originalEnv }
-    process.env.MAIL_USER = 'test@gmail.com'
-    process.env.MAIL_PASS = 'password123'
+    process.env.EMAIL_USER = 'test@gmail.com'
+    process.env.EMAIL_PASS = 'password123'
   })
 
   it('should send OTP email with correct parameters', async () => {
