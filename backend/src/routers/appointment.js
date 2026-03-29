@@ -17,7 +17,7 @@ router.get("/doctor/:doctorId", authenticate, authorizeRoles('admin', 'doctor'),
 router.patch("/cancel/:appointmentId", authenticate, authorizeRoles('patient'), validate(appointmentSchema.checkParamId), cancelAppointment)
 router.patch("/update/status/:appointmentId", authenticate, authorizeRoles('admin', 'doctor'), validate(appointmentSchema.updateStatus), updateAppointmentStatus)
 router.post("/medical-record/create/:appointmentId", authenticate, authorizeRoles('doctor'), validate(medicalRecordSchema.create), createMedicalRecord)
-router.get("/medical-record/:appointmentId", authenticate, validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
+router.get("/medical-record/:appointmentId", authenticate,authorizeRoles( 'doctor', 'patient'), validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
 router.patch("/medical-record/update/:appointmentId", authenticate, authorizeRoles('doctor'), validate(medicalRecordSchema.update), updateMedicalRecord)
 
 export default router
