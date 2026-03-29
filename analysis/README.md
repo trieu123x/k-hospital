@@ -7,7 +7,7 @@
 
 2. Lập lịch chạy 1 lần duy nhất vào 1 thời điểm cụ thể
     ```bash
-    node src/index.js --test <daily|weekly|monthly> <YYYY-MM-DD>
+    node src/index.js --test <daily> <YYYY-MM-DD>
     ```
     Ví dụ: 
     ```bash

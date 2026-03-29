@@ -24,26 +24,7 @@ export function getTimestamp() {
 }
 
 // Các hàm tính khoảng thời gian
-
 export function getDailyRange() {
   const yesterday = getYesterday();
   return { startDate: yesterday, endDate: yesterday };
-}
-
-export function getWeeklyRange() {
-  const now = new Date();
-  // Về chủ nhật tuần trước
-  const end = new Date(now);
-  end.setDate(now.getDate() - now.getDay());
-  // Về thứ 2 tuần trước
-  const start = new Date(end);
-  start.setDate(end.getDate() - 6);
-  return { startDate: formatDate(start), endDate: formatDate(end) };
-}
-
-export function getMonthlyRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const end = new Date(now.getFullYear(), now.getMonth(), 0);
-  return { startDate: formatDate(start), endDate: formatDate(end) };
 }
