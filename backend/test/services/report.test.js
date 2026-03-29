@@ -4,7 +4,7 @@ import { reportRepository } from '@/repositories/report.js'
 
 vi.mock('@/repositories/report.js', () => ({
   reportRepository: {
-    getReportByTime: vi.fn(),
+    getReportsByTimeRange: vi.fn(),
     getReportById: vi.fn()
   }
 }))
@@ -14,44 +14,60 @@ describe('reportService', () => {
     vi.clearAllMocks()
   })
 
-  describe('getReportByTime', () => {
-    it('nên trả về report khi repository tìm thấy dữ liệu', async () => {
-      const params = { reportName: 'summary', mode: 'daily', date: '2026-03-27' }
-      const report = { id: 1, ...params }
-      reportRepository.getReportByTime.mockResolvedValue(report)
+  describe('getReportsByTimeRange', () => {
+    it('nên trả về danh sách report khi repository tìm thấy dữ liệu', async () => {
+      const params = { reportName: 'daily_summary', mode: 'daily', startDate: '2026-03-01', endDate: '2026-03-29' }
 
-      const result = await reportService.getReportByTime(params)
+      const mockReports = [
+        { id: 1, ...params, totalEvents: 100 },
+        { id: 2, ...params, totalEvents: 150 }
+      ]
+      reportRepository.getReportsByTimeRange.mockResolvedValue(mockReports)
 
-      expect(reportRepository.getReportByTime).toHaveBeenCalledWith(params)
-      expect(result).toEqual(report)
+      const result = await reportService.getReportsByTimeRange(params)
+
+      expect(reportRepository.getReportsByTimeRange).toHaveBeenCalledWith(params)
+      expect(result).toEqual(mockReports)
     })
 
-    it('nên throw lỗi 404 khi không tìm thấy report theo thời gian', async () => {
-      reportRepository.getReportByTime.mockResolvedValue(null)
+    it('nên throw lỗi 404 khi mảng trả về rỗng (không có data trong khoảng thời gian này)', async () => {
+      reportRepository.getReportsByTimeRange.mockResolvedValue([])
 
-      await expect(reportService.getReportByTime({
-        reportName: 'summary',
+      await expect(reportService.getReportsByTimeRange({
+        reportName: 'daily_summary',
         mode: 'daily',
-        date: '2026-03-27'
+        startDate: '2026-03-01',
+        endDate: '2026-03-29'
+      })).rejects.toMatchObject({ statusCode: 404 })
+    })
+
+    it('nên throw lỗi 404 khi repository trả về null', async () => {
+      reportRepository.getReportsByTimeRange.mockResolvedValue(null)
+
+      await expect(reportService.getReportsByTimeRange({
+        reportName: 'daily_summary',
+        mode: 'daily',
+        startDate: '2026-03-01',
+        endDate: '2026-03-29'
       })).rejects.toMatchObject({ statusCode: 404 })
     })
   })
 
   describe('getReportById', () => {
     it('nên trả về report khi tìm thấy id', async () => {
-      const report = { id: 99, reportName: 'summary' }
-      reportRepository.getReportById.mockResolvedValue(report)
+      const mockReport = { id: '99', reportName: 'daily_summary' }
+      reportRepository.getReportById.mockResolvedValue(mockReport)
 
-      const result = await reportService.getReportById(99)
+      const result = await reportService.getReportById('99')
 
-      expect(reportRepository.getReportById).toHaveBeenCalledWith(99)
-      expect(result).toEqual(report)
+      expect(reportRepository.getReportById).toHaveBeenCalledWith('99')
+      expect(result).toEqual(mockReport)
     })
 
     it('nên throw lỗi 404 khi không tìm thấy id', async () => {
       reportRepository.getReportById.mockResolvedValue(null)
 
-      await expect(reportService.getReportById(404)).rejects.toMatchObject({
+      await expect(reportService.getReportById('404-uuid')).rejects.toMatchObject({
         statusCode: 404
       })
     })
