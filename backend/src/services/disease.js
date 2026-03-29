@@ -1,5 +1,9 @@
 import { uploadHelper } from "../helpers/storage-helper.js"
 import { diseaseRepository } from "../repositories/disease.js"
+import { eventService } from "./event.js"
+import axios from "axios"
+
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000'
 
 export const diseaseService = {
     createDisease: async (data, file) => {
@@ -10,11 +14,18 @@ export const diseaseService = {
 
         const newDisease = await diseaseRepository.create(data)
         try {
-            // Thêm logic/ gọi service biến đổi symtons thành embedding vector vào đây
-            // const vector = []
-            // await diseaseRepository.updateEmbedding(newDisease.id, vector)
+            if (data.symptoms) {
+                const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
+                    content: data.symptoms
+                })
+
+                const vector = res.data?.vector
+                if (vector && Array.isArray(vector) && vector.length > 0) {
+                    await diseaseRepository.updateEmbedding(newDisease.id, vector)
+                }
+            }
         } catch (error) {
-            console.error("Lỗi tạo Embedding Vector:", error)
+            console.error("Lỗi tạo Embedding Vector:", error.message)
         }
 
         return newDisease
@@ -23,7 +34,7 @@ export const diseaseService = {
     updateDisease: async (id, data, file) => {
         if (file) {
             const existingDisease = await diseaseRepository.findById(id)
-            
+
             if (existingDisease?.imageUrl) {
                 await uploadHelper.deleteFile(existingDisease.imageUrl, 'medicare')
             }
@@ -35,23 +46,37 @@ export const diseaseService = {
         const updatedDisease = await diseaseRepository.update(id, data)
 
         if (data.symptoms) {
-            // Ở đây chứa logic cập nhật embedding vector nếu thay đổi symptoms ok
-            // const vector = []
-            // await diseaseRepository.updateEmbedding(newDisease.id, vector)
+            try {
+                const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
+                    content: data.symptoms
+                })
+
+                const vector = res.data?.vector
+                if (vector && Array.isArray(vector) && vector.length > 0) {
+                    await diseaseRepository.updateEmbedding(id, vector)
+                }
+            } catch (error) {
+                console.error("Lỗi Cập nhật Embedding Vector:", error.message)
+            }
         }
 
         return updatedDisease
     },
 
     getDiseases: async (filters) => {
-        return await diseaseRepository.findWithFilter(filters)
+        const diseases = await diseaseRepository.findWithFilter(filters)
+
+        return diseases
     },
 
-    getDiseaseDetail: async (id) => {
+    getDiseaseDetail: async (id, userId = null) => {
         const disease = await diseaseRepository.findById(id)
         if (!disease) {
             throw Object.assign(new Error("Không tìm thấy thông tin bệnh!"), { statusCode: 404 })
         }
+
+        eventService.track(userId, 'VIEW_DISEASE', id)
+
         return disease
     },
 
@@ -67,7 +92,7 @@ export const diseaseService = {
     },
 
     deleteDisease: async (id) => {
-        const existing = await diseaseRepository.findById(id) 
+        const existing = await diseaseRepository.findById(id)
         if (existing?.imageUrl) {
             await uploadHelper.deleteFile(existing.imageUrl, 'medicare')
         }

@@ -18,13 +18,43 @@ describe('medicineService', () => {
   })
 
   describe('getAllMedicines', () => {
-    it('should calculate pagination and return data', async () => {
+    it('should calculate pagination and return data (no filters)', async () => {
       medicineRepository.findAll.mockResolvedValue({ medicines: [{ id: 1 }], total: 15 })
       const res = await medicineService.getAllMedicines({}, 2, 10)
       expect(res.medicines).toHaveLength(1)
       expect(res.pagination.totalItems).toBe(15)
       expect(res.pagination.totalPages).toBe(2)
       expect(medicineRepository.findAll).toHaveBeenCalledWith({}, 10, 10)
+    })
+
+    it('should filter by name', async () => {
+      medicineRepository.findAll.mockResolvedValue({ medicines: [{ id: 2, name: 'Paracetamol' }], total: 1 })
+      const res = await medicineService.getAllMedicines({ name: 'para' }, 1, 10)
+      expect(res.medicines).toHaveLength(1)
+      expect(res.medicines[0].name).toBe('Paracetamol')
+      expect(medicineRepository.findAll).toHaveBeenCalledWith({ name: 'para' }, 0, 10)
+    })
+
+    it('should filter by medicineType', async () => {
+      medicineRepository.findAll.mockResolvedValue({ medicines: [{ id: 3, medicineType: 'uống' }], total: 1 })
+      const res = await medicineService.getAllMedicines({ medicineType: 'uống' }, 1, 10)
+      expect(res.medicines).toHaveLength(1)
+      expect(medicineRepository.findAll).toHaveBeenCalledWith({ medicineType: 'uống' }, 0, 10)
+    })
+
+    it('should filter by both name and medicineType', async () => {
+      medicineRepository.findAll.mockResolvedValue({ medicines: [{ id: 4 }], total: 1 })
+      const res = await medicineService.getAllMedicines({ name: 'amox', medicineType: 'tiêm' }, 1, 10)
+      expect(res.medicines).toHaveLength(1)
+      expect(medicineRepository.findAll).toHaveBeenCalledWith({ name: 'amox', medicineType: 'tiêm' }, 0, 10)
+    })
+
+    it('should return empty list when no medicine matches', async () => {
+      medicineRepository.findAll.mockResolvedValue({ medicines: [], total: 0 })
+      const res = await medicineService.getAllMedicines({ name: 'không tồn tại' }, 1, 10)
+      expect(res.medicines).toHaveLength(0)
+      expect(res.pagination.totalItems).toBe(0)
+      expect(res.pagination.totalPages).toBe(0)
     })
   })
 

@@ -1,0 +1,306 @@
+tags:
+  - name: Chat
+    description: Quản lý phiên chat AI và tin nhắn tư vấn
+  - name: Disease
+    description: Quản lý thông tin chi tiết về các loại bệnh lý
+  - name: Disease Category
+    description: Quản lý danh mục các nhóm bệnh
+  - name: User Notification
+    description: Quản lý thông báo và nhắc nhở cho người dùng
+  - name: Event
+    description: Theo dõi và ghi lại hành vi của người dùng trên hệ thống
+  - name: Report
+    description: Các báo cáo thống kê và phân tích dữ liệu (ETL)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Dữ liệu gửi lên không hợp lệ hoặc lỗi hệ thống
+    
+    ChatSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+          nullable: true
+          example: Tư vấn triệu chứng ho sốt
+        topic:
+          type: string
+          nullable: true
+          example: Hô hấp
+        startedAt:
+          type: string
+          format: date-time
+          description: Thời gian bắt đầu phiên chat
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Thời gian kết thúc phiên chat (nếu có)
+        isActive:
+          type: boolean
+          description: Trạng thái phiên chat còn hoạt động hay không
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [USER, AI, SYSTEM]
+          description: Vai trò của người gửi tin nhắn
+        content:
+          type: string
+          description: Nội dung tin nhắn
+        metadata:
+          description: Dữ liệu bổ sung đi kèm tin nhắn (cấu hình AI, link tham khảo...)
+          nullable: true
+          oneOf:
+            - type: object
+            - type: array
+            - type: string
+            - type: number
+            - type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatSessionDetail:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/ChatSession'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+
+    DiseaseCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Bệnh truyền nhiễm
+        description:
+          type: string
+          nullable: true
+          example: Các loại bệnh có khả năng lây lan trong cộng đồng
+
+    DiseaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Cảm cúm
+        imageUrl:
+          type: string
+          nullable: true
+          example: https://storage.medicare.com/diseases/flu.jpg
+        description:
+          type: string
+          nullable: true
+          example: Bệnh lý đường hô hấp phổ biến do virus gây ra
+
+    DiseaseReference:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Nội khoa
+
+    DiseaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        symptoms:
+          type: string
+          description: Các triệu chứng điển hình của bệnh
+        homeTreatment:
+          type: string
+          nullable: true
+          description: Hướng dẫn chăm sóc và điều trị tại nhà
+        specialtyId:
+          type: string
+          format: uuid
+          nullable: true
+        category:
+          description: Thông tin danh mục bệnh
+          allOf:
+            - $ref: '#/components/schemas/DiseaseReference'
+          nullable: true
+        specialty:
+          description: Thông tin chuyên khoa liên quan
+          allOf:
+            - $ref: '#/components/schemas/DiseaseReference'
+          nullable: true
+
+    DiagnosedDisease:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        symptoms:
+          type: string
+        description:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        similarityScore:
+          type: number
+          format: float
+          description: Độ tương đồng dựa trên phân tích của AI (0 đến 1)
+          example: 0.95
+
+    NotificationItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+          example: Nhắc nhở lịch hẹn khám
+        message:
+          type: string
+          nullable: true
+          example: Bạn có lịch hẹn với bác sĩ vào ngày mai
+        isRead:
+          type: boolean
+          description: Trạng thái đã đọc hay chưa
+        createdAt:
+          type: string
+          format: date-time
+        appointmentId:
+          type: string
+          format: uuid
+          nullable: true
+        appointment:
+          type: object
+          nullable: true
+          properties:
+            status:
+              type: string
+              description: Trạng thái của lịch hẹn liên quan
+              example: đã xác nhận
+
+    EventRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        eventType:
+          type: string
+          enum: [VIEW_DOCTOR, BOOK_APPOINTMENT, CANCEL_APPOINTMENT, VIEW_DISEASE, CHAT_AI_TOPIC]
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID của đối tượng bị tác động (ID bác sĩ, ID bệnh...)
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Dữ liệu bổ sung đi kèm sự kiện
+        createdAt:
+          type: string
+          format: date-time
+
+    EventCreated:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [VIEW_DOCTOR, BOOK_APPOINTMENT, CANCEL_APPOINTMENT, VIEW_DISEASE, CHAT_AI_TOPIC]
+        createdAt:
+          type: string
+          format: date-time
+
+    ReportItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          description: Chế độ báo cáo (ngày, tuần, tháng)
+          example: daily
+        reportName:
+          type: string
+          enum: [raw_events, top_doctors, top_diseases, peak_hours, daily_summary, chat_topics]
+          description: Tên loại báo cáo thống kê
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        totalEvents:
+          type: integer
+          nullable: true
+          description: Tổng số lượng sự kiện ghi nhận được
+        reports:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Dữ liệu báo cáo chi tiết theo cấu hình JSON
+        createdAt:
+          type: string
+          format: date-time
