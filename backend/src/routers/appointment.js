@@ -4,6 +4,7 @@ import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
 import { createMedicalRecord, getMedicalRecordDetail, updateMedicalRecord } from "../controllers/medical-record.js"
 import { validate } from "../middlewares/validate-handler.js"
 import { appointmentSchema } from "../validates/appointment.js"
+import { medicalRecordSchema } from "../validates/medical-record.js"
 
 const router = express.Router()
 
@@ -15,8 +16,8 @@ router.get("/patient/:userId", validate(appointmentSchema.getHistory), getPatien
 router.get("/doctor/:doctorId", validate(appointmentSchema.getDoctorSchedule), getDoctorSchedule)
 router.patch("/cancel/:appointmentId", validate(appointmentSchema.checkParamId), cancelAppointment)
 router.patch("/update/status/:appointmentId", validate(appointmentSchema.updateStatus), updateAppointmentStatus)
-router.post("/medical-record/create/:appointmentId", validate(appointmentSchema.medicalRecord), createMedicalRecord)
-router.get("/medical-record/:appointmentId", validate(appointmentSchema.checkParamId), getMedicalRecordDetail)
-router.patch("/medical-record/update/:appointmentId", validate(appointmentSchema.medicalRecord), updateMedicalRecord)
+router.post("/medical-record/create/:appointmentId", validate(medicalRecordSchema.create), createMedicalRecord)
+router.get("/medical-record/:appointmentId", validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
+router.patch("/medical-record/update/:appointmentId", validate(medicalRecordSchema.update), updateMedicalRecord)
 
 export default router

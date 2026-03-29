@@ -2,26 +2,24 @@ import express from "express"
 import { doctorController } from "../controllers/doctor.js"
 import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
 
+import { validate } from "../middlewares/validate-handler.js"
+import { doctorSchema } from "../validates/doctor.js"
+
 const router = express.Router()
 
 // GET /doctors: Fetch all doctors
-// Accessible by admin, patient, doctor
-router.get("/", authenticate, authorizeRoles('admin', 'doctor', 'patient'), doctorController.getAllDoctors)
+router.get("/", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(doctorSchema.getAll), doctorController.getAllDoctors)
 
 // GET /doctors/:id: Fetch specific doctor
-// Accessible by admin, patient, doctor
-router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), doctorController.getDoctorById)
+router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(doctorSchema.getById), doctorController.getDoctorById)
 
-// PATCH /doctors/:id: Update specific doctor info (degree, experience, etc.)
-// Accessible only by doctor, specifically their own profile handled in service
-router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), doctorController.updateDoctorInfo)
+// PATCH /doctors/:id: Update specific doctor info
+router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(doctorSchema.update), doctorController.updateDoctorInfo)
 
 // POST /doctors: Create a new doctor account
-// Accessible only by admin
-router.post("/", authenticate, authorizeRoles('admin'), doctorController.createDoctor)
+router.post("/", authenticate, authorizeRoles('admin'), validate(doctorSchema.create), doctorController.createDoctor)
 
 // PUT /doctors/:id: Full update of a doctor profile by admin
-// Accessible only by admin
-router.put("/:id", authenticate, authorizeRoles('admin'), doctorController.updateDoctorByAdmin)
+router.put("/:id", authenticate, authorizeRoles('admin'), validate(doctorSchema.update), doctorController.updateDoctorByAdmin)
 
 export default router
