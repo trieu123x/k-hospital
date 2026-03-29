@@ -172,21 +172,6 @@ async function main() {
 
     console.log("✅ Đã nạp Thuốc và liên kết");
 
-    // 7. APPOINTMENTS (LỊCH HẸN)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    await prisma.appointment.deleteMany({});
-    await prisma.appointment.create({
-        data: {
-            patientId: patient1.id,
-            doctorId: doctorProfile1.id,
-            date: tomorrow,
-            shift: 1,
-            status: 'pending'
-        }
-    });
-
     // 8. NEWS
     await prisma.news.deleteMany({});
     await prisma.news.create({
