@@ -1,14 +1,17 @@
 import { prisma } from "../configs/prisma-config.js"
 
 export const reportRepository = {
-    getReportByTime: async ({ reportName, mode, date }) => {
-        return await prisma.etlReports.findFirst({
+    getReportsByTimeRange: async ({ reportName, mode, startDate, endDate }) => {
+        return await prisma.etlReports.findMany({
             where: {
                 reportName,
                 mode,
-                startDate: new Date(date)
+                startDate: {
+                    gte: new Date(startDate),
+                    lte: new Date(endDate)
+                }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { startDate: 'asc' }
         });
     },
 
