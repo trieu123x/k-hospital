@@ -2,12 +2,13 @@ import { catchError } from "../helpers/catch-error.js"
 import { reportService } from "../services/report.js"
 
 export const getReportByTime = catchError(async (req, res) => {
-    const { reportName, mode, date } = req.query;
-    const report = await reportService.getReportByTime({ reportName, mode, date });
+    const { reportName, mode, startDate, endDate } = req.query;
+    const reports = await reportService.getReportsByTimeRange({ reportName, mode, startDate, endDate });
+
     res.status(200).json({
         success: true,
-        message: "Lấy báo cáo thành công",
-        data: report
+        message: "Lấy danh sách báo cáo thành công",
+        data: reports
     });
 });
 
