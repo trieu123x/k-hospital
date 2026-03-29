@@ -8,7 +8,11 @@ export const reportSchema = {
         mode: z.enum(['daily', 'weekly', 'monthly'], {
             errorMap: () => ({ message: "Chế độ không hợp lệ (daily, weekly, monthly)" })
         }),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Định dạng ngày phải là YYYY-MM-DD")
+        startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Định dạng ngày bắt đầu phải là YYYY-MM-DD"),
+        endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Định dạng ngày kết thúc phải là YYYY-MM-DD")
+    }).refine(data => new Date(data.startDate) <= new Date(data.endDate), {
+        message: "Ngày bắt đầu không được lớn hơn ngày kết thúc",
+        path: ["endDate"]
     }),
 
     params: z.object({
