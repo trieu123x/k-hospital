@@ -8,16 +8,16 @@ import { medicalRecordSchema } from "../validates/medical-record.js"
 
 const router = express.Router()
 
-router.post("/book", validate(appointmentSchema.bookAppointment), bookAppointment)
+router.post("/book", authenticate, authorizeRoles('patient', 'admin'), validate(appointmentSchema.bookAppointment), bookAppointment)
 router.get("/slots", validate(appointmentSchema.getSlots), getAvailableSlots)
-router.get("/all", validate(appointmentSchema.getAll), getAllAppointments)
-router.get("/:appointmentId", validate(appointmentSchema.checkParamId), getAppointmentDetail)
-router.get("/patient/:userId", validate(appointmentSchema.getHistory), getPatientHistory)
-router.get("/doctor/:doctorId", validate(appointmentSchema.getDoctorSchedule), getDoctorSchedule)
-router.patch("/cancel/:appointmentId", validate(appointmentSchema.checkParamId), cancelAppointment)
-router.patch("/update/status/:appointmentId", validate(appointmentSchema.updateStatus), updateAppointmentStatus)
-router.post("/medical-record/create/:appointmentId", validate(medicalRecordSchema.create), createMedicalRecord)
-router.get("/medical-record/:appointmentId", validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
-router.patch("/medical-record/update/:appointmentId", validate(medicalRecordSchema.update), updateMedicalRecord)
+router.get("/all", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(appointmentSchema.getAll), getAllAppointments)
+router.get("/:appointmentId", authenticate,authorizeRoles('admin', 'doctor', 'patient'), validate(appointmentSchema.checkParamId), getAppointmentDetail)
+router.get("/patient/:userId", authenticate, authorizeRoles('admin', 'doctor'), validate(appointmentSchema.getHistory), getPatientHistory)
+router.get("/doctor/:doctorId", authenticate, authorizeRoles('admin', 'doctor'), validate(appointmentSchema.getDoctorSchedule), getDoctorSchedule)
+router.patch("/cancel/:appointmentId", authenticate, authorizeRoles('patient'), validate(appointmentSchema.checkParamId), cancelAppointment)
+router.patch("/update/status/:appointmentId", authenticate, authorizeRoles('admin', 'doctor'), validate(appointmentSchema.updateStatus), updateAppointmentStatus)
+router.post("/medical-record/create/:appointmentId", authenticate, authorizeRoles('doctor'), validate(medicalRecordSchema.create), createMedicalRecord)
+router.get("/medical-record/:appointmentId", authenticate, validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
+router.patch("/medical-record/update/:appointmentId", authenticate, authorizeRoles('doctor'), validate(medicalRecordSchema.update), updateMedicalRecord)
 
 export default router
