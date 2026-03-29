@@ -59,13 +59,13 @@ async function main() {
     const patient1 = await prisma.profile.upsert({
         where: { phone: '0900000001' },
         update: {},
-        create: { fullName: 'Nguyễn Văn A', phone: '0900000001', role: 'patient' },
+        create: { fullName: 'Nguyễn Văn A', phone: '0900000001', role: 'patient', email: 'vna@gmail.com' },
     });
 
     const patient2 = await prisma.profile.upsert({
         where: { phone: '0900000002' },
         update: {},
-        create: { fullName: 'Trần Thị B', phone: '0900000002', role: 'patient' },
+        create: { fullName: 'Trần Thị B', phone: '0900000002', role: 'patient', email: 'tranthib@gmail.com' },
     });
 
     // Bác sĩ
@@ -76,7 +76,8 @@ async function main() {
             id: '11111111-1111-1111-1111-111111111111',
             fullName: 'Bác sĩ Lê Minh',
             phone: '0900000003',
-            role: 'doctor'
+            role: 'doctor',
+            email: 'leminh@hospital.vn'
         },
     });
 
@@ -87,7 +88,8 @@ async function main() {
             id: '22222222-2222-2222-2222-222222222222',
             fullName: 'Bác sĩ Phạm Hùng',
             phone: '0900000004',
-            role: 'doctor'
+            role: 'doctor',
+            email: 'phamhung@hospital.vn'
         },
     });
 
