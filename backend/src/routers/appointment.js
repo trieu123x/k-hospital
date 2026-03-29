@@ -1,14 +1,11 @@
 import express from "express"
-import { appointmentController, bookAppointment, getAvailableSlots, getAppointmentDetail, getPatientHistory, cancelAppointment, updateAppointmentStatus, getDoctorSchedule, getAllAppointments} from "../controllers/appointment.js"
+import { bookAppointment, getAvailableSlots, getAppointmentDetail, getPatientHistory, cancelAppointment, updateAppointmentStatus, getDoctorSchedule, getAllAppointments} from "../controllers/appointment.js"
 import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
 import { createMedicalRecord, getMedicalRecordDetail, updateMedicalRecord } from "../controllers/medical-record.js"
 import { validate } from "../middlewares/validate-handler.js"
 import { appointmentSchema } from "../validates/appointment.js"
 
 const router = express.Router()
-
-// POST /appointments/:appointmentId/medical-record: Add medical record
-// Accessible only by Doctor
 
 router.post("/book", validate(appointmentSchema.bookAppointment), bookAppointment)
 router.get("/slots", validate(appointmentSchema.getSlots), getAvailableSlots)

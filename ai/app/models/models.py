@@ -9,7 +9,7 @@ class TopicPredictRequest(BaseModel):
     session_id: str
 
 class TitlePredictRequest(BaseModel):
-    first_message: str
+    session_id: str
 
 class TitlePredictResponse(BaseModel):
     title: str
