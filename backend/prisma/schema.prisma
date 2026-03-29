@@ -50,6 +50,7 @@ model Profile {
   doctor                Doctor?
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  schedulesAsDoctor     Schedule[]     @relation("DoctorSchedules") // <-- ĐÃ THÊM QUAN HỆ ẢO TỚI BẢNG SCHEDULE
   notifications         Notification[]
   chatSessions          ChatSession[]
 
@@ -130,17 +131,36 @@ model DiseaseMedicine {
 }
 
 // ================================
+// SCHEDULES (THÊM MỚI BẢNG NÀY)
+// ================================
+
+model Schedule {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @map("doctor_id") @db.Uuid
+  date      DateTime @db.Date
+  shift     Int       // Ca khám: 1, 2, 3, 4
+  isBooked  Boolean  @default(false) @map("is_booked")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  doctor      Profile      @relation("DoctorSchedules", fields: [doctorId], references: [id], onDelete: Cascade)
+  appointment Appointment?
+
+  @@unique([doctorId, date, shift]) 
+  @@index([doctorId, date])
+  @@map("schedules")
+}
+
+// ================================
 // APPOINTMENTS & MEDICAL RECORDS
 // ================================
 
 model Appointment {
-  id        String @id @default(uuid()) @db.Uuid
-  patientId String @map("patient_id") @db.Uuid
-  doctorId  String @map("doctor_id") @db.Uuid
-
-  // THÊM 2 CỘT NÀY ĐỂ THAY CHO BẢNG SCHEDULE:
-  date  DateTime @db.Date // Ngày khám (VD: 2026-03-25)
-  shift Int // Ca khám: 1, 2, 3, 4
+  id         String @id @default(uuid()) @db.Uuid
+  patientId  String @map("patient_id") @db.Uuid
+  doctorId   String @map("doctor_id") @db.Uuid
+  scheduleId String @unique @map("schedule_id") @db.Uuid // <-- THAY THẾ DATE/SHIFT BẰNG SCHEDULE_ID
 
   status String  @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
   reason String? @db.Text
@@ -148,11 +168,11 @@ model Appointment {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient       Profile?       @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor        Profile?       @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient   Profile?  @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor    Profile?  @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  schedule  Schedule  @relation(fields: [scheduleId], references: [id]) // <-- LIÊN KẾT ĐẾN SCHEDULE
+  
   notifications Notification[]
-
-  // 1 Cuộc hẹn đẻ ra 1 hồ sơ bệnh án
   medicalRecord MedicalRecord?
 
   @@index([patientId], name: "idx_appointment_patient")

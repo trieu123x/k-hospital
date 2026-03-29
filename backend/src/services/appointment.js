@@ -1,16 +1,15 @@
 import { appointmentRepository } from "../repositories/appointment.js"
+import { prisma } from "../configs/prisma-config.js" 
 
 export const appointmentService = {
-   
-
     getAllAppointments: async (filters) => {
         const appointments = await appointmentRepository.getAllAppointments(filters)
 
         return appointments.map(app => {
             return {
                 appointmentId: app.id,
-                date: app.date,
-                shift: app.shift, 
+                date: app.schedule?.date,  
+                shift: app.schedule?.shift, 
                 status: app.status,
                 reason: app.reason,
                 patient: app.patient ? {
@@ -47,8 +46,8 @@ export const appointmentService = {
                 specialityName: appointment.doctor.doctor?.specialty?.name
             } : null,
             schedule: {
-                date: appointment.date,
-                shift: appointment.shift, 
+                date: appointment.schedule?.date,  
+                shift: appointment.schedule?.shift, 
                 status: appointment.status
             },
             note: appointment.reason,
@@ -62,8 +61,8 @@ export const appointmentService = {
         return appointments.map(app => {
             return {
                 appointmentId: app.id,
-                date: app.date,
-                shift: app.shift, 
+                date: app.schedule?.date,   
+                shift: app.schedule?.shift, 
                 status: app.status,
                 doctor: app.doctor ? {
                     doctorId: app.doctor.id,
@@ -83,8 +82,8 @@ export const appointmentService = {
         return appointments.map(app => {
             return {
                 appointmentId: app.id,
-                date: app.date,
-                shift: app.shift, 
+                date: app.schedule?.date,  
+                shift: app.schedule?.shift, 
                 status: app.status,
                 reason: app.reason, 
                 patient: app.patient ? {
@@ -101,30 +100,27 @@ export const appointmentService = {
     getAvailableSlots: async (filters) => {
         const { date, doctorId } = filters
         
-        if (!date) {
-            throw Object.assign(new Error("Vui lòng cung cấp ngày cần xem lịch!"), { statusCode: 400 })
+        if (!date || !doctorId) {
+            throw Object.assign(new Error("Vui lòng cung cấp đầy đủ mã bác sĩ và ngày cần xem lịch!"), { statusCode: 400 })
         }
 
-        const bookedAppointments = await appointmentRepository.findBookedAppointments({
-            date, doctorId
+        const availableSchedules = await prisma.schedule.findMany({
+            where: {
+                doctorId: doctorId,
+                date: new Date(date),
+                isBooked: false
+            },
+            select: {
+                id: true, 
+                shift: true
+            },
+            orderBy: { shift: 'asc' }
         })
 
-        const allShifts = [1, 2, 3, 4] 
-
-        if (doctorId) {
-            const bookedShifts = bookedAppointments.map(app => app.shift)
-            
-            return allShifts
-                .filter(shift => !bookedShifts.includes(shift))
-                .map(shift => ({
-                    shift: shift, 
-                    availableDoctors: [{ doctorId: doctorId }] 
-                }))
-        }
-        
-        return allShifts.map(shift => ({
-            shift: shift,
-            availableDoctors: [] 
+        return availableSchedules.map(schedule => ({
+            scheduleId: schedule.id, 
+            shift: schedule.shift,
+            availableDoctors: [{ doctorId: doctorId }] 
         }))
     },
 
@@ -143,16 +139,23 @@ export const appointmentService = {
             throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 4)!"), { statusCode: 400 })
         }
 
-        const existingSlot = await appointmentRepository.checkSlot(doctorId, date, shift)
-        if (existingSlot) {
-            throw Object.assign(new Error("Khung giờ này đã có người đặt, vui lòng chọn ca khác!"), { statusCode: 409 })
+        const slot = await prisma.schedule.findFirst({
+            where: {
+                doctorId: doctorId,
+                date: new Date(date),
+                shift: shift
+            }
+        })
+
+        if (!slot) {
+            throw Object.assign(new Error("Bác sĩ không có lịch làm việc vào ca này!"), { statusCode: 404 })
         }
+
 
         const newAppointment = await appointmentRepository.create({
             patientId,
             doctorId,
-            date,
-            shift,
+            scheduleId: slot.id, 
             reason
         })
 
@@ -175,7 +178,7 @@ export const appointmentService = {
             throw Object.assign(new Error("Lịch khám này đã bị hủy từ trước!"), { statusCode: 400 })
         }
         
-        const appointmentDate = new Date(appointment.date) 
+        const appointmentDate = new Date(appointment.schedule.date) 
         const now = new Date()
 
         const diffInHours = (appointmentDate - now) / (1000 * 60 * 60)

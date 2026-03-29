@@ -13,6 +13,7 @@ import medicineRouter from "./routers/medicine.js"
 import newsRouter from "./routers/news.js"
 import eventRouter from "./routers/event.js"
 import reportRouter from "./routers/report.js"
+import scheduleRouter from "./routers/schedule.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
 import dotenv from "dotenv"
 import { setupSwagger } from "./configs/swagger-config.js"
@@ -26,7 +27,7 @@ app.use(express.json())
 app.use("/auth", authRouter)
 app.use("/users", userRouter)
 app.use("/doctors", doctorRouter)
-app.use("/appointments", appointmentRouter)
+app.use("/appointment", appointmentRouter)
 app.use("/specialties", specialtyRouter)
 app.use("/disease-catgorize", diseaseCatgorizeRouter)
 app.use("/disease", diseaseRouter)
@@ -36,6 +37,7 @@ app.use("/medicines", medicineRouter)
 app.use("/news", newsRouter)
 app.use("/event", eventRouter)
 app.use("/report", reportRouter)
+app.use("/schedule", scheduleRouter)
 
 app.use(globalErrorHandler)
 

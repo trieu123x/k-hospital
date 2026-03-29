@@ -1,22 +1,15 @@
 from fastapi import APIRouter
 from app.models.models import TopicPredictRequest, TitlePredictRequest, TitlePredictResponse
+from app.services.prediction_service import prediction_service
 
 router = APIRouter()
 
 @router.post("/topic")
 async def predict_topic(request: TopicPredictRequest):
-    """
-        Thêm logic xử lý để cập nhật topic cho phiên chat với session_id từ nội dung chat trong bảng chat_messages
-        Có thể trả về gì đó ở đây để thông báo cho back end
-    """
-    
-    return 
+    result = await prediction_service.process_and_update_topic(request.session_id)
+    return result
 
 @router.post("/title")
 async def predict_title(request: TitlePredictRequest) -> TitlePredictResponse:
-    """
-        Thêm logic xử lý để cập nhật topic cho phiên chat với session_id từ nội dung chat trong bảng chat_messages
-        Có thể trả về gì đó ở đây để thông báo cho back end
-    """
-    
-    return TitlePredictResponse(title="")
+    generated_title = await prediction_service.process_and_update_title(request.session_id)
+    return TitlePredictResponse(title=generated_title)
