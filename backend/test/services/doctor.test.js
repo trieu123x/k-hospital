@@ -41,13 +41,59 @@ describe('doctorService', () => {
   })
 
   describe('getAllDoctors', () => {
-    it('should return doctors and pagination info', async () => {
+    it('should return doctors and pagination info (no filters)', async () => {
       doctorRepository.findAllDoctors.mockResolvedValue({ doctors: [{ id: 1 }], total: 11 })
       const result = await doctorService.getAllDoctors(2, 10)
       expect(result.doctors).toHaveLength(1)
       expect(result.pagination.totalItems).toBe(11)
       expect(result.pagination.totalPages).toBe(2)
       expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith({}, 10, 10)
+    })
+
+    it('should filter by name (case-insensitive)', async () => {
+      doctorRepository.findAllDoctors.mockResolvedValue({ doctors: [{ id: 2 }], total: 1 })
+      const result = await doctorService.getAllDoctors(1, 10, { name: 'nguyễn' })
+      expect(result.doctors).toHaveLength(1)
+      expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith(
+        { profile: { fullName: { contains: 'nguyễn', mode: 'insensitive' } } },
+        0,
+        10
+      )
+    })
+
+    it('should filter by specialtyId', async () => {
+      const specId = 'spec-uuid-001'
+      doctorRepository.findAllDoctors.mockResolvedValue({ doctors: [{ id: 3 }], total: 1 })
+      const result = await doctorService.getAllDoctors(1, 10, { specialtyId: specId })
+      expect(result.doctors).toHaveLength(1)
+      expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith(
+        { specialtyId: specId },
+        0,
+        10
+      )
+    })
+
+    it('should filter by both name and specialtyId', async () => {
+      const specId = 'spec-uuid-002'
+      doctorRepository.findAllDoctors.mockResolvedValue({ doctors: [{ id: 4 }], total: 1 })
+      const result = await doctorService.getAllDoctors(1, 10, { name: 'an', specialtyId: specId })
+      expect(result.doctors).toHaveLength(1)
+      expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith(
+        {
+          profile: { fullName: { contains: 'an', mode: 'insensitive' } },
+          specialtyId: specId
+        },
+        0,
+        10
+      )
+    })
+
+    it('should return empty list when no doctor matches filter', async () => {
+      doctorRepository.findAllDoctors.mockResolvedValue({ doctors: [], total: 0 })
+      const result = await doctorService.getAllDoctors(1, 10, { name: 'không tồn tại' })
+      expect(result.doctors).toHaveLength(0)
+      expect(result.pagination.totalItems).toBe(0)
+      expect(result.pagination.totalPages).toBe(0)
     })
   })
 
