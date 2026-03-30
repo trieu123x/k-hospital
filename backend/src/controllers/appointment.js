@@ -3,6 +3,13 @@ import { catchError } from "../helpers/catch-error.js"
 
 export const bookAppointment = catchError(async (req, res) => {
     const appointmentData = req.body 
+    const requesterId = req.user.id
+    const requesterRole = req.user.profile.role
+
+    // If patient, ensure they book for themselves
+    if (requesterRole === 'patient' && appointmentData.patientId !== requesterId) {
+        throw Object.assign(new Error("Bạn chỉ có thể đặt lịch cho chính mình."), { statusCode: 403 })
+    }
 
     const data = await appointmentService.bookAppointment(appointmentData)
     

@@ -8,13 +8,6 @@ import { catchError } from "../helpers/catch-error.js"
 export const register = catchError(async (req, res) => {
     const { email, password, fullName, phone } = req.body
 
-    if (!email || !password || !fullName || !phone) {
-        return res.status(400).json({
-            success: false,
-            message: "Thiếu thông tin bắt buộc: email, password, fullName, phone"
-        })
-    }
-
     const data = await authService.register({ email, password, fullName, phone })
 
     res.status(201).json({
@@ -30,13 +23,6 @@ export const register = catchError(async (req, res) => {
  */
 export const login = catchError(async (req, res) => {
     const { email, password } = req.body
-
-    if (!email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: "Thiếu thông tin bắt buộc: email, password"
-        })
-    }
 
     const data = await authService.login({ email, password })
 
@@ -83,9 +69,6 @@ export const getMe = catchError(async (req, res) => {
  */
 export const forgotPassword = catchError(async (req, res) => {
     const { email } = req.body
-    if (!email) {
-        return res.status(400).json({ success: false, message: "Vui lòng cung cấp email" })
-    }
     const data = await authService.forgotPassword({ email })
     res.status(200).json({ success: true, ...data })
 })
@@ -96,9 +79,6 @@ export const forgotPassword = catchError(async (req, res) => {
  */
 export const resetPassword = catchError(async (req, res) => {
     const { email, otp, newPassword } = req.body
-    if (!email || !otp || !newPassword) {
-        return res.status(400).json({ success: false, message: "Vui lòng cung cấp email, otp và mật khẩu mới" })
-    }
     const data = await authService.resetPassword({ email, otp, newPassword })
     res.status(200).json({ success: true, ...data })
 })

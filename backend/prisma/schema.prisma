@@ -6,17 +6,13 @@ datasource db {
   provider = "postgresql"
 }
 
-// ================================
-// MASTER DATA
-// ================================
-
 model Specialty {
   id          String    @id @default(uuid()) @db.Uuid
   name        String    @unique
   basePrice   Decimal   @map("base_price")
   description String?
-  doctors     Doctor[]
   diseases    Disease[]
+  doctors     Doctor[]
 
   @@map("specialties")
 }
@@ -30,78 +26,58 @@ model DiseaseCategory {
   @@map("disease_categories")
 }
 
-// ================================
-// USERS
-// ================================
-
 model Profile {
-  id        String    @id @default(uuid()) @db.Uuid
-  fullName  String    @map("full_name")
-  email     String?   @unique
-  phone     String    @unique
-  avatarUrl String?   @map("avatar_url")
-  role      String? // 'admin', 'doctor', 'patient'
-  dob       DateTime? @db.Date
-  address   String?
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  isActive  Boolean   @default(true) @map("is_active")
-
-  // Relations
-  doctor                Doctor?
-  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  id                    String         @id @default(uuid()) @db.Uuid
+  fullName              String         @map("full_name")
+  email                 String?        @unique
+  phone                 String         @unique
+  avatarUrl             String?        @map("avatar_url")
+  role                  String?
+  dob                   DateTime?      @db.Date
+  address               String?
+  status                String?
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
-  schedulesAsDoctor     Schedule[]     @relation("DoctorSchedules") // <-- ĐÃ THÊM QUAN HỆ ẢO TỚI BẢNG SCHEDULE
-  notifications         Notification[]
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   chatSessions          ChatSession[]
+  doctor                Doctor?
+  notifications         Notification[]
 
   @@map("profiles")
 }
 
-// ================================
-// DOCTORS
-// ================================
-
 model Doctor {
-  id           String  @id @db.Uuid
-  specialtyId  String? @map("specialty_id") @db.Uuid
+  id           String     @id @db.Uuid
+  specialtyId  String?    @map("specialty_id") @db.Uuid
   degree       String?
   experience   String?
   education    String?
   achievements String?
+  profile      Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
+  specialty    Specialty? @relation(fields: [specialtyId], references: [id])
 
-  profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
-  specialty Specialty? @relation(fields: [specialtyId], references: [id])
-
-  @@index([specialtyId], name: "idx_doctor_specialty")
+  @@index([specialtyId], map: "idx_doctor_specialty")
   @@map("doctors")
 }
 
-// ================================
-// MEDICAL KNOWLEDGE
-// ================================
-
 model Disease {
-  id          String  @id @default(uuid()) @db.Uuid
-  categoryId  String? @map("category_id") @db.Uuid
-  specialtyId String? @map("specialty_id") @db.Uuid
-  name        String
-
-  nameClean String? @map("name_clean")
-
-  imageUrl      String? @map("image_url")
+  id            String                 @id @default(uuid()) @db.Uuid
+  categoryId    String?                @map("category_id") @db.Uuid
+  specialtyId   String?                @map("specialty_id") @db.Uuid
+  name          String
+  imageUrl      String?                @map("image_url")
   description   String?
   symptoms      String
-  homeTreatment String? @map("home_treatment")
+  homeTreatment String?                @map("home_treatment")
+  embedding     Unsupported("vector")?
+  nameClean     String?                @map("name_clean")
+  medicines     DiseaseMedicine[]
+  category      DiseaseCategory?       @relation(fields: [categoryId], references: [id])
+  specialty     Specialty?             @relation(fields: [specialtyId], references: [id])
 
-  embedding Unsupported("vector(1536)")?
-
-  category  DiseaseCategory?  @relation(fields: [categoryId], references: [id])
-  specialty Specialty?        @relation(fields: [specialtyId], references: [id])
-  medicines DiseaseMedicine[]
-
-  @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_disease_name_clean_trgm")
-  @@index([specialtyId], name: "idx_disease_specialty")
-  @@index([categoryId], name: "idx_disease_category")
+  @@index([nameClean(ops: raw("gin_trgm_ops"))], map: "idx_disease_name_clean_trgm", type: Gin)
+  @@index([specialtyId], map: "idx_disease_specialty")
+  @@index([categoryId], map: "idx_disease_category")
   @@map("diseases")
 }
 
@@ -109,7 +85,7 @@ model Medicine {
   id               String            @id @default(uuid()) @db.Uuid
   name             String
   imageUrl         String?           @map("image_url")
-  medicineType     String?           @map("medicine_type") // 'uống','ngậm','bôi','tiêm'
+  medicineType     String?           @map("medicine_type")
   ingredients      String?
   dosage           String?
   usageInstruction String?           @map("usage_instruction")
@@ -120,136 +96,83 @@ model Medicine {
 }
 
 model DiseaseMedicine {
-  diseaseId  String @map("disease_id") @db.Uuid
-  medicineId String @map("medicine_id") @db.Uuid
-
-  disease  Disease  @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
-  medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  diseaseId  String   @map("disease_id") @db.Uuid
+  medicineId String   @map("medicine_id") @db.Uuid
+  disease    Disease  @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
 
   @@id([diseaseId, medicineId])
   @@map("disease_medicine")
 }
 
-// ================================
-// SCHEDULES (THÊM MỚI BẢNG NÀY)
-// ================================
-
-model Schedule {
-  id        String   @id @default(uuid()) @db.Uuid
-  doctorId  String   @map("doctor_id") @db.Uuid
-  date      DateTime @db.Date
-  shift     Int       // Ca khám: 1, 2, 3, 4
-  isBooked  Boolean  @default(false) @map("is_booked")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  doctor      Profile      @relation("DoctorSchedules", fields: [doctorId], references: [id], onDelete: Cascade)
-  appointment Appointment?
-
-  @@unique([doctorId, date, shift]) 
-  @@index([doctorId, date])
-  @@map("schedules")
-}
-
-// ================================
-// APPOINTMENTS & MEDICAL RECORDS
-// ================================
-
 model Appointment {
-  id         String @id @default(uuid()) @db.Uuid
-  patientId  String @map("patient_id") @db.Uuid
-  doctorId   String @map("doctor_id") @db.Uuid
-  scheduleId String @unique @map("schedule_id") @db.Uuid // <-- THAY THẾ DATE/SHIFT BẰNG SCHEDULE_ID
-
-  status String  @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
-  reason String? @db.Text
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  patient   Profile?  @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor    Profile?  @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  schedule  Schedule  @relation(fields: [scheduleId], references: [id]) // <-- LIÊN KẾT ĐẾN SCHEDULE
-  
-  notifications Notification[]
+  id            String         @id @default(uuid()) @db.Uuid
+  patientId     String         @map("patient_id") @db.Uuid
+  doctorId      String         @map("doctor_id") @db.Uuid
+  status        String         @default("pending")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  date          DateTime       @db.Date
+  reason        String?
+  shift         Int
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  doctor        Profile        @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient       Profile        @relation("PatientAppointments", fields: [patientId], references: [id])
   medicalRecord MedicalRecord?
+  notifications Notification[]
 
-  @@index([patientId], name: "idx_appointment_patient")
-  @@index([doctorId], name: "idx_appointment_doctor")
+  @@index([patientId], map: "idx_appointment_patient")
+  @@index([doctorId], map: "idx_appointment_doctor")
   @@map("appointments")
 }
 
 model MedicalRecord {
-  id            String  @id @default(uuid()) @db.Uuid
-  appointmentId String  @unique @map("appointment_id") @db.Uuid
-  diagnosis     String  @db.Text
-  prescription  String? @db.Text
-  note          String? @db.Text
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  id            String      @id @default(uuid()) @db.Uuid
+  appointmentId String      @unique @map("appointment_id") @db.Uuid
+  diagnosis     String
+  prescription  String?
+  note          String?
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@map("medical_records")
 }
 
-// ================================
-// NOTIFICATIONS
-// ================================
-
 model Notification {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String?  @map("user_id") @db.Uuid
-  appointmentId String?  @map("appointment_id") @db.Uuid
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String?      @map("user_id") @db.Uuid
+  appointmentId String?      @map("appointment_id") @db.Uuid
   title         String?
   message       String?
-  isRead        Boolean  @default(false) @map("is_read")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  isRead        Boolean      @default(false) @map("is_read")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  user          Profile?     @relation(fields: [userId], references: [id])
 
-  user        Profile?     @relation(fields: [userId], references: [id])
-  appointment Appointment? @relation(fields: [appointmentId], references: [id])
-
-  @@index([userId], name: "idx_notification_user")
+  @@index([userId], map: "idx_notification_user")
   @@map("notifications")
 }
-
-// ================================
-// NEWS
-// ================================
 
 model News {
   id        String   @id @default(uuid()) @db.Uuid
   title     String
   content   String
   newUrl    String?  @map("new_url")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("news")
 }
 
-// ================================
-// AI CHAT SYSTEM
-// ================================
-// Khai báo Enum để phân biệt ai đang nói
-enum MessageRole {
-  USER // Bệnh nhân
-  AI // Trợ lý MediCare
-  SYSTEM // Prompt ẩn gài vào hệ thống (Không hiện lên UI)
-}
-
 model ChatSession {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String?   @map("user_id") @db.Uuid
-  title     String?   @db.VarChar(255)
-  topic     String?   @db.VarChar(100) // VD: "Tim mạch", "Tiêu hóa", "Da liễu"
-  startedAt DateTime  @default(now()) @map("started_at") @db.Timestamptz
-  endedAt   DateTime? @map("ended_at") @db.Timestamptz
-  isActive  Boolean   @default(true) @map("is_active")
-
-  user     Profile?      @relation(fields: [userId], references: [id])
-  messages ChatMessage[]
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String?       @map("user_id") @db.Uuid
+  startedAt DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
+  isActive  Boolean       @default(true) @map("is_active")
+  endedAt   DateTime?     @map("ended_at") @db.Timestamptz(6)
+  title     String?       @db.VarChar(255)
+  topic     String?       @db.VarChar(100)
+  messages  ChatMessage[]
+  user      Profile?      @relation(fields: [userId], references: [id])
 
   @@map("chat_sessions")
 }
@@ -257,26 +180,14 @@ model ChatSession {
 model ChatMessage {
   id        String      @id @default(uuid()) @db.Uuid
   sessionId String      @map("session_id") @db.Uuid
-  role      MessageRole
-  content   String      @db.Text
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  content   String
   metadata  Json?
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  role      MessageRole
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, createdAt])
   @@map("chat_messages")
-}
-
-// ================================
-// USER EVENTS
-// ================================
-
-enum EventType {
-  VIEW_DOCTOR
-  BOOK_APPOINTMENT
-  CANCEL_APPOINTMENT
-  VIEW_DISEASE
-  CHAT_AI_TOPIC
 }
 
 model UserEvent {
@@ -293,19 +204,6 @@ model UserEvent {
   @@map("user_events")
 }
 
-// ================================
-// ETL REPORTS
-// ================================
-
-enum ReportName {
-  raw_events
-  top_doctors
-  top_diseases
-  peak_hours
-  daily_summary
-  chat_topics
-}
-
 model EtlReports {
   id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   mode        String     @db.VarChar(50)
@@ -318,4 +216,27 @@ model EtlReports {
 
   @@index([reportName, startDate])
   @@map("etl_reports")
+}
+
+enum MessageRole {
+  USER
+  AI
+  SYSTEM
+}
+
+enum EventType {
+  VIEW_DOCTOR
+  BOOK_APPOINTMENT
+  CANCEL_APPOINTMENT
+  VIEW_DISEASE
+  CHAT_AI_TOPIC
+}
+
+enum ReportName {
+  raw_events
+  top_doctors
+  top_diseases
+  peak_hours
+  daily_summary
+  chat_topics
 }

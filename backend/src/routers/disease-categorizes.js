@@ -2,6 +2,8 @@ import express from 'express'
 import { getAllDiseaseCategories, getDiseaseCategoryById } from '../controllers/disease-categorizes.js'
 import { validate } from '../middlewares/validate-handler.js'
 import { diseaseCategorySchema } from '../validates/disease-categorizes.js'
+import { authenticate } from '../middlewares/auth-handler.js'
+import { authorizeRoles } from '../middlewares/authorize-handler.js'
 
 const router = express.Router()
 

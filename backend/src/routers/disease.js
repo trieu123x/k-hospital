@@ -3,6 +3,8 @@ import multer from 'multer'
 import { createDisease, deleteDisease, diagnoseSymptoms, getDiseaseById, getDiseases, updateDisease } from '../controllers/disease.js'
 import { diseaseSchema } from '../validates/disease.js'
 import { validate } from '../middlewares/validate-handler.js'
+import { authenticate } from '../middlewares/auth-handler.js'
+import { authorizeRoles } from '../middlewares/authorize-handler.js'
 
 const upload = multer({ storage: multer.memoryStorage() })
 const router = express.Router()
