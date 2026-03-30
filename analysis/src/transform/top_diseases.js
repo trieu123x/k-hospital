@@ -1,38 +1,26 @@
 import { SCORES } from '../helpers/constants.js';
 
-// Top bệnh quan tâm — JOIN diseases để lấy tên
+// Top bệnh quan tâm — JOIN diseases để lấy tên và chuyên khoa
 export async function transformTopDiseases(db) {
   await db.exec(`
     CREATE OR REPLACE TABLE result_top_diseases AS
     WITH disease_scores AS (
       SELECT
-        entity_id AS disease_id,
-        COUNT(*) FILTER (WHERE event_type = 'VIEW_DISEASE')   AS view_count,
-        0 AS chat_count
-      FROM disease_events
-      WHERE entity_id IS NOT NULL
-      GROUP BY entity_id
-
-      UNION ALL
-
-      SELECT
-        entity_id AS disease_id,
-        0 AS view_count,
-        COUNT(*) AS chat_count
-      FROM chat_events
-      WHERE entity_id IS NOT NULL
-      GROUP BY entity_id
+        de.entity_id AS disease_id,
+        COUNT(*) AS view_count
+      FROM disease_events de
+      WHERE de.entity_id IS NOT NULL
+      GROUP BY de.entity_id
     )
     SELECT
       ds.disease_id,
-      SUM(ds.view_count)        AS total_views,
-      SUM(ds.chat_count)        AS total_chats,
-      (
-        SUM(ds.view_count)   * ${SCORES.VIEW_DISEASE} +
-        SUM(ds.chat_count)   * ${SCORES.CHAT_AI_TOPIC}
-      ) AS interest_score
+      d.name AS disease_name,
+      s.name AS specialty_name,
+      ds.view_count AS total_views,
+      (ds.view_count * ${SCORES.VIEW_DISEASE}) AS interest_score
     FROM disease_scores ds
-    GROUP BY ds.disease_id
+    LEFT JOIN pg.public.diseases d ON ds.disease_id = d.id
+    LEFT JOIN pg.public.specialties s ON d.specialty_id = s.id
     ORDER BY interest_score DESC
   `);
 

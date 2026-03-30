@@ -43,11 +43,7 @@ export async function extractEvents(db, startDate, endDate) {
     CREATE OR REPLACE TABLE chat_events AS
     SELECT
       *,
-      CASE
-        WHEN metadata IS NOT NULL
-        THEN json_extract_string(metadata::JSON, '$.topic')
-        ELSE NULL
-      END AS chat_topic
+      metadata->>'topic' AS chat_topic
     FROM daily_events
     WHERE event_type = 'CHAT_AI_TOPIC';
   `);
