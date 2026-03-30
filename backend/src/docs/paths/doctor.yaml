@@ -1,0 +1,187 @@
+paths:
+  /doctors:
+    get:
+      summary: Lấy danh sách bác sĩ
+      tags: [Doctor]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: specialtyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Profile'
+                        - $ref: '#/components/schemas/DoctorItem'
+                        - type: object
+                          properties:
+                            specialty:
+                              $ref: '#/components/schemas/Specialty'
+
+    post:
+      summary: Tạo tài khoản bác sĩ mới (chỉ Admin)
+      tags: [Doctor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fullName, phone, password, specialtyId]
+              properties:
+                fullName:
+                  type: string
+                phone:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                specialtyId:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                degree:
+                  type: string
+                experience:
+                  type: string
+                education:
+                  type: string
+                achievements:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /doctors/{id}:
+    get:
+      summary: Lấy chi tiết bác sĩ
+      tags: [Doctor]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Profile'
+                      - $ref: '#/components/schemas/DoctorItem'
+                      - type: object
+                        properties:
+                          specialty:
+                            $ref: '#/components/schemas/Specialty'
+
+    patch:
+      summary: Cập nhật thông tin bác sĩ
+      tags: [Doctor]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                degree:
+                  type: string
+                experience:
+                  type: string
+                education:
+                  type: string
+                achievements:
+                  type: string
+                specialtyId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: OK
+
+    put:
+      summary: Cập nhật toàn bộ hồ sơ bác sĩ (Admin)
+      tags: [Doctor]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                degree:
+                  type: string
+                experience:
+                  type: string
+                education:
+                  type: string
+                achievements:
+                  type: string
+                specialtyId:
+                  type: string
+                  format: uuid
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: OK

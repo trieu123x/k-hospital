@@ -8,10 +8,10 @@ import { userSchema } from "../validates/user.js"
 const router = express.Router()
 
 // GET /users: Fetch all users based on roles
-router.get("/", authenticate, authorizeRoles('admin', 'doctor'), validate(userSchema.getAll), userController.getAllUsers)
+router.get("/", authenticate, authorizeRoles('admin'), validate(userSchema.getAll), userController.getAllUsers)
 
 // GET /users/:id: Fetch specific user
-router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(userSchema.getById), userController.getUserById)
+router.get("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(userSchema.getById), userController.getUserById)
 
 // PATCH /users/:id: Update specific user profile
 router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(userSchema.update), userController.updateUser)

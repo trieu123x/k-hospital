@@ -1,10 +1,9 @@
 import express from 'express';
 import multer from 'multer';
-import { createNews, getNewsList, getNewsDetail, updateNews, deleteNews } from '../controllers/news.js'; 
+import { createNews, getNewsList, getNewsDetail, updateNews, deleteNews } from '../controllers/news.js';
 import { newsSchema } from '../validates/news.js';
 import { validate } from '../middlewares/validate-handler.js';
-import { authenticate } from '../middlewares/auth-handler.js'
-import { authorizeRoles } from '../middlewares/authorize-handler.js'
+import { authenticate, authorizeRoles } from '../middlewares/authenticate.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
 const newsRouter = express.Router();
@@ -15,7 +14,7 @@ newsRouter.get('/:newsId', validate({ params: newsSchema.params }), getNewsDetai
 
 newsRouter.post('/create', authenticate, authorizeRoles('admin'), upload.single('image'), createNews);
 
-newsRouter.put('/update/:newsId', authenticate, authorizeRoles('admin'), upload.single('image'), validate({ params: newsSchema.params,  body: newsSchema.updateBody }), updateNews);
+newsRouter.put('/update/:newsId', authenticate, authorizeRoles('admin'), upload.single('image'), validate({ params: newsSchema.params, body: newsSchema.updateBody }), updateNews);
 
 newsRouter.delete('/delete/:newsId', authenticate, authorizeRoles('admin'), validate({ params: newsSchema.params }), deleteNews);
 

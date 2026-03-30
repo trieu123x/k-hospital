@@ -1,0 +1,120 @@
+paths:
+  /users:
+    get:
+      summary: Lấy danh sách người dùng
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, doctor, patient]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /users/{id}:
+    get:
+      summary: Lấy chi tiết người dùng
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Profile'
+
+    patch:
+      summary: Cập nhật thông tin người dùng
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                email:
+                  type: string
+                address:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: OK
+
+    delete:
+      summary: Xóa người dùng (chỉ Admin)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  /users/{id}/block:
+    patch:
+      summary: Khóa/Mở khóa người dùng
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK

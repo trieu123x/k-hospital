@@ -1,0 +1,131 @@
+paths:
+  /news:
+    get:
+      summary: Lấy danh sách tin tức
+      tags: [News]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsItem'
+
+  /news/{newsId}:
+    get:
+      summary: Xem chi tiết tin tức
+      tags: [News]
+      parameters:
+        - name: newsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/NewsItem'
+
+  /news/create:
+    post:
+      summary: Tạo bài viết tin tức mới (Admin)
+      tags: [News]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, content]
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                  description: "Ảnh bìa của bài viết"
+      responses:
+        '201':
+          description: Created
+
+  /news/update/{newsId}:
+    put:
+      summary: Cập nhật bài viết tin tức (Admin)
+      tags: [News]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: newsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: OK
+
+  /news/delete/{newsId}:
+    delete:
+      summary: Xóa bài viết tin tức (Admin)
+      tags: [News]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: newsId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK

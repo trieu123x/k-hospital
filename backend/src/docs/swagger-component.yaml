@@ -11,6 +11,24 @@ tags:
     description: Theo dõi và ghi lại hành vi của người dùng trên hệ thống
   - name: Report
     description: Các báo cáo thống kê và phân tích dữ liệu (ETL)
+  - name: Appointment
+    description: Quản lý lịch hẹn và đặt lịch khám
+  - name: Medical Record
+    description: Quản lý hồ sơ bệnh án
+  - name: Auth
+    description: Xác thực và quản lý tài khoản
+  - name: Doctor
+    description: Quản lý thông tin và hồ sơ bác sĩ
+  - name: Medicine
+    description: Quản lý danh mục thuốc
+  - name: News
+    description: Quản lý bài viết và tin tức
+  - name: Schedule
+    description: Quản lý lịch làm việc của bác sĩ
+  - name: Specialty
+    description: Quản lý danh sách chuyên khoa
+  - name: User
+    description: Quản lý người dùng hệ thống (Admin)
 
 components:
   securitySchemes:
@@ -301,6 +319,196 @@ components:
           nullable: true
           additionalProperties: true
           description: Dữ liệu báo cáo chi tiết theo cấu hình JSON
+        createdAt:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          enum: [admin, doctor, patient]
+        dob:
+          type: string
+          format: date
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    DoctorItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        specialtyId:
+          type: string
+          format: uuid
+          nullable: true
+        degree:
+          type: string
+          nullable: true
+        experience:
+          type: string
+          nullable: true
+        education:
+          type: string
+          nullable: true
+        achievements:
+          type: string
+          nullable: true
+
+    Specialty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        basePrice:
+          type: number
+        description:
+          type: string
+          nullable: true
+
+    Medicine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        medicineType:
+          type: string
+          nullable: true
+        ingredients:
+          type: string
+          nullable: true
+        dosage:
+          type: string
+          nullable: true
+        usageInstruction:
+          type: string
+          nullable: true
+        sideEffects:
+          type: string
+          nullable: true
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        shift:
+          type: integer
+          description: Ca khám 1, 2, 3, 4
+        isBooked:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        doctorId:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        reason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        appointmentId:
+          type: string
+          format: uuid
+        diagnosis:
+          type: string
+        prescription:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewsItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        newUrl:
+          type: string
+          format: uri
+          nullable: true
         createdAt:
           type: string
           format: date-time

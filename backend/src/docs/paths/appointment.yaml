@@ -1,0 +1,282 @@
+paths:
+  /appointments/book:
+    post:
+      summary: Đặt lịch khám
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patientId, doctorId, scheduleId]
+              properties:
+                patientId:
+                  type: string
+                  format: uuid
+                doctorId:
+                  type: string
+                  format: uuid
+                scheduleId:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+
+  /appointments/slots:
+    get:
+      summary: Lấy danh sách ca khám trống
+      tags: [Appointment]
+      parameters:
+        - name: doctorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+
+  /appointments/all:
+    get:
+      summary: Lấy tất cả lịch hẹn (cho Admin / Doctor xem tổng quan)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, completed, cancelled]
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+
+  /appointments/{appointmentId}:
+    get:
+      summary: Lấy chi tiết lịch hẹn
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Appointment'
+
+  /appointments/patient/{userId}:
+    get:
+      summary: Lấy lịch sử khám của bệnh nhân
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  /appointments/doctor/{doctorId}:
+    get:
+      summary: Lấy danh sách lịch khám của bác sĩ
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+
+  /appointments/cancel/{appointmentId}:
+    patch:
+      summary: Hủy lịch khám (bệnh nhân)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+
+  /appointments/update/status/{appointmentId}:
+    patch:
+      summary: Cập nhật trạng thái lịch khám (Admin/Doctor)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, confirmed, completed, cancelled]
+      responses:
+        '200':
+          description: OK
+
+  /appointments/medical-record/create/{appointmentId}:
+    post:
+      summary: Tạo hồ sơ bệnh án cho lịch khám
+      tags: [Medical Record]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [diagnosis]
+              properties:
+                diagnosis:
+                  type: string
+                prescription:
+                  type: string
+                note:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicalRecord'
+
+  /appointments/medical-record/{appointmentId}:
+    get:
+      summary: Lấy chi tiết hồ sơ bệnh án
+      tags: [Medical Record]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MedicalRecord'
+
+  /appointments/medical-record/update/{appointmentId}:
+    patch:
+      summary: Cập nhật hồ sơ bệnh án
+      tags: [Medical Record]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                diagnosis:
+                  type: string
+                prescription:
+                  type: string
+                note:
+                  type: string
+      responses:
+        '200':
+          description: OK

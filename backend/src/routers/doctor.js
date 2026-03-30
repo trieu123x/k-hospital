@@ -8,10 +8,10 @@ import { doctorSchema } from "../validates/doctor.js"
 const router = express.Router()
 
 // GET /doctors: Fetch all doctors
-router.get("/", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(doctorSchema.getAll), doctorController.getAllDoctors)
+router.get("/", validate(doctorSchema.getAll), doctorController.getAllDoctors)
 
 // GET /doctors/:id: Fetch specific doctor
-router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(doctorSchema.getById), doctorController.getDoctorById)
+router.get("/:id", validate(doctorSchema.getById), doctorController.getDoctorById)
 
 // PATCH /doctors/:id: Update specific doctor info
 router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(doctorSchema.update), doctorController.updateDoctorInfo)

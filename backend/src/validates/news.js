@@ -2,15 +2,15 @@ import { z } from "zod";
 
 export const newsSchema = {
     params: z.object({
-        newsId: z.string().uuid({ message: "ID tin tức không hợp lệ (phải là UUID)" })
+        newsId: z.uuid({ message: "ID tin tức không hợp lệ (phải là UUID)" })
     }),
 
     query: z.object({
         title: z.string().optional(),
-        lastId: z.string().uuid({ message: "lastId không hợp lệ" }).optional(),
-        limit: z.string() 
+        lastId: z.uuid({ message: "lastId không hợp lệ" }).optional(),
+        limit: z.string()
             .optional()
-            .transform((val) => (val ? parseInt(val) : 30)) 
+            .transform((val) => (val ? parseInt(val) : 30))
             .pipe(z.number().min(1).max(100))
     }),
 

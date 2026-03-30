@@ -1,0 +1,143 @@
+paths:
+  /medicines:
+    get:
+      summary: Lấy danh sách thuốc
+      tags: [Medicine]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Medicine'
+
+    post:
+      summary: Tạo thẻ thuốc mới (Admin)
+      tags: [Medicine]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                imageUrl:
+                  type: string
+                  format: uri
+                medicineType:
+                  type: string
+                ingredients:
+                  type: string
+                dosage:
+                  type: string
+                usageInstruction:
+                  type: string
+                sideEffects:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /medicines/{id}:
+    get:
+      summary: Lấy chi tiết một loại thuốc
+      tags: [Medicine]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Medicine'
+
+    put:
+      summary: Cập nhật thông tin thuốc (Admin)
+      tags: [Medicine]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                imageUrl:
+                  type: string
+                  format: uri
+                medicineType:
+                  type: string
+                ingredients:
+                  type: string
+                dosage:
+                  type: string
+                usageInstruction:
+                  type: string
+                sideEffects:
+                  type: string
+      responses:
+        '200':
+          description: OK
+
+    delete:
+      summary: Xóa thuốc (Admin)
+      tags: [Medicine]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
