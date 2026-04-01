@@ -26,9 +26,6 @@ export const appointmentSchema = {
             date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày khám phải đúng định dạng YYYY-MM-DD" }),
             doctorId: z.string().uuid({ message: "ID bác sĩ không hợp lệ" }).optional(),
             specialtyId: z.string().uuid({ message: "ID chuyên khoa không hợp lệ" }).optional()
-        }).refine(data => data.doctorId || data.specialtyId, {
-            message: "Phải cung cấp ít nhất ID bác sĩ hoặc ID chuyên khoa",
-            path: ["doctorId"]
         })
     },
 

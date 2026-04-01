@@ -7,47 +7,56 @@ export const appointmentRepository = {
             include: {
                 patient: true,
                 doctor: true,
-                schedule: true
             }
         })
     },
 
     create: async (data) => {
-        const { patientId, doctorId, scheduleId, reason } = data
+        const { patientId, doctorId, date, shift, reason } = data
+        const appointmentDate = new Date(date)
         
         return await prisma.$transaction(async (tx) => {
-            const updateSchedule = await tx.schedule.updateMany({
-                where: { 
-                    id: scheduleId,
-                    isBooked: false 
-                },
-                data: { isBooked: true }
+            const doctorLeave = await tx.doctorLeave.findFirst({
+                where: {
+                    doctorId,
+                    date: appointmentDate,
+                    OR: [
+                        { shift: null }, // Trường hợp nghỉ nguyên ngày
+                        { shift: shift } 
+                    ]
+                }
             })
 
-            if (updateSchedule.count === 0) {
+            if (doctorLeave) {
+                throw Object.assign(new Error("Bác sĩ đã báo bận/nghỉ ca khám này, vui lòng chọn ca khác!"), { statusCode: 409 })
+            }
+
+            const existingAppointment = await tx.appointment.findFirst({
+                where: { 
+                    doctorId,
+                    date: appointmentDate,
+                    shift
+                }
+            })
+
+            if (existingAppointment) {
                 throw Object.assign(new Error("Khung giờ này vừa có người đặt, vui lòng chọn ca khác!"), { statusCode: 409 })
             }
 
-            return await tx.appointment.upsert({
-                where: { 
-                    scheduleId: scheduleId 
-                },
-                update: {
-                    patientId: patientId,
-                    doctorId: doctorId,
-                    reason: reason,
-                    status: "pending"
-                },
-                create: {
+            return await tx.appointment.create({
+                data: {
                     patientId,
                     doctorId,
-                    scheduleId, 
+                    date: appointmentDate,
+                    shift,
                     reason,
                     status: "pending"
                 },
                 select: { 
                     id: true, 
-                    status: true 
+                    status: true,
+                    date: true,
+                    shift: true
                 }
             })
         })
@@ -56,9 +65,7 @@ export const appointmentRepository = {
     updateMedicalRecord: async (appointmentId) => {
         return await prisma.appointment.update({
             where: { id: appointmentId },
-            data: {
-                status: 'completed'
-            }
+            data: { status: 'completed' }
         })
     },
 
@@ -68,7 +75,7 @@ export const appointmentRepository = {
         const whereClause = {}
 
         if (date) {
-            whereClause.schedule = { date: new Date(date) } 
+            whereClause.date = new Date(date)
         }
         if (status) {
             whereClause.status = status
@@ -80,22 +87,17 @@ export const appointmentRepository = {
             skip: skip,
             cursor: cursorCondition,
             orderBy: [
-                { schedule: { date: desc ? 'desc' : 'asc' } }, 
-                { schedule: { shift: 'asc' } }
+                { date: desc ? 'desc' : 'asc' }, 
+                { shift: 'asc' }
             ],
             select: {
                 id: true,
                 status: true,
                 reason: true,
-                schedule: {
-                    select: { date: true, shift: true } 
-                },
-                patient: { 
-                    select: { id: true }
-                },
-                doctor: { 
-                    select: { id: true }
-                }
+                date: true,   
+                shift: true, 
+                patient: { select: { id: true } },
+                doctor:  { select: { id: true } }
             }
         })
     },
@@ -107,9 +109,8 @@ export const appointmentRepository = {
                 id: true,
                 status: true,
                 reason: true,
-                schedule: {
-                    select: { date: true, shift: true }
-                },
+                date: true,
+                shift: true,
                 patient: {
                     select: {
                         id: true,
@@ -125,9 +126,7 @@ export const appointmentRepository = {
                         avatarUrl: true,
                         doctor: {
                             select: {
-                                specialty: {
-                                select: { name: true }
-                                }
+                                specialty: { select: { name: true } }
                             }
                         }
                     }
@@ -149,9 +148,7 @@ export const appointmentRepository = {
         const skip = lastId ? 1 : 0 
 
         return await prisma.appointment.findMany({
-            where: {
-                patientId: patientId
-            },
+            where: { patientId },
             take: limit,
             skip: skip,
             cursor: cursorCondition,
@@ -162,9 +159,8 @@ export const appointmentRepository = {
                 id: true,
                 status: true,
                 reason: true,
-                schedule: {
-                    select: { date: true, shift: true }
-                },
+                date: true,
+                shift: true,
                 medicalRecord: {
                     select: { diagnosis: true }
                 },
@@ -175,9 +171,7 @@ export const appointmentRepository = {
                         avatarUrl: true,
                         doctor: {
                             select: {
-                                specialty: {
-                                select: { name: true }
-                                }
+                                specialty: { select: { name: true } }
                             }
                         }
                     }
@@ -189,10 +183,10 @@ export const appointmentRepository = {
     findByDoctorId: async ({ doctorId, date, lastId, limit = 30, desc = true }) => {
         const cursorCondition = lastId ? { id: lastId } : undefined
         const skip = lastId ? 1 : 0 
-        const whereClause = { doctorId: doctorId }
+        const whereClause = { doctorId }
 
         if (date) {
-            whereClause.schedule = { date: new Date(date) }
+            whereClause.date = new Date(date)
         }
 
         return await prisma.appointment.findMany({
@@ -201,16 +195,15 @@ export const appointmentRepository = {
             skip: skip,
             cursor: cursorCondition,
             orderBy: [
-                { schedule: { date: desc ? 'desc' : 'asc' } }, 
-                { schedule: { shift: 'asc' } }                
+                { date: desc ? 'desc' : 'asc' }, 
+                { shift: 'asc' }                
             ],
             select: {
                 id: true,
                 status: true,
                 reason: true,
-                schedule: {
-                    select: { date: true, shift: true }
-                },
+                date: true,
+                shift: true,
                 patient: { 
                     select: {
                         id: true,
@@ -224,52 +217,51 @@ export const appointmentRepository = {
         })
     },
 
-    findBookedAppointments: async ({ date, doctorId }) => {
-        const whereClause = {
-            schedule: { date: new Date(date) },
-            status: { not: "cancelled" } 
-        }
 
-        if (doctorId) {
-            whereClause.doctorId = doctorId
-        }
+    getUnavailableSlots: async ({ date, doctorId }) => {
+        const targetDate = new Date(date)
 
-        return await prisma.appointment.findMany({
-            where: whereClause,
-            select: {
-                doctorId: true,
-                schedule: {
-                    select: { shift: true }
-                },
-                doctor: {
-                    select: {
-                        fullName: true
-                    }
-                }
-            }
-        })
+        const whereBase = { date: targetDate }
+        if (doctorId) whereBase.doctorId = doctorId
+
+        const [appointments, leaves] = await Promise.all([
+            prisma.appointment.findMany({
+                where: whereBase,
+                select: { shift: true, doctorId: true }
+            }),
+            prisma.doctorLeave.findMany({
+                where: whereBase,
+                select: { shift: true, doctorId: true }
+            })
+        ])
+
+        return {
+            bookedShifts: appointments,
+            doctorLeaves: leaves
+        }
     },
 
     updateStatus: async (id, status) => {
-        return await prisma.$transaction(async (tx) => {
-            const appointment = await tx.appointment.update({
+        if (status === "cancelled" || status === "canceled") {
+            return await prisma.appointment.delete({
                 where: { id },
-                data: { status },
                 select: { 
-                    id: true, 
-                    status: true,
-                    scheduleId: true 
+                    id: true,
+                    date: true,
+                    shift: true
                 }
             })
+        }
 
-            if (status === "cancelled" || status === "canceled") {
-                await tx.schedule.update({
-                    where: { id: appointment.scheduleId },
-                    data: { isBooked: false } 
-                })
+        return await prisma.appointment.update({
+            where: { id },
+            data: { status },
+            select: { 
+                id: true, 
+                status: true,
+                date: true,
+                shift: true 
             }
-
-            return appointment
         })
     }
 }

@@ -47,10 +47,10 @@ model Profile {
   isActive  Boolean   @default(true) @map("is_active")
 
   // Relations
-  doctor                Doctor?
+  doctor               Doctor?
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
-  schedulesAsDoctor     Schedule[]     @relation("DoctorSchedules") // <-- ĐÃ THÊM QUAN HỆ ẢO TỚI BẢNG SCHEDULE
+  doctorLeaves          DoctorLeave[]  @relation("DoctorLeaves") // <-- ĐÃ THAY THẾ QUAN HỆ SCHEDULE THÀNH DOCTOR LEAVE
   notifications         Notification[]
   chatSessions          ChatSession[]
 
@@ -131,25 +131,28 @@ model DiseaseMedicine {
 }
 
 // ================================
-// SCHEDULES (THÊM MỚI BẢNG NÀY)
+// DOCTOR LEAVES (Bảng lưu Lịch Nghỉ/Báo Bận của Bác sĩ)
 // ================================
 
-model Schedule {
+model DoctorLeave {
   id       String   @id @default(uuid()) @db.Uuid
   doctorId String   @map("doctor_id") @db.Uuid
   date     DateTime @db.Date
-  shift    Int // Ca khám: 1, 2, 3, 4
-  isBooked Boolean  @default(false) @map("is_booked")
+  
+  // NẾU shift = null -> Bác sĩ nghỉ CẢ NGÀY hôm đó
+  // NẾU shift = 1, 2... -> Bác sĩ chỉ báo bận đúng ca đó
+  shift    Int?     
+  
+  reason   String?  @db.Text 
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  doctor      Profile      @relation("DoctorSchedules", fields: [doctorId], references: [id], onDelete: Cascade)
-  appointment Appointment?
+  doctor   Profile  @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
 
-  @@unique([doctorId, date, shift])
+  // CHUẨN: Không tạo trùng 2 cái lịch nghỉ cho cùng 1 ca
+  @@unique([doctorId, date, shift], name: "idx_unique_leave") 
   @@index([doctorId, date])
-  @@map("schedules")
+  @@map("doctor_leaves")
 }
 
 // ================================
@@ -157,26 +160,28 @@ model Schedule {
 // ================================
 
 model Appointment {
-  id         String @id @default(uuid()) @db.Uuid
-  patientId  String @map("patient_id") @db.Uuid
-  doctorId   String @map("doctor_id") @db.Uuid
-  scheduleId String @unique @map("schedule_id") @db.Uuid // <-- THAY THẾ DATE/SHIFT BẰNG SCHEDULE_ID
+  id        String   @id @default(uuid()) @db.Uuid
+  patientId String   @map("patient_id") @db.Uuid
+  doctorId  String   @map("doctor_id") @db.Uuid
 
-  status String  @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
-  reason String? @db.Text
+  date      DateTime @db.Date
+  shift     Int      // Ca khám: 1, 2, 3, 4
+
+  status    String   @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
+  reason    String?  @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient  Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor   Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  schedule Schedule @relation(fields: [scheduleId], references: [id]) // <-- LIÊN KẾT ĐẾN SCHEDULE
+  patient   Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor    Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
 
   notifications Notification[]
   medicalRecord MedicalRecord?
 
-  @@index([patientId], name: "idx_appointment_patient")
-  @@index([doctorId], name: "idx_appointment_doctor")
+  // THÊM CÁI NÀY: Để truy vấn nhanh
+  @@index([doctorId, date, status])
+  @@index([patientId])
   @@map("appointments")
 }
 
@@ -232,6 +237,7 @@ model News {
 // ================================
 // AI CHAT SYSTEM
 // ================================
+
 // Khai báo Enum để phân biệt ai đang nói
 enum MessageRole {
   USER // Bệnh nhân

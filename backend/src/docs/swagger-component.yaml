@@ -23,8 +23,6 @@ tags:
     description: Quản lý danh mục thuốc
   - name: News
     description: Quản lý bài viết và tin tức
-  - name: Schedule
-    description: Quản lý lịch làm việc của bác sĩ
   - name: Specialty
     description: Quản lý danh sách chuyên khoa
   - name: User
@@ -421,28 +419,6 @@ components:
         sideEffects:
           type: string
           nullable: true
-
-    Schedule:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        doctorId:
-          type: string
-          format: uuid
-        date:
-          type: string
-          format: date
-        shift:
-          type: integer
-          description: Ca khám 1, 2, 3, 4
-        isBooked:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-
     Appointment:
       type: object
       properties:
@@ -455,9 +431,14 @@ components:
         doctorId:
           type: string
           format: uuid
-        scheduleId:
+        date:
           type: string
-          format: uuid
+          format: date
+          example: "2024-05-20"
+        shift:
+          type: integer
+          enum: [1, 2, 3, 4]
+          description: "Ca khám (1: Sáng, 2: Trưa, 3: Chiều, 4: Tối)"
         status:
           type: string
           enum: [pending, confirmed, completed, cancelled]

@@ -1,7 +1,45 @@
 paths:
+  /appointments/slots:
+    get:
+      summary: Lấy danh sách ca khám trống
+      tags: [Appointment]
+      parameters:
+        - name: doctorId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2024-05-20"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách giờ trống thành công
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1
+
   /appointments/book:
     post:
-      summary: Đặt lịch khám
+      summary: Đặt lịch khám (Patient / Admin)
       tags: [Appointment]
       security:
         - bearerAuth: []
@@ -11,7 +49,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [patientId, doctorId, scheduleId]
+              required: [patientId, doctorId, date, shift]
               properties:
                 patientId:
                   type: string
@@ -19,9 +57,13 @@ paths:
                 doctorId:
                   type: string
                   format: uuid
-                scheduleId:
+                date:
                   type: string
-                  format: uuid
+                  format: date
+                  example: "2024-05-20"
+                shift:
+                  type: integer
+                  enum: [1, 2, 3, 4]
                 reason:
                   type: string
       responses:
@@ -34,31 +76,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Đặt lịch khám thành công. Vui lòng chờ bác sĩ xác nhận.
                   data:
                     $ref: '#/components/schemas/Appointment'
 
-  /appointments/slots:
-    get:
-      summary: Lấy danh sách ca khám trống
-      tags: [Appointment]
-      parameters:
-        - name: doctorId
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: date
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: OK
-
   /appointments/all:
     get:
-      summary: Lấy tất cả lịch hẹn (cho Admin / Doctor xem tổng quan)
+      summary: Lấy tất cả lịch hẹn (Admin / Doctor)
       tags: [Appointment]
       security:
         - bearerAuth: []
@@ -73,13 +100,142 @@ paths:
           schema:
             type: string
             format: date
+        - name: lastId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: desc
+          in: query
+          schema:
+            type: boolean
+            default: true
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách toàn bộ lịch khám thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Appointment'
 
-  /appointments/{appointmentId}:
+  /appointments/patient/{userId}:
     get:
-      summary: Lấy chi tiết lịch hẹn
+      summary: Lấy lịch sử khám của bệnh nhân (Admin / Doctor / Patient)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: lastId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: desc
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách lịch sử khám thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Appointment'
+
+  /appointments/doctor/{doctorId}:
+    get:
+      summary: Lấy danh sách lịch khám của bác sĩ (Admin / Doctor)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: lastId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: desc
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách lịch khám của bác sĩ thành công
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Appointment'
+
+  /appointments/cancel/{appointmentId}:
+    patch:
+      summary: Hủy lịch khám (Patient / Admin)
       tags: [Appointment]
       security:
         - bearerAuth: []
@@ -100,68 +256,14 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  data:
-                    $ref: '#/components/schemas/Appointment'
-
-  /appointments/patient/{userId}:
-    get:
-      summary: Lấy lịch sử khám của bệnh nhân
-      tags: [Appointment]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: OK
-
-  /appointments/doctor/{doctorId}:
-    get:
-      summary: Lấy danh sách lịch khám của bác sĩ
-      tags: [Appointment]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: doctorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: date
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: OK
-
-  /appointments/cancel/{appointmentId}:
-    patch:
-      summary: Hủy lịch khám (bệnh nhân)
-      tags: [Appointment]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: appointmentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: OK
+                    example: true
+                  message:
+                    type: string
+                    example: Hủy lịch khám thành công.
 
   /appointments/update/status/{appointmentId}:
     patch:
-      summary: Cập nhật trạng thái lịch khám (Admin/Doctor)
+      summary: Cập nhật trạng thái lịch khám (Admin / Doctor)
       tags: [Appointment]
       security:
         - bearerAuth: []
@@ -173,6 +275,7 @@ paths:
             type: string
             format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -185,10 +288,23 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cập nhật trạng thái lịch khám thành công.
+                  data:
+                    $ref: '#/components/schemas/Appointment'
 
   /appointments/medical-record/create/{appointmentId}:
     post:
-      summary: Tạo hồ sơ bệnh án cho lịch khám
+      summary: Tạo hồ sơ bệnh án cho lịch khám (Doctor)
       tags: [Medical Record]
       security:
         - bearerAuth: []
@@ -223,12 +339,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tạo hồ sơ bệnh án thành công.
                   data:
                     $ref: '#/components/schemas/MedicalRecord'
 
   /appointments/medical-record/{appointmentId}:
     get:
-      summary: Lấy chi tiết hồ sơ bệnh án
+      summary: Lấy chi tiết hồ sơ bệnh án (Doctor / Patient)
       tags: [Medical Record]
       security:
         - bearerAuth: []
@@ -249,12 +369,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy thông tin bệnh án thành công.
                   data:
                     $ref: '#/components/schemas/MedicalRecord'
 
   /appointments/medical-record/update/{appointmentId}:
     patch:
-      summary: Cập nhật hồ sơ bệnh án
+      summary: Cập nhật hồ sơ bệnh án (Doctor)
       tags: [Medical Record]
       security:
         - bearerAuth: []
@@ -266,6 +390,7 @@ paths:
             type: string
             format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -280,3 +405,46 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cập nhật hồ sơ bệnh án thành công.
+                  data:
+                    $ref: '#/components/schemas/MedicalRecord'
+
+  /appointments/{appointmentId}:
+    get:
+      summary: Lấy chi tiết lịch hẹn (Admin / Doctor / Patient)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy thông tin lịch khám thành công
+                  data:
+                    $ref: '#/components/schemas/Appointment'

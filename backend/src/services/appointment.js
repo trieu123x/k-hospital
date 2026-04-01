@@ -1,35 +1,32 @@
 import { appointmentRepository } from "../repositories/appointment.js"
-import { prisma } from "../configs/prisma-config.js" 
 
 export const appointmentService = {
     getAllAppointments: async (filters) => {
         const appointments = await appointmentRepository.getAllAppointments(filters)
 
-        return appointments.map(app => {
-            return {
-                appointmentId: app.id,
-                date: app.schedule?.date,  
-                shift: app.schedule?.shift, 
-                status: app.status,
-                reason: app.reason,
-                patient: app.patient ? {
-                    patientId: app.patient.id,
-                    name: app.patient.fullName,
-                    phone: app.patient.phone
-                } : null,
-                doctor: app.doctor ? {
-                    doctorId: app.doctor.id,
-                    name: app.doctor.fullName,
-                    specialityName: app.doctor.doctor?.specialty?.name
-                } : null
-            }
-        })
+        return appointments.map(app => ({
+            appointmentId: app.id,
+            date: app.date,
+            shift: app.shift,
+            status: app.status,
+            reason: app.reason,
+            patient: app.patient ? {
+                patientId: app.patient.id,
+                name: app.patient.fullName,
+                phone: app.patient.phone
+            } : null,
+            doctor: app.doctor ? {
+                doctorId: app.doctor.id,
+                name: app.doctor.fullName,
+                specialityName: app.doctor.doctor?.specialty?.name
+            } : null
+        }))
     },
 
     getAppointmentDetail: async (id) => {
         const appointment = await appointmentRepository.findById(id)
         if (!appointment) {
-            throw Object.assign(new Error("Không tìm thấy lịch khám!"), { statusCode: 404 })
+            throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
         }
 
         return {
@@ -46,8 +43,8 @@ export const appointmentService = {
                 specialityName: appointment.doctor.doctor?.specialty?.name
             } : null,
             schedule: {
-                date: appointment.schedule?.date,  
-                shift: appointment.schedule?.shift, 
+                date: appointment.date,
+                shift: appointment.shift,
                 status: appointment.status
             },
             note: appointment.reason,
@@ -58,70 +55,113 @@ export const appointmentService = {
     getPatientHistory: async (filters) => {
         const appointments = await appointmentRepository.findByPatientId(filters)
 
-        return appointments.map(app => {
-            return {
-                appointmentId: app.id,
-                date: app.schedule?.date,   
-                shift: app.schedule?.shift, 
-                status: app.status,
-                doctor: app.doctor ? {
-                    doctorId: app.doctor.id,
-                    name: app.doctor.fullName,
-                    specialityName: app.doctor.doctor?.specialty?.name,
-                    avatarUrl: app.doctor.avatarUrl
-                } : null,
-                symptoms: app.reason,
-                diagnosis: app.medicalRecord?.diagnosis || null
-            }
-        })
+        return appointments.map(app => ({
+            appointmentId: app.id,
+            date: app.date,
+            shift: app.shift,
+            status: app.status,
+            doctor: app.doctor ? {
+                doctorId: app.doctor.id,
+                name: app.doctor.fullName,
+                specialityName: app.doctor.doctor?.specialty?.name,
+                avatarUrl: app.doctor.avatarUrl
+            } : null,
+            symptoms: app.reason,
+            diagnosis: app.medicalRecord?.diagnosis || null
+        }))
     },
 
     getDoctorSchedule: async (filters) => {
         const appointments = await appointmentRepository.findByDoctorId(filters)
 
-        return appointments.map(app => {
-            return {
-                appointmentId: app.id,
-                date: app.schedule?.date,  
-                shift: app.schedule?.shift, 
-                status: app.status,
-                reason: app.reason, 
-                patient: app.patient ? {
-                    patientId: app.patient.id,
-                    name: app.patient.fullName,
-                    phone: app.patient.phone,
-                    dob: app.patient.dob,
-                    avatarUrl: app.patient.avatarUrl
-                } : null
-            }
-        })
+        return appointments.map(app => ({
+            appointmentId: app.id,
+            date: app.date,
+            shift: app.shift,
+            status: app.status,
+            reason: app.reason, 
+            patient: app.patient ? {
+                patientId: app.patient.id,
+                name: app.patient.fullName,
+                phone: app.patient.phone,
+                dob: app.patient.dob,
+                avatarUrl: app.patient.avatarUrl
+            } : null
+        }))
     },
 
     getAvailableSlots: async (filters) => {
         const { date, doctorId } = filters
-        
-        if (!date || !doctorId) {
-            throw Object.assign(new Error("Vui lòng cung cấp đầy đủ mã bác sĩ và ngày cần xem lịch!"), { statusCode: 400 })
+
+        if (!date) {
+            throw Object.assign(new Error("Vui lòng cung cấp ngày cần xem lịch!"), { statusCode: 400 })
         }
 
-        const availableSchedules = await prisma.schedule.findMany({
-            where: {
-                doctorId: doctorId,
-                date: new Date(date),
-                isBooked: false
-            },
-            select: {
-                id: true, 
-                shift: true
-            },
-            orderBy: { shift: 'asc' }
+        const targetDate = new Date(date)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        if (targetDate < today) {
+            return []
+        }
+
+        let targetDoctors = []
+        if (doctorId) {
+            targetDoctors = [{ id: doctorId }]
+        } else {
+            targetDoctors = await prisma.profile.findMany({
+                where: { role: 'doctor', isActive: true },
+                select: { id: true }
+            })
+        }
+
+        if (targetDoctors.length === 0) return []
+
+        const unavailable = await appointmentRepository.getUnavailableSlots({ date, doctorId })
+
+        const doctorBusyMap = {}
+        targetDoctors.forEach(doc => {
+            doctorBusyMap[doc.id] = new Set()
         })
 
-        return availableSchedules.map(schedule => ({
-            scheduleId: schedule.id, 
-            shift: schedule.shift,
-            availableDoctors: [{ doctorId: doctorId }] 
-        }))
+        unavailable.doctorLeaves.forEach(leave => {
+            if (doctorBusyMap[leave.doctorId]) {
+                if (leave.shift === null) {
+                    [1, 2, 3, 4].forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
+                } else {
+                    doctorBusyMap[leave.doctorId].add(leave.shift)
+                }
+            }
+        })
+
+        unavailable.bookedShifts.forEach(app => {
+            if (doctorBusyMap[app.doctorId]) {
+                doctorBusyMap[app.doctorId].add(app.shift)
+            }
+        })
+
+        const allShifts = [1, 2, 3, 4]
+        const result = []
+
+        allShifts.forEach(shift => {
+            const availableDoctorsForShift = []
+            
+            targetDoctors.forEach(doc => {
+                if (!doctorBusyMap[doc.id].has(shift)) {
+                    availableDoctorsForShift.push({ doctorId: doc.id }) 
+                }
+            })
+
+            if (availableDoctorsForShift.length > 0) {
+                result.push({
+                    shift: shift,
+                    date: date,
+                    availableDoctors: availableDoctorsForShift
+                })
+            }
+        })
+
+        return result
     },
 
     bookAppointment: async (data) => {
@@ -139,23 +179,11 @@ export const appointmentService = {
             throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 4)!"), { statusCode: 400 })
         }
 
-        const slot = await prisma.schedule.findFirst({
-            where: {
-                doctorId: doctorId,
-                date: new Date(date),
-                shift: shift
-            }
-        })
-
-        if (!slot) {
-            throw Object.assign(new Error("Bác sĩ không có lịch làm việc vào ca này!"), { statusCode: 404 })
-        }
-
-
         const newAppointment = await appointmentRepository.create({
             patientId,
             doctorId,
-            scheduleId: slot.id, 
+            date, 
+            shift, 
             reason
         })
 
@@ -169,16 +197,13 @@ export const appointmentService = {
         const appointment = await appointmentRepository.findById(id)
         
         if (!appointment) {
-            throw Object.assign(new Error("Không tìm thấy lịch khám!"), { statusCode: 404 })
+            throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
         }
         if (appointment.status === "completed") {
             throw Object.assign(new Error("Lịch khám đã hoàn thành, không thể hủy!"), { statusCode: 400 })
         }
-        if (appointment.status === "cancelled") {
-            throw Object.assign(new Error("Lịch khám này đã bị hủy từ trước!"), { statusCode: 400 })
-        }
         
-        const appointmentDate = new Date(appointment.schedule.date) 
+        const appointmentDate = new Date(appointment.date)  
         const now = new Date()
 
         const diffInHours = (appointmentDate - now) / (1000 * 60 * 60)
@@ -193,12 +218,9 @@ export const appointmentService = {
 
     updateAppointmentStatus: async (id, status) => {
         const existingAppointment = await appointmentRepository.findById(id)
+        
         if (!existingAppointment) {
-            throw Object.assign(new Error("Không tìm thấy lịch khám!"), { statusCode: 404 })
-        }
-
-        if (existingAppointment.status === "cancelled") {
-            throw Object.assign(new Error("Lịch khám này đã bị hủy từ trước, không thể thay đổi trạng thái nữa!"), { statusCode: 400 })
+            throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
         }
 
         if (existingAppointment.status === "completed") {

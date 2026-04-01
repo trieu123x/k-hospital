@@ -2,16 +2,21 @@ import { appointmentService } from "../services/appointment.js"
 import { catchError } from "../helpers/catch-error.js"
 
 export const bookAppointment = catchError(async (req, res) => {
-    const appointmentData = req.body 
+    const { patientId, doctorId, date, shift, reason } = req.body 
     const requesterId = req.user.id
     const requesterRole = req.user.profile.role
 
-    // If patient, ensure they book for themselves
-    if (requesterRole === 'patient' && appointmentData.patientId !== requesterId) {
+    if (requesterRole === 'patient' && patientId !== requesterId) {
         throw Object.assign(new Error("Bạn chỉ có thể đặt lịch cho chính mình."), { statusCode: 403 })
     }
 
-    const data = await appointmentService.bookAppointment(appointmentData)
+    const data = await appointmentService.bookAppointment({ 
+        patientId, 
+        doctorId, 
+        date, 
+        shift, 
+        reason 
+    })
     
     res.status(201).json({
         success: true,
@@ -39,12 +44,11 @@ export const getAllAppointments = catchError(async (req, res) => {
 })
 
 export const getAvailableSlots = catchError(async (req, res) => {
-    const { date, doctorId, specialtyId } = req.query
+    const { date, doctorId } = req.query
     
     const data = await appointmentService.getAvailableSlots({ 
         date, 
-        doctorId, 
-        specialtyId 
+        doctorId
     })
 
     res.status(200).json({
@@ -56,8 +60,17 @@ export const getAvailableSlots = catchError(async (req, res) => {
 
 export const getAppointmentDetail = catchError(async (req, res) => {
     const { appointmentId } = req.params
+    const requesterId = req.user.id
+    const requesterRole = req.user.profile.role
 
     const data = await appointmentService.getAppointmentDetail(appointmentId)
+
+    if (requesterRole === 'patient' && data.patient?.userId !== requesterId) {
+        throw Object.assign(new Error("Bạn không có quyền xem thông tin lịch khám của người khác."), { statusCode: 403 })
+    }
+    if (requesterRole === 'doctor' && data.doctor?.doctorId !== requesterId) {
+        throw Object.assign(new Error("Bạn không có quyền xem lịch khám của bác sĩ khác."), { statusCode: 403 })
+    }
     
     res.status(200).json({
         success: true,
@@ -69,6 +82,12 @@ export const getAppointmentDetail = catchError(async (req, res) => {
 export const getPatientHistory = catchError(async (req, res) => {
     const { userId } = req.params 
     const { lastId, limit, desc } = req.query
+    const requesterId = req.user.id
+    const requesterRole = req.user.profile.role
+
+    if (requesterRole === 'patient' && userId !== requesterId) {
+        throw Object.assign(new Error("Bạn chỉ có thể xem lịch sử khám của chính mình."), { statusCode: 403 })
+    }
     
     const data = await appointmentService.getPatientHistory({ 
         patientId: userId,
@@ -79,7 +98,7 @@ export const getPatientHistory = catchError(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        message: "Lấy danh sách lịch khám thành công",
+        message: "Lấy danh sách lịch sử khám thành công",
         data
     })
 })
@@ -105,6 +124,16 @@ export const getDoctorSchedule = catchError(async (req, res) => {
 
 export const cancelAppointment = catchError(async (req, res) => {
     const { appointmentId } = req.params
+    const requesterId = req.user.id
+    const requesterRole = req.user.profile.role
+
+    if (requesterRole === 'patient') {
+        const existingAppointment = await appointmentService.getAppointmentDetail(appointmentId)
+        
+        if (existingAppointment.patient?.userId !== requesterId) {
+            throw Object.assign(new Error("Bạn chỉ có thể hủy lịch cho chính mình."), { statusCode: 403 })
+        }
+    }
 
     await appointmentService.cancelAppointment(appointmentId)
     
@@ -117,6 +146,15 @@ export const cancelAppointment = catchError(async (req, res) => {
 export const updateAppointmentStatus = catchError(async (req, res) => {
     const { appointmentId } = req.params
     const { status } = req.body
+    const requesterId = req.user.id
+    const requesterRole = req.user.profile.role
+
+    if (requesterRole === 'doctor') {
+        const existingAppointment = await appointmentService.getAppointmentDetail(appointmentId)
+        if (existingAppointment.doctor?.doctorId !== requesterId) {
+            throw Object.assign(new Error("Bạn không có quyền cập nhật lịch khám của bác sĩ khác."), { statusCode: 403 })
+        }
+    }
 
     const data = await appointmentService.updateAppointmentStatus(appointmentId, status)
     
