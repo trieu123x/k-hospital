@@ -143,6 +143,37 @@ export const cancelAppointment = catchError(async (req, res) => {
     })
 })
 
+export const registerDoctorLeave = catchError(async (req, res) => {
+    const { date, shift, reason } = req.body
+    
+    const doctorId = req.user.id 
+    
+    const data = await appointmentService.registerDoctorLeave({
+        doctorId,
+        date,
+        shift,
+        reason
+    })
+
+    res.status(201).json({
+        success: true,
+        message: "Đăng ký lịch nghỉ thành công.",
+        data
+    })
+})
+
+export const cancelDoctorLeave = catchError(async (req, res) => {
+    const { leaveId } = req.params;
+    const doctorId = req.user.id; 
+
+    await appointmentService.cancelDoctorLeave(leaveId, doctorId);
+
+    res.status(200).json({
+        success: true,
+        message: "Hủy lịch nghỉ thành công."
+    });
+});
+
 export const updateAppointmentStatus = catchError(async (req, res) => {
     const { appointmentId } = req.params
     const { status } = req.body

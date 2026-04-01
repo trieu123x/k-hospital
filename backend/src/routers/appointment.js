@@ -1,5 +1,5 @@
 import express from "express"
-import { bookAppointment, getAvailableSlots, getAppointmentDetail, getPatientHistory, cancelAppointment, updateAppointmentStatus, getDoctorSchedule, getAllAppointments} from "../controllers/appointment.js"
+import { bookAppointment, getAvailableSlots, getAppointmentDetail, getPatientHistory, cancelAppointment, updateAppointmentStatus, getDoctorSchedule, getAllAppointments, registerDoctorLeave, cancelDoctorLeave} from "../controllers/appointment.js"
 import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
 import { createMedicalRecord, getMedicalRecordDetail, updateMedicalRecord } from "../controllers/medical-record.js"
 import { validate } from "../middlewares/validate-handler.js"
@@ -25,5 +25,8 @@ router.post("/medical-record/create/:appointmentId", authenticate, authorizeRole
 router.get("/medical-record/:appointmentId", authenticate, authorizeRoles('doctor', 'patient'), validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
 router.patch("/medical-record/update/:appointmentId", authenticate, authorizeRoles('doctor'), validate(medicalRecordSchema.update), updateMedicalRecord)
 router.get("/:appointmentId", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(appointmentSchema.checkParamId), getAppointmentDetail)
+// Đăng kí nghỉ lịch và hủy nghỉ
+router.post("/leave", authenticate, authorizeRoles('doctor'), validate(appointmentSchema.registerLeave), registerDoctorLeave)
+router.delete("/leave/:leaveId", authenticate, authorizeRoles('doctor'), validate(appointmentSchema.cancelLeave), cancelDoctorLeave)
 
 export default router

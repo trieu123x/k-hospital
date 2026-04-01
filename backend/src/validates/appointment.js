@@ -78,5 +78,30 @@ export const appointmentSchema = {
         params: z.object({
             appointmentId: z.string().uuid({ message: "ID lịch khám không hợp lệ" })
         })
+    },
+
+    registerLeave: {
+        body: z.object({
+            date: z.string()
+                .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày nghỉ phải đúng định dạng YYYY-MM-DD" }),
+            
+            shift: z.number()
+                .int({ message: "Ca nghỉ phải là số nguyên" })
+                .min(1, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
+                .max(4, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
+                .nullable()
+                .optional(),
+            
+            reason: z.string()
+                .trim()
+                .min(5, { message: "Vui lòng nhập lý do nghỉ cụ thể (ít nhất 5 ký tự)" })
+                .max(255, { message: "Lý do quá dài (tối đa 255 ký tự)" })
+        })
+    },
+    
+    cancelLeave: {
+        params: z.object({
+            leaveId: z.string().uuid({ message: "ID lịch nghỉ không hợp lệ" })
+        })
     }
 };

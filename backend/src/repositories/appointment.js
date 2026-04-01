@@ -263,5 +263,39 @@ export const appointmentRepository = {
                 shift: true 
             }
         })
+    },
+    
+    createLeave: async (data) => {
+        const { doctorId, date, shift, reason } = data;
+        return await prisma.doctorLeave.create({
+            data: {
+                doctorId,
+                date: new Date(date),
+                shift: shift || null, 
+                reason
+            }
+        });
+    },
+
+    findExistingLeave: async (doctorId, date, shift) => {
+        return await prisma.doctorLeave.findFirst({
+            where: {
+                doctorId,
+                date: new Date(date),
+                shift: shift || null
+            }
+        });
+    },
+
+    findLeaveById: async (id) => {
+        return await prisma.doctorLeave.findUnique({
+            where: { id }
+        });
+    },
+
+    deleteLeave: async (id) => {
+        return await prisma.doctorLeave.delete({
+            where: { id }
+        });
     }
 }

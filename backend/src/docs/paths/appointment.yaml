@@ -6,7 +6,7 @@ paths:
       parameters:
         - name: doctorId
           in: query
-          required: true
+          required: false
           schema:
             type: string
             format: uuid
@@ -448,3 +448,90 @@ paths:
                     example: Lấy thông tin lịch khám thành công
                   data:
                     $ref: '#/components/schemas/Appointment'
+/appointments/leave:
+    post:
+      summary: Đăng ký lịch nghỉ/bận (Doctor)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, reason]
+              properties:
+                date:
+                  type: string
+                  format: date
+                  example: "2024-05-20"
+                shift:
+                  type: integer
+                  nullable: true
+                  enum: [1, 2, 3, 4]
+                  description: "Ca muốn nghỉ (1-4). Bỏ trống hoặc truyền null nếu nghỉ nguyên ngày."
+                  example: 1
+                reason:
+                  type: string
+                  description: "Lý do xin nghỉ (ít nhất 5 ký tự)"
+                  example: "Đi công tác đột xuất"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Đăng ký lịch nghỉ thành công.
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      doctorId:
+                        type: string
+                        format: uuid
+                      date:
+                        type: string
+                        format: date-time
+                      shift:
+                        type: integer
+                        nullable: true
+                      reason:
+                        type: string
+/appointments/leave/{leaveId}:
+    delete:
+      summary: Hủy lịch nghỉ/bận đã đăng ký (Doctor)
+      tags: [Appointment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: leaveId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID của bản ghi lịch nghỉ cần hủy
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Hủy lịch nghỉ thành công.

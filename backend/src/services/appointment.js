@@ -164,6 +164,91 @@ export const appointmentService = {
         return result
     },
 
+    registerDoctorLeave: async (data) => {
+        const { doctorId, date, shift, reason } = data;
+        
+        const leaveDate = new Date(date);
+        const now = new Date();
+        
+        const startOfLeaveDate = new Date(date);
+        startOfLeaveDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (startOfLeaveDate < today) {
+            throw Object.assign(new Error("Không thể đăng ký nghỉ cho ngày đã qua!"), { statusCode: 400 });
+        }
+
+        const shiftStartHours = { 1: 8, 2: 10, 3: 13, 4: 15, null: 8 }; 
+        const targetTime = new Date(startOfLeaveDate);
+        targetTime.setHours(shiftStartHours[shift] || 8, 0, 0, 0);
+
+        const diffInHours = (targetTime - now) / (1000 * 60 * 60);
+
+        if (diffInHours < 24) {
+            throw Object.assign(
+                new Error("Bạn phải đăng ký nghỉ trước ít nhất 24 tiếng so với giờ bắt đầu ca khám!"), 
+                { statusCode: 400 }
+            );
+        }
+
+        const appointmentsOnDate = await appointmentRepository.findByDoctorId({
+            doctorId,
+            date: startOfLeaveDate,
+            limit: 50 
+        });
+
+        const conflictingAppointments = appointmentsOnDate.filter(app => {
+            const isTargetShift = shift ? app.shift === shift : true;
+            const isConflictingStatus = ['pending', 'confirmed'].includes(app.status);
+            return isTargetShift && isConflictingStatus;
+        });
+
+        if (conflictingAppointments.length > 0) {
+            throw Object.assign(
+                new Error(`Đã có ${conflictingAppointments.length} lịch hẹn đã được đặt. Vui lòng xử lý hủy hoặc dời lịch trước khi báo nghỉ!`), 
+                { statusCode: 409 }
+            );
+        }
+
+        const duplicate = await appointmentRepository.findExistingLeave(doctorId, startOfLeaveDate, shift);
+        
+        if (duplicate) {
+            throw Object.assign(new Error("Bạn đã đăng ký lịch nghỉ này trước đó rồi."), { statusCode: 409 });
+        }
+
+        return await appointmentRepository.createLeave({ 
+            doctorId, 
+            date: startOfLeaveDate, 
+            shift, 
+            reason 
+        });
+    },
+
+    cancelDoctorLeave: async (leaveId, doctorId) => {
+        const leave = await appointmentRepository.findLeaveById(leaveId);
+
+        if (!leave) {
+            throw Object.assign(new Error("Không tìm thấy lịch nghỉ này!"), { statusCode: 404 });
+        }
+
+        if (leave.doctorId !== doctorId) {
+            throw Object.assign(new Error("Bạn không có quyền hủy lịch nghỉ của bác sĩ khác!"), { statusCode: 403 });
+        }
+
+        const leaveDate = new Date(leave.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (leaveDate < today) {
+            throw Object.assign(new Error("Không thể hủy lịch nghỉ của ngày đã qua!"), { statusCode: 400 });
+        }
+
+        await appointmentRepository.deleteLeave(leaveId);
+
+        return true;
+    },
+
     bookAppointment: async (data) => {
         const { doctorId, date, shift, reason, patientId } = data 
         
