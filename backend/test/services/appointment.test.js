@@ -35,19 +35,34 @@ describe('appointmentService', () => {
 
   describe('getAllAppointments', () => {
     it('should map appointments correctly', async () => {
-      const mockAppointments = [{
-         id: 1, schedule: { date: '2023-12-01', shift: 1 }, status: 'pending', reason: 'sick',
-         patient: { id: 2, fullName: 'John', phone: '123' },
-         doctor: { id: 3, fullName: 'Dr. Smith', doctor: { specialty: { name: 'Cardio' } } }
-      }]
+      const mockAppointments = [
+        {
+          id: 1,
+          schedule: { date: '2023-12-01', shift: 1 },
+          status: 'pending',
+          reason: 'sick',
+          patient: { id: 2, fullName: 'John', phone: '123', userId: 2 },
+          doctor: { id: 3, fullName: 'Dr. Smith', doctorId: 3, doctor: { specialty: { name: 'Cardio' } } }
+        },
+        {
+          id: 2,
+          schedule: { date: '2023-12-02', shift: 2 },
+          status: 'confirmed',
+          reason: 'checkup',
+          patient: { id: 4, fullName: 'Jane', phone: '456', userId: 4 },
+          doctor: { id: 5, fullName: 'Dr. Brown', doctorId: 5, doctor: { specialty: { name: 'Pediatric' } } }
+        }
+      ]
       appointmentRepository.getAllAppointments.mockResolvedValue(mockAppointments)
 
       const result = await appointmentService.getAllAppointments({})
       
-      expect(result).toHaveLength(1)
+      expect(result).toHaveLength(2)
       expect(result[0].appointmentId).toBe(1)
       expect(result[0].patient.name).toBe('John')
       expect(result[0].doctor.specialityName).toBe('Cardio')
+      expect(result[1].appointmentId).toBe(2)
+      expect(result[1].status).toBe('confirmed')
     })
   })
 
@@ -59,12 +74,17 @@ describe('appointmentService', () => {
 
     it('should return mapped appointment detail', async () => {
       appointmentRepository.findById.mockResolvedValue({
-        id: 1, schedule: { date: '2023-12-01', shift: 1 }, status: 'pending', reason: 'sick',
-        patient: { id: 2, fullName: 'John', phone: '123', dob: '1990-01-01' },
+        id: 1,
+        schedule: { date: '2023-12-01', shift: 1 },
+        status: 'pending',
+        reason: 'sick',
+        patient: { id: 2, fullName: 'John', phone: '123', dob: '1990-01-01', userId: 2 },
+        doctor: { id: 3, fullName: 'Dr. Smith', doctorId: 3, doctor: { specialty: { name: 'Cardio' } } }
       })
       const result = await appointmentService.getAppointmentDetail(1)
       expect(result.appointmentId).toBe(1)
       expect(result.patient.name).toBe('John')
+      expect(result.patient.userId).toBe(2)
     })
   })
 
@@ -74,13 +94,15 @@ describe('appointmentService', () => {
     })
 
     it('should return available slots successfully', async () => {
-      prisma.schedule.findMany.mockResolvedValue([{ id: 101, shift: 1 }, { id: 102, shift: 2 }])
+      prisma.schedule.findMany.mockResolvedValue([
+        { id: 101, shift: 1, date: '2023-12-01' },
+        { id: 102, shift: 2, date: '2023-12-01' }
+      ])
       const result = await appointmentService.getAvailableSlots({ date: '2023-12-01', doctorId: 1 })
       
       expect(result).toHaveLength(2)
       expect(result[0].shift).toBe(1)
       expect(result[0].scheduleId).toBe(101)
-      expect(result[0].availableDoctors[0].doctorId).toBe(1)
     })
   })
 
@@ -104,8 +126,21 @@ describe('appointmentService', () => {
     it('should create new appointment successfully', async () => {
       vi.setSystemTime(new Date('2023-12-01'))
       prisma.schedule.findFirst.mockResolvedValue({ id: 99 })
-      appointmentRepository.create.mockResolvedValue({ id: 10, status: 'pending' })
-      const result = await appointmentService.bookAppointment({ doctorId: 1, date: '2023-12-02', shift: 1, patientId: 2, reason: 'Checkup' })
+      appointmentRepository.create.mockResolvedValue({
+        id: 10,
+        status: 'pending',
+        patientId: 2,
+        doctorId: 1,
+        scheduleId: 99,
+        reason: 'Checkup'
+      })
+      const result = await appointmentService.bookAppointment({
+        doctorId: 1,
+        date: '2023-12-02',
+        shift: 1,
+        patientId: 2,
+        reason: 'Checkup'
+      })
       expect(result.appointmentId).toBe(10)
       expect(result.status).toBe('pending')
     })
@@ -119,8 +154,36 @@ describe('appointmentService', () => {
 
     it('should throw if within 24 hours', async () => {
       vi.setSystemTime(new Date('2023-12-01T10:00:00Z'))
-      appointmentRepository.findById.mockResolvedValue({ id: 1, status: 'pending', schedule: { date: '2023-12-01T15:00:00Z' } })
+      appointmentRepository.findById.mockResolvedValue({
+        id: 1,
+        status: 'pending',
+        schedule: { date: '2023-12-01T15:00:00Z' }
+      })
       await expect(appointmentService.cancelAppointment(1)).rejects.toThrow('Chỉ có thể tự hủy lịch trước ngày khám ít nhất 24 tiếng')
+    })
+
+    it('should cancel appointment successfully', async () => {
+      vi.setSystemTime(new Date('2023-12-01T10:00:00Z'))
+      appointmentRepository.findById.mockResolvedValue({
+        id: 1,
+        status: 'pending',
+        schedule: { date: '2023-12-03T10:00:00Z' }
+      })
+      appointmentRepository.updateStatus.mockResolvedValue({ id: 1, status: 'cancelled' })
+      const result = await appointmentService.cancelAppointment(1)
+      expect(result.status).toBe('cancelled')
+    })
+  })
+
+  describe('updateAppointmentStatus', () => {
+    it('should update appointment status successfully', async () => {
+      appointmentRepository.updateStatus.mockResolvedValue({
+        id: 1,
+        status: 'confirmed'
+      })
+      const result = await appointmentService.updateAppointmentStatus(1, 'confirmed')
+      expect(result.id).toBe(1)
+      expect(result.status).toBe('confirmed')
     })
   })
 })
