@@ -10,9 +10,25 @@ export const register = catchError(async (req, res) => {
 
     const data = await authService.register({ email, password, fullName, phone })
 
+    res.status(200).json({
+        success: true,
+        message: "Mã OTP xác nhận đã được gửi đến email của bạn.",
+        data
+    })
+})
+
+/**
+ * POST /auth/verify-register
+ * Body: { email, otp }
+ */
+export const verifyRegister = catchError(async (req, res) => {
+    const { email, otp } = req.body
+
+    const data = await authService.verifyRegister({ email, otp })
+
     res.status(201).json({
         success: true,
-        message: "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản.",
+        message: "Đăng ký thành công",
         data
     })
 })

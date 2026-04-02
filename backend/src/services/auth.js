@@ -6,6 +6,9 @@ import crypto from "crypto"
 // In-memory OTP store: email -> { otp, expiresAt }
 const otpStore = new Map()
 
+// In-memory OTP store cho Đăng ký: email -> { otp, expiresAt, data: { password, fullName, phone } }
+const registerOtpStore = new Map()
+
 export const authService = {
     /**
      * Đăng ký tài khoản mới
@@ -19,7 +22,45 @@ export const authService = {
             throw Object.assign(new Error("Số điện thoại đã được sử dụng"), { statusCode: 409 })
         }
 
-        // 2. Tạo user trên Supabase Auth
+        // Kiểm tra email đã tồn tại chưa
+        const existingEmail = await profileRepository.findByEmail(email)
+        if (existingEmail) {
+            throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 })
+        }
+
+        // Sinh OTP 6 chữ số
+        const otp = crypto.randomInt(100000, 999999).toString()
+        const expiresAt = Date.now() + 10 * 60 * 1000 // 10 phút
+
+        // Lưu thông tin đăng ký vào bộ nhớ tạm
+        registerOtpStore.set(email, { otp, expiresAt, data: { password, fullName, phone } })
+
+        // Gửi email OTP
+        await sendOtpEmail(email, otp)
+
+        return { email }
+    },
+
+    /**
+     * Xác minh OTP đăng ký và tạo tài khoản thực tế
+     */
+    verifyRegister: async ({ email, otp }) => {
+        const record = registerOtpStore.get(email)
+
+        if (!record) {
+            throw Object.assign(new Error("Tài khoản chưa được đăng ký hoặc OTP chưa được yêu cầu"), { statusCode: 400 })
+        }
+        if (Date.now() > record.expiresAt) {
+            registerOtpStore.delete(email)
+            throw Object.assign(new Error("OTP đã hết hạn, vui lòng đăng ký lại"), { statusCode: 400 })
+        }
+        if (record.otp !== otp) {
+            throw Object.assign(new Error("OTP không đúng"), { statusCode: 400 })
+        }
+
+        const { password, fullName, phone } = record.data
+
+        // Tạo user trên Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
@@ -37,7 +78,7 @@ export const authService = {
             throw Object.assign(new Error("Không thể tạo tài khoản"), { statusCode: 500 })
         }
 
-        // 3. Tạo profile trong DB
+        // Tạo profile trong DB
         const profile = await profileRepository.create({
             id: userId,
             fullName,
@@ -45,6 +86,9 @@ export const authService = {
             phone,
             role: "patient"
         })
+
+        // Xóa thông tin tạm
+        registerOtpStore.delete(email)
 
         return {
             userId: profile.id,
