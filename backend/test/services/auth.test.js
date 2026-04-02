@@ -46,21 +46,53 @@ describe('authService', () => {
   describe('register', () => {
     it('should throw error if phone already exists', async () => {
       profileRepository.findByPhone.mockResolvedValue({ id: 1 })
-      await expect(authService.register({ phone: '123' })).rejects.toThrow('Số điện thoại đã được sử dụng')
+      await expect(authService.register({ phone: '123', email: 'test@a.com' })).rejects.toThrow('Số điện thoại đã được sử dụng')
+    })
+
+    it('should throw error if email already exists', async () => {
+      profileRepository.findByPhone.mockResolvedValue(null)
+      profileRepository.findByEmail.mockResolvedValue({ id: 1 })
+      await expect(authService.register({ phone: '123', email: 'test@a.com' })).rejects.toThrow('Email đã được sử dụng')
+    })
+
+    it('should generate OTP and send email', async () => {
+      profileRepository.findByPhone.mockResolvedValue(null)
+      profileRepository.findByEmail.mockResolvedValue(null)
+      
+      const result = await authService.register({ phone: '123', email: 'test@a.com', password: '123', fullName: 'Test Name' })
+      
+      expect(result.email).toBe('test@a.com')
+      expect(sendOtpEmail).toHaveBeenCalledWith('test@a.com', expect.any(String))
+    })
+  })
+
+  describe('verifyRegister', () => {
+    const email = 'test@a.com'
+    let otp = ''
+
+    beforeEach(async () => {
+      // Simulate registering first to populate registerOtpStore
+      profileRepository.findByPhone.mockResolvedValue(null)
+      profileRepository.findByEmail.mockResolvedValue(null)
+      await authService.register({ phone: '123', email, password: '123', fullName: 'Test Name' })
+      // Get the injected OTP out of the sendOtpEmail mock tracker
+      otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)[1]
+    })
+
+    it('should throw error if OTP is invalid', async () => {
+      await expect(authService.verifyRegister({ email, otp: '000000' })).rejects.toThrow('OTP không đúng')
     })
 
     it('should throw error if supabase signup fails', async () => {
-      profileRepository.findByPhone.mockResolvedValue(null)
       supabase.auth.signUp.mockResolvedValue({ data: null, error: { message: 'Signup failed' } })
-      await expect(authService.register({ phone: '123', email: 'test@a.com', password: '123' })).rejects.toThrow('Signup failed')
+      await expect(authService.verifyRegister({ email, otp })).rejects.toThrow('Signup failed')
     })
 
     it('should create user successfully', async () => {
-      profileRepository.findByPhone.mockResolvedValue(null)
       supabase.auth.signUp.mockResolvedValue({ data: { user: { id: 'user-123', email: 'test@a.com' } }, error: null })
       profileRepository.create.mockResolvedValue({ id: 'user-123', fullName: 'Test Name', phone: '123', role: 'patient' })
       
-      const result = await authService.register({ phone: '123', email: 'test@a.com', password: '123', fullName: 'Test Name' })
+      const result = await authService.verifyRegister({ email, otp })
       
       expect(result.userId).toBe('user-123')
       expect(result.role).toBe('patient')
