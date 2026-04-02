@@ -25,13 +25,13 @@ export const profileRepository = {
     },
 
     findByPhone: async (phone) => {
-        return await prisma.profile.findUnique({
+        return await prisma.profile.findFirst({
             where: { phone }
         })
     },
 
     findByEmail: async (email) => {
-        return await prisma.profile.findUnique({
+        return await prisma.profile.findFirst({
             where: { email }
         })
     }
