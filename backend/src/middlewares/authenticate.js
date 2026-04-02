@@ -8,15 +8,16 @@ import { profileRepository } from "../repositories/auth.js"
  */
 export const authenticate = async (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        // Hỗ trợ lấy token từ cookie (ưu tiên) hoặc từ header (cho dev/postman cũ)
+        const token = req.cookies?.access_token || 
+                      (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);
+
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 message: "Không có token xác thực"
             })
         }
-
-        const token = authHeader.split(" ")[1]
 
         const { data, error } = await supabase.auth.getUser(token)
 

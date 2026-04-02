@@ -1,5 +1,6 @@
 import express from "express"
 import cors from "cors"
+import cookieParser from "cookie-parser"
 import diseaseCatgorizeRouter from "./routers/disease-categorizes.js"
 import diseaseRouter from "./routers/disease.js"
 import chatRouter from "./routers/chat.js"
@@ -20,7 +21,23 @@ import { setupSwagger } from "./configs/swagger-config.js"
 dotenv.config()
 const app = express()
 
-app.use(cors())
+app.use(cors({
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            process.env.FRONTEND_URL,
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002'
+        ];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, origin);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+}))
+app.use(cookieParser())
 app.use(express.json())
 
 app.use("/auth", authRouter)

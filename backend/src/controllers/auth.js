@@ -42,10 +42,24 @@ export const login = catchError(async (req, res) => {
 
     const data = await authService.login({ email, password })
 
+    res.cookie('access_token', data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+    })
+    
+    res.cookie('refresh_token', data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ngày
+    })
+
     res.status(200).json({
         success: true,
         message: "Đăng nhập thành công",
-        data
+        data: data.user // Ẩn token trong JSON response nếu muốn, hoặc trả về tuỳ ý. Tốt nhất là chỉ trả về user info.
     })
 })
 
@@ -54,8 +68,13 @@ export const login = catchError(async (req, res) => {
  * Header: Authorization: Bearer <access_token>
  */
 export const logout = catchError(async (req, res) => {
-    const token = req.headers.authorization?.split(" ")[1]
-    await authService.logout(token)
+    const token = req.cookies?.access_token || req.headers.authorization?.split(" ")[1]
+    if (token) {
+        await authService.logout(token)
+    }
+
+    res.clearCookie('access_token')
+    res.clearCookie('refresh_token')
 
     res.status(200).json({
         success: true,

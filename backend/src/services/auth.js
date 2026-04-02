@@ -28,15 +28,16 @@ export const authService = {
             throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 })
         }
 
-        // Sinh OTP 6 chữ số
-        const otp = crypto.randomInt(100000, 999999).toString()
+        // Sinh OTP 6 chữ số (FIX CỨNG 123456 ĐỂ TEST)
+        const otp = "123456" // crypto.randomInt(100000, 999999).toString()
         const expiresAt = Date.now() + 10 * 60 * 1000 // 10 phút
 
         // Lưu thông tin đăng ký vào bộ nhớ tạm
         registerOtpStore.set(email, { otp, expiresAt, data: { password, fullName, phone } })
 
-        // Gửi email OTP
-        await sendOtpEmail(email, otp)
+        // TẮT gửi email OTP lúc test
+        // await sendOtpEmail(email, otp)
+        console.log(`[TEST OTP] Mã đăng ký của email ${email}: ${otp}`)
 
         return { email }
     },
@@ -173,13 +174,15 @@ export const authService = {
             throw Object.assign(new Error("Email không tồn tại trong hệ thống"), { statusCode: 404 })
         }
 
-        // Sinh OTP 6 chữ số
-        const otp = crypto.randomInt(100000, 999999).toString()
+        // Sinh OTP 6 chữ số (FIX CỨNG 123456 ĐỂ TEST)
+        const otp = "123456" // crypto.randomInt(100000, 999999).toString()
         const expiresAt = Date.now() + 10 * 60 * 1000 // 10 phút
 
         otpStore.set(email, { otp, expiresAt })
 
-        await sendOtpEmail(email, otp)
+        // TẮT gửi email quên mật khẩu lúc test
+        // await sendOtpEmail(email, otp)
+        console.log(`[TEST OTP] Mã reset mật khẩu của email ${email}: ${otp}`)
 
         return { message: "OTP đã được gửi đến email của bạn" }
     },

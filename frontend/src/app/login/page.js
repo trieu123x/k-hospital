@@ -21,9 +21,7 @@ export default function Login() {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
       
-      if (typeof window !== "undefined") {
-        localStorage.setItem("token", res.data.accessToken || res.data.data?.accessToken);
-      }
+      console.log("Thông tin user sau khi đăng nhập:", res.data || res);
       
       // Redirect based on role or to home
       router.push("/");
