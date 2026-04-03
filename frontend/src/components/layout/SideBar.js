@@ -31,7 +31,7 @@ export function SideBar({ isAdmin = true, isDoctor = false, setSidebarClose = ()
 
   return (
     <div ref={sidebarRef} className={`
-      absolute top-15 bottom-0 w-full z-20 bg-[#070575] 
+      fixed top-15 bottom-0 w-full z-20 bg-[#070575] 
     text-white rasa-font text-[20px]
       xl:hidden flex flex-col
       transition-all duration-300 ease-in-out
@@ -118,27 +118,27 @@ export function SideBar({ isAdmin = true, isDoctor = false, setSidebarClose = ()
       {
         isAdminOpen &&
         <>
-          <LinkButton onClick={setSidebarClose} href="/admin"
+          <LinkButton onClick={setSidebarClose} href="/admin/users"
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Quản lý tài khoản
           </LinkButton>
 
-          <LinkButton onClick={setSidebarClose} href="/admin"
+          <LinkButton onClick={setSidebarClose} href="/admin/medicines"
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Quản lý thông tin thuốc
           </LinkButton>
 
-          <LinkButton onClick={setSidebarClose} href="/admin"
+          <LinkButton onClick={setSidebarClose} href="/admin/diseases"
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Quản lý thông tin bệnh
           </LinkButton>
 
-          <LinkButton onClick={setSidebarClose} href="/admin"
+          <LinkButton onClick={setSidebarClose} href="/admin/news"
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Quản lý tin tức
           </LinkButton>
 
-          <LinkButton onClick={setSidebarClose} href="/admin"
+          <LinkButton onClick={setSidebarClose} href="/admin/aggregate"
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Tổng kết
           </LinkButton>

@@ -8,3 +8,15 @@
 .rasa-font {
     font-family: 'Rasa-Regular', 'serif';
 }
+
+.hide-scrollbar {
+    /* Cho Firefox */
+    scrollbar-width: none;
+    /* Cho Internet Explorer và Edge cũ */
+    -ms-overflow-style: none;
+}
+
+/* Cho Chrome, Safari và Opera */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
