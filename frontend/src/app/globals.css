@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@font-face {
+    font-family: 'Rasa-Regular';
+    src: url('/fonts/Rasa-Regular.ttf') format('truetype');
+}
+
+.rasa-font {
+    font-family: 'Rasa-Regular', 'serif';
+}

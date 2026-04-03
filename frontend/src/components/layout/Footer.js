@@ -3,9 +3,12 @@ import { Phone, MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-white text-gray-800 py-6 px-10 border-t border-gray-100 text-sm font-medium">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-        
+    <footer className={`
+    bg-white h-15 px-10 rasa-font
+      border-t border-gray-100
+      flex flex-col lg:flex-row lg:items-center justify-between
+    `}>
+      <div className="flex flex-col lg:flex-row lg:gap-5">
         {/* Left: Contact Info */}
         <div className="flex items-center space-x-2">
           <Phone strokeWidth={2} className="w-4 h-4" />
@@ -17,17 +20,16 @@ export default function Footer() {
           <MapPin strokeWidth={2} className="w-4 h-4" />
           <span>Địa chỉ: Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội</span>
         </div>
+      </div>
 
-        {/* Right: Links */}
-        <div className="flex items-center space-x-6 text-blue-600">
-          <Link href="/policy" className="hover:underline">
-            Chính sách
-          </Link>
-          <Link href="/procedures" className="hover:underline">
-            Thủ tục
-          </Link>
-        </div>
-        
+      {/* Right: Links */}
+      <div className="flex items-center space-x-6 text-blue-600">
+        <Link href="/policy" className="hover:underline">
+          Chính sách
+        </Link>
+        <Link href="/procedures" className="hover:underline">
+          Thủ tục
+        </Link>
       </div>
     </footer>
   );
