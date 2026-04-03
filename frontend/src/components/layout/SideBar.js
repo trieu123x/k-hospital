@@ -14,6 +14,9 @@ export function SideBar({ isAdmin = true, isDoctor = false, setSidebarClose = ()
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest("#sidebar-menu-btn"))
+        return
+
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setSidebarClose()
       }
@@ -31,6 +34,7 @@ export function SideBar({ isAdmin = true, isDoctor = false, setSidebarClose = ()
       absolute top-15 bottom-0 w-full z-20 bg-[#070575] 
     text-white rasa-font text-[20px]
       xl:hidden flex flex-col
+      transition-all duration-300 ease-in-out
     `}>
       <LinkButton onClick={setSidebarClose} href="/"
         className="hover:bg-[#050355] justify-start rounded-none">

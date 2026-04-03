@@ -48,13 +48,14 @@ export default function Navbar({ isAdmin = true, setSidebarOpen = () => { } }) {
             Bác sĩ
           </LinkButton>
 
-          <Button onClick={() => { setLookUpOpen(prev => !prev) }} className="relative">
+          <Button
+            onClick={() => { setLookUpOpen(!isLookUpOpen) }} className="relative">
             <span>Tra cứu</span>
             <ChevronDown className={`size-3 ${isLookUpOpen && "rotate-180"}`} />
             {
               isLookUpOpen &&
               <div ref={lookUpRef}
-                className={`absolute top-[140%] 
+                className={`absolute top-[140%] z-20
                   bg-[#070575] rounded-xl overflow-hidden 
                   flex flex-col text-[12px]
                 `}>
@@ -89,7 +90,7 @@ export default function Navbar({ isAdmin = true, setSidebarOpen = () => { } }) {
           <LinkButton href="/register" className="bg-white text-[#070575]">
             Đăng ký
           </LinkButton>
-          <button onClick={setSidebarOpen}>
+          <button id="sidebar-menu-btn" onClick={setSidebarOpen}>
             <Menu className="w-6.5 h-6.5 text-white cursor-pointer" />
           </button>
         </div>
