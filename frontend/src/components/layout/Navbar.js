@@ -11,6 +11,9 @@ export default function Navbar({ isAdmin = true, setSidebarOpen = () => { } }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest("#lookup-btn"))
+        return
+
       if (lookUpRef.current && !lookUpRef.current.contains(event.target)) {
         setLookUpOpen(false)
       }
@@ -48,7 +51,7 @@ export default function Navbar({ isAdmin = true, setSidebarOpen = () => { } }) {
             Bác sĩ
           </LinkButton>
 
-          <Button
+          <Button id="lookup-btn"
             onClick={() => { setLookUpOpen(!isLookUpOpen) }} className="relative">
             <span>Tra cứu</span>
             <ChevronDown className={`size-3 ${isLookUpOpen && "rotate-180"}`} />
