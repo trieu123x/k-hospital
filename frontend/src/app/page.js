@@ -5,11 +5,11 @@ import { Bot } from "lucide-react";
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
+      <div className="max-w-7xl mx-auto px-2 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
         
         {/* Left Column: Text content */}
-        <div className="flex flex-col space-y-8 pr-0 lg:pr-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-serif leading-tight">
+        <div className="flex flex-col space-y-8 pr-0 lg:pr-8">
+          <h1 className="text-3xl md:text-5xl lg:text-5xl font-bold font-serif leading-tight">
             <span className="text-gray-900">Lý do để khách hàng</span>
             <br />
             <span className="text-[#6474fb]">tin tưởng MediCare?</span>
@@ -31,7 +31,7 @@ export default function Home() {
           
           {/* Card 1 */}
           <div className="bg-[#424cb8] text-white p-6 md:p-8 rounded-[2rem] shadow-xl w-full md:w-[85%] self-start lg:ml-12 hover:-translate-y-1 transition-transform duration-300">
-            <h3 className="text-xl font-bold mb-3">Đội ngũ chuyên gia đầu ngành</h3>
+            <h3 className="text-xl  font-bold mb-3">Đội ngũ chuyên gia đầu ngành</h3>
             <p className="text-sm md:text-base opacity-90 leading-relaxed mb-4 pr-4">
               Đội ngũ bác sĩ giàu kinh nghiệm, điều trị trực tiếp với phác đồ chuẩn quốc tế
             </p>

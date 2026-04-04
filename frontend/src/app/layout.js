@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axiosInstance from "@/utils/axios";
 import { SideBar } from "@/components/layout/SideBar";
 import { OptionBar } from "@/components/layout/OptionBar";
 
@@ -27,6 +28,18 @@ export default function RootLayout({ children }) {
   const [isAdmin, setAdmin] = useState(true)
   const [isDoctor, setDoctor] = useState(true)
   const [isLogin, setLogin] = useState(true)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/auth/me");
+        console.log("=== THÔNG TIN NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP ===", res.data);
+      } catch (error) {
+        // Not logged in or token invalid
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <html lang="en">
