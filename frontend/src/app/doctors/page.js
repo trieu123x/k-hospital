@@ -131,8 +131,8 @@ export default function DoctorsPage() {
               {/* Doctor Avatar */}
               <div className="relative w-full aspect-[4/5] bg-[#f6f7f9]">
                 <Image
-                  src={doctor.avatarUrl || "/images/Avartar.jpg"}
-                  alt={doctor.fullName}
+                  src={doctor.profile?.avatarUrl || "/images/Avartar.jpg"}
+                  alt={doctor.profile?.fullName || "Doctor"}
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
@@ -141,8 +141,8 @@ export default function DoctorsPage() {
 
               {/* Doctor Info */}
               <div className="p-3.5 flex flex-col bg-white text-left h-full">
-                <h3 className="font-serif font-bold text-gray-900 text-[13px] leading-snug mb-1">
-                  {doctor.degree ? `${doctor.degree} - ` : ""} {doctor.fullName}
+                <h3 className="font-bold  text-gray-900 text-2sm leading-snug mb-1">
+                  {doctor.degree ? `${doctor.degree.normalize('NFC')} - ` : ""} {doctor.profile?.fullName?.normalize('NFC')}
                 </h3>
                 
                 <p className="text-gray-500 text-[11px] mb-4 line-clamp-2">
