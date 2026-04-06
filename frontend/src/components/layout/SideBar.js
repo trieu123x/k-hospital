@@ -31,7 +31,7 @@ export function SideBar({ isAdmin = true, isDoctor = false, setSidebarClose = ()
 
   return (
     <div ref={sidebarRef} className={`
-      fixed top-15 bottom-0 w-full z-20 bg-[#070575] 
+      fixed top-15 bottom-0 w-full z-30 bg-[#070575] 
     text-white rasa-font text-[20px]
       xl:hidden flex flex-col
       transition-all duration-300 ease-in-out

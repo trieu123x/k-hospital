@@ -6,25 +6,35 @@ import Image from "next/image"
 export function NotificationForm() {
   const notifications = useNotificationStore(state => state.notifications)
 
+  const isEmpty = !notifications || notifications.length === 0;
+
   return <div className="absolute top-[120%] text-white right-0 w-100 h-125 bg-[#0C0B3F] flex flex-col">
     <header className="rasa-font h-15 text-[28px] flex items-center justify-center">
       Notification
     </header>
 
     <div className="h-95 flex-none overflow-y-scroll flex flex-col hide-scrollbar">
-      <NotificationCard />
-      <NotificationCard />
-      <NotificationCard isRead={true} />
-      <NotificationCard />
-      <NotificationCard isRead={true} />
+      {isEmpty ? (
+        <div className="flex-1 flex items-center justify-center text-gray-400/80 italic text-[15px] rasa-font">
+          Chưa có thông báo để xem
+        </div>
+      ) : (
+        <>
+          <NotificationCard />
+          <NotificationCard />
+          <NotificationCard isRead={true} />
+          <NotificationCard />
+          <NotificationCard isRead={true} />
+        </>
+      )}
     </div>
 
     <footer className="grow flex items-center justify-end border-t border-[#181672] mx-6">
-      <Button
+      {!isEmpty && <Button
         className="bg-[#3D59BD] hover:bg-[#4361cc] text-[12px]"
         onClick={() => { }}>
         Xóa tất cả
-      </Button>
+      </Button>}
     </footer>
   </div>
 }

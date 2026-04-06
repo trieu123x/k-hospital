@@ -1,22 +1,36 @@
 @import "tailwindcss";
 
 @font-face {
-    font-family: 'Rasa-Regular';
-    src: url('/fonts/Rasa-Regular.ttf') format('truetype');
+  font-family: 'Rasa-Regular';
+  src: url('/fonts/Rasa-Regular.ttf') format('truetype');
 }
 
 .rasa-font {
-    font-family: 'Rasa-Regular', 'serif';
+  font-family: 'Rasa-Regular', 'serif';
 }
 
 .hide-scrollbar {
-    /* Cho Firefox */
-    scrollbar-width: none;
-    /* Cho Internet Explorer và Edge cũ */
-    -ms-overflow-style: none;
+  /* Cho Firefox */
+  scrollbar-width: none;
+  /* Cho Internet Explorer và Edge cũ */
+  -ms-overflow-style: none;
 }
 
 /* Cho Chrome, Safari và Opera */
 .hide-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
 }

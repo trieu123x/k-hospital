@@ -31,7 +31,7 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
   }, [])
 
   return (
-    <nav className="fixed h-15 w-full bg-white z-20">
+    <nav className="fixed h-15 w-full bg-white z-30">
       <div className="flex h-full xl:justify-between bg-[#070575] xl:bg-transparent">
         <div className={`
           xl:bg-[#070575] xl:rounded-br-full 
@@ -85,7 +85,7 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
               Đặt lịch khám
             </LinkButton>
 
-            {isAdmin && <LinkButton href="/admin">
+            {isAdmin && <LinkButton href="/admin/aggregate">
               Quản lý
             </LinkButton>}
           </div>
@@ -142,8 +142,9 @@ function UnLoginOption2({ setSidebarOpen }) {
 
 function LoginOption1({ isNotiOpen, setNotiOpen }) {
   return <div className="hidden xl:flex w-1/5 justify-end items-center gap-2">
-    <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-2 rounded-full">
-      <Bell onClick={() => setNotiOpen(prev => !prev)} className="size-6" />
+    <div onClick={() => setNotiOpen(prev => !prev)}
+      className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-2 rounded-full">
+      <Bell className="size-6" />
       {isNotiOpen && <NotificationForm />}
     </div>
 
@@ -155,8 +156,9 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
 
 function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   return <div className="flex xl:hidden items-center gap-3.5 mr-5">
-    <div className="relative cursor-pointer hover:bg-[#bdbddf] transition-all duration-300 p-2 ml-2 rounded-full">
-      <Bell onClick={() => setNotiOpen(prev => !prev)} className="size-6" />
+    <div onClick={() => setNotiOpen(prev => !prev)}
+      className="relative cursor-pointer hover:bg-[#bdbddf] transition-all duration-300 p-2 ml-2 rounded-full">
+      <Bell className="size-6" />
       {isNotiOpen && <NotificationForm />}
     </div>
 
