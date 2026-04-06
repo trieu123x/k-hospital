@@ -79,29 +79,38 @@ export const diseaseRepository = {
     findById: async (id) => {
         const disease = await prisma.disease.findUnique({
             where: { id },
-            select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                description: true,
-                symptoms: true,
-                homeTreatment: true,
-                specialtyId: true,
+            include: {
                 category: {
                     select: {
                         id: true,
-                        name: true
+                        name: true,
+                        description: true
                     }
                 },
                 specialty: {
-                    select: {
-                        id: true,
-                        name: true
+                    include: {
+                        doctors: {
+                            include: {
+                                profile: {
+                                    select: {
+                                        id: true,
+                                        fullName: true,
+                                        avatarUrl: true,
+                                        isActive: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                medicines: {
+                    include: {
+                        medicine: true
                     }
                 }
             }
         })
-
+        
         return disease
     },
 
