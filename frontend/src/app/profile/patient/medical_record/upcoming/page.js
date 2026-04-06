@@ -1,56 +1,56 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import FilterImage from "../../../../../public/images/Filter.svg"; 
-import { DoctorAppointmentItem } from "../../../../components/medicalRecord/doctor/doctorAppointmentItem";
+import FilterImage from "../../../../../../public/images/Filter.svg"
+import { UpcomingAppointmentItem } from "../../../../../components//medicalRecord//upcomingItem.js" 
 import Image from "next/image";
 
-const mockDoctorRecords = [
+// DATA GIẢ LẬP ĐÃ CẬP NHẬT THÊM TRẠNG THÁI (status)
+const mockUpcomingRecords = [
   {
     id: 1,
     department: "Tai mũi họng",
-    patientName: "Đinh Tiến Tùng",
-    phone: "0123456789",
+    doctor: "TTND.PGS.TS.BS - Nguyễn Xuân Hùng",
     date: "21-03-2026",
     timestamp: new Date("2026-03-21T10:00:00").getTime(), 
     shift: "Ca 4 (10h - 11h)",
-    status: "ongoing", 
-    diagnosisMsg: "Nhập chẩn đoán" 
+    location: "Phòng 401, Tầng 5, Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội",
+    status: "ongoing" // Trạng thái: Đang diễn ra
   },
   {
     id: 2,
     department: "Tai mũi họng",
-    patientName: "Đinh Tiến Tùng",
-    phone: "0123456789",
+    doctor: "TTND.PGS.TS.BS - Nguyễn Xuân Hùng",
     date: "21-03-2026",
     timestamp: new Date("2026-03-21T11:00:00").getTime(),
     shift: "Ca 4 (10h - 11h)",
-    status: "urgent", // Ca GẤP
-    diagnosisMsg: "Chưa thể nhập"
+    location: "Phòng 401, Tầng 5, Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội",
+    status: "urgent" // Trạng thái: GẤP
   },
   {
     id: 3,
     department: "Tai mũi họng",
-    patientName: "Đinh Tiến Tùng",
-    phone: "0123456789",
+    doctor: "TTND.PGS.TS.BS - Nguyễn Xuân Hùng",
     date: "21-03-2026",
     timestamp: new Date("2026-03-21T14:00:00").getTime(),
     shift: "Ca 4 (10h - 11h)",
-    status: "normal", 
-    diagnosisMsg: "chưa thể nhập"
+    location: "Phòng 401, Tầng 5, Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội",
+    status: "normal" // Trạng thái: Bình thường (có nút Hủy)
   }
 ];
 
-export default function DoctorSchedulePage() {
+export default function UpcomingAppointmentsPage() {
   const [filterOption, setFilterOption] = useState("newest");
 
   const displayedRecords = useMemo(() => {
-    let result = [...mockDoctorRecords]; 
+    let result = [...mockUpcomingRecords]; 
 
     if (filterOption === "newest") {
       result.sort((a, b) => b.timestamp - a.timestamp); 
     } else if (filterOption === "oldest") {
       result.sort((a, b) => a.timestamp - b.timestamp); 
+    } else if (filterOption === "tai_mui_hong") {
+      result = result.filter(record => record.department === "Tai mũi họng");
     }
 
     return result;
@@ -58,7 +58,7 @@ export default function DoctorSchedulePage() {
 
   return (
     <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 min-h-screen flex justify-center">
-      <div className="w-full max-w-[1400px]">
+      <div className="w-full">
         
         <div className="flex items-center gap-3 mb-6 rasa-font text-[20px]">
           <Image
@@ -76,17 +76,18 @@ export default function DoctorSchedulePage() {
           >
             <option value="newest">Ngày khám: Gần đây nhất</option>
             <option value="oldest">Ngày khám: Cũ nhất</option>
+            <option value="tai_mui_hong">Chỉ khoa: Tai mũi họng</option>
           </select>
         </div>
 
         <div className="w-full max-h-[750px] overflow-y-auto pr-2 custom-scrollbar">
           {displayedRecords.length > 0 ? (
             displayedRecords.map((record) => (
-              <DoctorAppointmentItem key={record.id} data={record} />
+              <UpcomingAppointmentItem key={record.id} data={record} />
             ))
           ) : (
             <div className="text-center py-10 text-gray-500 italic rasa-font">
-              Không có lịch khám nào sắp tới.
+              Không có lịch hẹn sắp tới nào.
             </div>
           )}
         </div>
