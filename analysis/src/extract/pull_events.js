@@ -10,10 +10,8 @@ export async function extractEvents(db, startDate, endDate) {
       id,
       user_id,
       event_type,
-      entity_id,
       metadata,
-      created_at,
-      EXTRACT(HOUR FROM created_at) AS event_hour
+      created_at
     FROM pg.public.user_events
     WHERE created_at >= '${startDate}'::TIMESTAMP
       AND created_at <  '${endDate}'::TIMESTAMP + INTERVAL '1 day';
@@ -43,7 +41,8 @@ export async function extractEvents(db, startDate, endDate) {
     CREATE OR REPLACE TABLE chat_events AS
     SELECT
       *,
-      metadata->>'topic' AS chat_topic
+      metadata->>'topic' AS chat_topic,
+      metadata->>'sessionId' AS session_id
     FROM daily_events
     WHERE event_type = 'CHAT_AI_TOPIC';
   `);
