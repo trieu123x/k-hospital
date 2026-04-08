@@ -47,7 +47,7 @@ model Profile {
   isActive  Boolean   @default(true) @map("is_active")
 
   // Relations
-  doctor               Doctor?
+  doctor                Doctor?
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
   doctorLeaves          DoctorLeave[]  @relation("DoctorLeaves") // <-- ĐÃ THAY THẾ QUAN HỆ SCHEDULE THÀNH DOCTOR LEAVE
@@ -138,19 +138,19 @@ model DoctorLeave {
   id       String   @id @default(uuid()) @db.Uuid
   doctorId String   @map("doctor_id") @db.Uuid
   date     DateTime @db.Date
-  
+
   // NẾU shift = null -> Bác sĩ nghỉ CẢ NGÀY hôm đó
   // NẾU shift = 1, 2... -> Bác sĩ chỉ báo bận đúng ca đó
-  shift    Int?     
-  
-  reason   String?  @db.Text 
+  shift Int?
+
+  reason String? @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  doctor   Profile  @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
+  doctor Profile @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
 
   // CHUẨN: Không tạo trùng 2 cái lịch nghỉ cho cùng 1 ca
-  @@unique([doctorId, date, shift], name: "idx_unique_leave") 
+  @@unique([doctorId, date, shift], name: "idx_unique_leave")
   @@index([doctorId, date])
   @@map("doctor_leaves")
 }
@@ -160,21 +160,21 @@ model DoctorLeave {
 // ================================
 
 model Appointment {
-  id        String   @id @default(uuid()) @db.Uuid
-  patientId String   @map("patient_id") @db.Uuid
-  doctorId  String   @map("doctor_id") @db.Uuid
+  id        String @id @default(uuid()) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+  doctorId  String @map("doctor_id") @db.Uuid
 
-  date      DateTime @db.Date
-  shift     Int      // Ca khám: 1, 2, 3, 4
+  date  DateTime @db.Date
+  shift Int // Ca khám: 1, 2, 3, 4
 
-  status    String   @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
-  reason    String?  @db.Text
+  status String  @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
+  reason String? @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient   Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor    Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor  Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
 
   notifications Notification[]
   medicalRecord MedicalRecord?
@@ -275,7 +275,7 @@ model ChatMessage {
 
 // ================================
 // USER EVENTS
-// ================================
+// ================================ 
 
 enum EventType {
   VIEW_DOCTOR
@@ -289,13 +289,12 @@ model UserEvent {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String?   @map("user_id") @db.Uuid
   eventType EventType @map("event_type")
-  entityId  String?   @map("entity_id") @db.Uuid
-  metadata  Json?     @default("{}")
+  metadata  Json?     @default("{}") // Tất cả context (doctorId, diseaseId, shift, date, sessionId...) nằm ở đây
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([eventType])
   @@index([createdAt])
-  @@index([entityId])
+  @@index([metadata(ops: raw("jsonb_path_ops"))], type: Gin)
   @@map("user_events")
 }
 
@@ -307,7 +306,7 @@ enum ReportName {
   raw_events
   top_doctors
   top_diseases
-  peak_hours
+  peak_shifts
   daily_summary
   chat_topics
 }

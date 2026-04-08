@@ -1,287 +1,143 @@
-import "dotenv/config"
-import pkg from "@prisma/client"
-import { PrismaPg } from "@prisma/adapter-pg"
-const { PrismaClient } = pkg
+import "dotenv/config";
+import pkg from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import crypto from "crypto";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const { PrismaClient } = pkg;
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
-const prisma = new PrismaClient({
-    adapter
-})
+// ==========================================
+// HÀM TIỆN ÍCH RANDOM
+// ==========================================
+const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const generateUUID = () => crypto.randomUUID();
+
+const ho = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương"];
+const tenDem = ["Văn", "Thị", "Minh", "Ngọc", "Hải", "Tuấn", "Phương", "Thảo", "Linh", "Quang", "Hữu", "Thanh", "Bảo", "Đức"];
+const ten = ["Anh", "Nam", "Trang", "Dũng", "Đạt", "Hà", "Hương", "Khang", "Khoa", "Phát", "Tâm", "Vy", "Yến", "Sơn", "Long"];
+const randomName = () => `${getRandom(ho)} ${getRandom(tenDem)} ${getRandom(ten)}`;
 
 async function main() {
-    console.log("🚀 Đang bắt đầu quá trình Seeding cho K-Hospital...");
+    console.log("🚀 BẮT ĐẦU SEEDING DỮ LIỆU TẬP TRUNG (8 NGÀY GẦN ĐÂY)...");
 
-    // 1. SPECIALTIES (CHUYÊN KHOA)
-    const specDaLieu = await prisma.specialty.upsert({
-        where: { name: 'Da liễu' },
-        update: {},
-        create: { name: 'Da liễu', basePrice: 200000, description: 'Khám và điều trị các bệnh về da' },
-    });
-
-    const specHoHap = await prisma.specialty.upsert({
-        where: { name: 'Hô hấp' },
-        update: {},
-        create: { name: 'Hô hấp', basePrice: 250000, description: 'Điều trị bệnh liên quan đến phổi và đường hô hấp' },
-    });
-
-    const specNoi = await prisma.specialty.upsert({
-        where: { name: 'Nội tổng quát' },
-        update: {},
-        create: { name: 'Nội tổng quát', basePrice: 180000, description: 'Khám và điều trị bệnh tổng quát' },
-    });
-
-    console.log("✅ Đã nạp Chuyên khoa");
-
-    // 2. DISEASE CATEGORIES (NHÓM BỆNH)
-    const catTruyenNhiem = await prisma.diseaseCategory.upsert({
-        where: { name: 'Bệnh truyền nhiễm' },
-        update: {},
-        create: { name: 'Bệnh truyền nhiễm', description: 'Các bệnh lây qua virus và vi khuẩn' },
-    });
-
-    const catManTinh = await prisma.diseaseCategory.upsert({
-        where: { name: 'Bệnh mãn tính' },
-        update: {},
-        create: { name: 'Bệnh mãn tính', description: 'Các bệnh kéo dài lâu dài' },
-    });
-
-    const catDaLieu = await prisma.diseaseCategory.upsert({
-        where: { name: 'Bệnh da liễu' },
-        update: {},
-        create: { name: 'Bệnh da liễu', description: 'Các bệnh liên quan đến da' },
-    });
-
-    console.log("✅ Đã nạp Nhóm bệnh");
-
-    // 3. PROFILES (NGƯỜI DÙNG & BÁC SĨ)
-    // Bệnh nhân
-    const patient1 = await prisma.profile.upsert({
-        where: { phone: '0900000001' },
-        update: {},
-        create: { fullName: 'Nguyễn Văn A', phone: '0900000001', role: 'patient', email: 'vna@gmail.com' },
-    });
-
-    const patient2 = await prisma.profile.upsert({
-        where: { phone: '0900000002' },
-        update: {},
-        create: { fullName: 'Trần Thị B', phone: '0900000002', role: 'patient', email: 'tranthib@gmail.com' },
-    });
-
-    // Bác sĩ
-    const doctorProfile1 = await prisma.profile.upsert({
-        where: { phone: '0900000003' },
-        update: {},
-        create: {
-            id: '11111111-1111-1111-1111-111111111111',
-            fullName: 'Bác sĩ Lê Minh',
-            phone: '0900000003',
-            role: 'doctor',
-            email: 'leminh@hospital.vn'
-        },
-    });
-
-    const doctorProfile2 = await prisma.profile.upsert({
-        where: { phone: '0900000004' },
-        update: {},
-        create: {
-            id: '22222222-2222-2222-2222-222222222222',
-            fullName: 'Bác sĩ Phạm Hùng',
-            phone: '0900000004',
-            role: 'doctor',
-            email: 'phamhung@hospital.vn'
-        },
-    });
-
-    console.log("✅ Đã nạp Profiles");
-
-    // 4. DOCTORS (THÔNG TIN BÁC SĨ CHI TIẾT)
-    await prisma.doctor.upsert({
-        where: { id: doctorProfile1.id },
-        update: {},
-        create: {
-            id: doctorProfile1.id,
-            specialtyId: specDaLieu.id,
-            degree: 'Thạc sĩ',
-            experience: '10 năm kinh nghiệm điều trị bệnh da',
-            education: 'ĐH Y Dược TP.HCM',
-        },
-    });
-
-    await prisma.doctor.upsert({
-        where: { id: doctorProfile2.id },
-        update: {},
-        create: {
-            id: doctorProfile2.id,
-            specialtyId: specHoHap.id,
-            degree: 'Tiến sĩ',
-            experience: '12 năm kinh nghiệm điều trị bệnh phổi',
-            education: 'ĐH Y Hà Nội',
-        },
-    });
-
-    console.log("✅ Đã nạp Thông tin Bác sĩ");
-
-    // 5. DISEASES (DANH MỤC BỆNH)
-    // Xóa dữ liệu cũ để tránh lỗi trùng lặp khi seed lại vì Disease không có field unique trong schema hiện tại
-    await prisma.disease.deleteMany({});
-
-    const camCum = await prisma.disease.create({
-        data: {
-            categoryId: catTruyenNhiem.id,
-            specialtyId: specHoHap.id,
-            name: 'Cảm cúm',
-            description: 'Bệnh do virus cúm gây ra',
-            symptoms: 'Sốt, ho, đau họng, mệt mỏi',
-            homeTreatment: 'Uống nhiều nước, nghỉ ngơi, dùng thuốc hạ sốt',
-        },
-    });
-
-    const vienDa = await prisma.disease.create({
-        data: {
-            categoryId: catDaLieu.id,
-            specialtyId: specDaLieu.id,
-            name: 'Viêm da dị ứng',
-            description: 'Phản ứng dị ứng trên da',
-            symptoms: 'Ngứa, nổi mẩn đỏ',
-            homeTreatment: 'Tránh dị nguyên và dùng thuốc bôi',
-        },
-    });
-
-    console.log("✅ Đã nạp Danh mục bệnh");
-
-    // 6. MEDICINES & liên kết DISEASE-MEDICINE
-    await prisma.medicine.deleteMany({});
-    const para = await prisma.medicine.create({
-        data: { name: 'Paracetamol', medicineType: 'uống', ingredients: 'Paracetamol 500mg', dosage: '1 viên mỗi 6 giờ', usageInstruction: 'Uống sau ăn' }
-    });
-    const lora = await prisma.medicine.create({
-        data: { name: 'Loratadine', medicineType: 'uống', ingredients: 'Loratadine 10mg', dosage: '1 viên mỗi ngày', usageInstruction: 'Dùng khi bị dị ứng' }
-    });
-    const hydro = await prisma.medicine.create({
-        data: { name: 'Hydrocortisone Cream', medicineType: 'bôi', ingredients: 'Hydrocortisone', dosage: 'Bôi 2 lần/ngày', usageInstruction: 'Bôi lên vùng da bị viêm' }
-    });
-
-    await prisma.diseaseMedicine.createMany({
-        data: [
-            { diseaseId: camCum.id, medicineId: para.id },
-            { diseaseId: vienDa.id, medicineId: lora.id },
-            { diseaseId: vienDa.id, medicineId: hydro.id },
-        ]
-    });
-
-    console.log("✅ Đã nạp Thuốc và liên kết");
-
-    // 8. NEWS
-    await prisma.news.deleteMany({});
-    await prisma.news.create({
-        data: {
-            title: 'Khai trương trung tâm khám bệnh K-Hospital',
-            content: 'Bệnh viện K chính thức đưa vào hoạt động trung tâm khám bệnh số hóa.',
-        }
-    });
-
-    console.log("✅ Đã nạp Tin tức và Lịch hẹn");
-
-    // 9. USER EVENTS 
+    // 0. DỌN DẸP
+    console.log("🧹 Đang dọn dẹp Database...");
     await prisma.userEvent.deleteMany({});
+    await prisma.medicalRecord.deleteMany({});
+    await prisma.appointment.deleteMany({});
+    await prisma.diseaseMedicine.deleteMany({});
+    await prisma.medicine.deleteMany({});
+    await prisma.disease.deleteMany({});
+    await prisma.doctorLeave.deleteMany({});
+    await prisma.doctor.deleteMany({});
+    await prisma.profile.deleteMany({});
+    await prisma.diseaseCategory.deleteMany({});
+    await prisma.specialty.deleteMany({});
+    await prisma.news.deleteMany({});
 
-    const today = new Date();
-    const morning = new Date(today.setHours(8, 30));
-    const noon = new Date(today.setHours(12, 15));
-    const afternoon = new Date(today.setHours(15, 45));
-    const evening = new Date(today.setHours(20, 0));
-    const midnight = new Date(today.setHours(23, 30));
-
-    const testEvents = [
-        {
-            userId: patient1.id,
-            eventType: 'VIEW_DOCTOR',
-            entityId: doctorProfile1.id,
-            metadata: { specialty: 'Da liễu', source: 'homepage' },
-            createdAt: morning
-        },
-        {
-            userId: patient1.id,
-            eventType: 'CHAT_AI_TOPIC',
-            metadata: { topic: 'Da liễu', question: 'Dấu hiệu viêm da dị ứng' },
-            createdAt: morning
-        },
-        {
-            userId: patient1.id,
-            eventType: 'BOOK_APPOINTMENT',
-            entityId: doctorProfile1.id,
-            metadata: { shift: 1, price: 200000 },
-            createdAt: noon
-        },
-        {
-            userId: null, // Khách vãng lai
-            eventType: 'VIEW_DISEASE',
-            entityId: camCum.id,
-            metadata: { device: 'Mobile', browser: 'Safari' },
-            createdAt: afternoon
-        },
-        {
-            userId: patient2.id,
-            eventType: 'CHAT_AI_TOPIC',
-            metadata: { topic: 'Hô hấp', question: 'Làm sao để hết ho khan?' },
-            createdAt: afternoon
-        },
-        {
-            userId: patient1.id,
-            eventType: 'CANCEL_APPOINTMENT',
-            entityId: null, // Giả sử hủy lịch vừa đặt
-            metadata: { reason: 'Đổi lịch sang tuần sau' },
-            createdAt: evening
-        },
-        {
-            userId: patient2.id,
-            eventType: 'CHAT_AI_TOPIC',
-            metadata: { topic: 'Hô hấp', question: 'Cảm cúm uống thuốc gì?' },
-            createdAt: evening
-        },
-        {
-            userId: patient2.id,
-            eventType: 'VIEW_DOCTOR',
-            entityId: doctorProfile2.id,
-            metadata: { specialty: 'Hô hấp', source: 'search' },
-            createdAt: midnight
-        },
-        {
-            userId: null,
-            eventType: 'CHAT_AI_TOPIC',
-            metadata: { topic: 'Nội tổng quát', question: 'Lịch khám tổng quát K-Hospital' },
-            createdAt: midnight
-        },
-        {
-            userId: patient1.id,
-            eventType: 'CHAT_AI_TOPIC',
-            metadata: { topic: 'Da liễu', question: 'Kem bôi Hydrocortisone dùng thế nào?' },
-            createdAt: midnight
-        }
-    ];
-
-    for (const ev of testEvents) {
-        await prisma.userEvent.create({
-            data: {
-                userId: ev.userId,
-                eventType: ev.eventType,
-                entityId: ev.entityId,
-                metadata: ev.metadata,
-                createdAt: ev.createdAt
-            }
+    // 1. CHUYÊN KHOA (15)
+    const specialtyNames = ["Da liễu", "Hô hấp", "Nội tổng quát", "Tim mạch", "Tiêu hóa", "Thần kinh", "Cơ xương khớp", "Nhi khoa", "Phụ sản", "Tai mũi họng", "Răng hàm mặt", "Mắt", "Ung bướu", "Nội tiết", "Nam khoa"];
+    const specialties = [];
+    for (const name of specialtyNames) {
+        const spec = await prisma.specialty.create({
+            data: { name, basePrice: getRandom([150000, 200000, 250000, 500000]), description: `Khoa ${name}` }
         });
+        specialties.push(spec);
     }
 
-    console.log("✅ Đã nạp 10 User Events khớp với dữ liệu hệ thống");
-    console.log("🎉 SEEDING HOÀN TẤT!");
+    // 2. NHÓM BỆNH (10)
+    const categoryNames = ["Truyền nhiễm", "Mãn tính", "Da liễu", "Tim mạch", "Tiêu hóa", "Thần kinh", "Xương khớp", "Hô hấp", "Nội tiết", "Nhi"];
+    const categories = [];
+    for (const name of categoryNames) {
+        const cat = await prisma.diseaseCategory.create({ data: { name, description: `Nhóm ${name}` } });
+        categories.push(cat);
+    }
+
+    // 3. BỆNH NHÂN (30)
+    const patients = [];
+    for (let i = 1; i <= 30; i++) {
+        const p = await prisma.profile.create({
+            data: {
+                id: generateUUID(), fullName: randomName(), phone: `090${getRandomInt(1000000, 9999999)}`,
+                role: 'patient', email: `p${i}_${Date.now()}@gmail.com`
+            }
+        });
+        patients.push(p);
+    }
+
+    // 4. BÁC SĨ (20)
+    const doctors = [];
+    for (let i = 1; i <= 20; i++) {
+        const profile = await prisma.profile.create({
+            data: { id: generateUUID(), fullName: `BS. ${randomName()}`, phone: `098${getRandomInt(1000000, 9999999)}`, role: 'doctor', email: `d${i}@hospital.vn` }
+        });
+        await prisma.doctor.create({
+            data: { id: profile.id, specialtyId: getRandom(specialties).id, degree: getRandom(["Thạc sĩ", "Tiến sĩ", "BSCK II"]), experience: `${getRandomInt(5, 20)} năm` }
+        });
+        doctors.push(profile.id);
+    }
+
+    // 5. BỆNH & THUỐC (30)
+    const medicines = [];
+    for (let i = 1; i <= 30; i++) {
+        const med = await prisma.medicine.create({ data: { id: generateUUID(), name: `Thuốc ${String.fromCharCode(65 + i % 26)}${i}`, medicineType: 'uống' } });
+        medicines.push(med);
+    }
+
+    const diseaseIds = [];
+    const names = ["Cảm cúm", "Dạ dày", "Huyết áp", "Tiểu đường", "Hen suyễn", "Xoang", "Gút", "Viêm gan", "Mất ngủ", "Sỏi thận"];
+    for (let i = 0; i < 30; i++) {
+        const d = await prisma.disease.create({
+            data: { id: generateUUID(), name: `${getRandom(names)} ${i}`, categoryId: getRandom(categories).id, specialtyId: getRandom(specialties).id, symptoms: "..." }
+        });
+        diseaseIds.push(d.id);
+        await prisma.diseaseMedicine.create({ data: { diseaseId: d.id, medicineId: getRandom(medicines).id } });
+    }
+
+    // 6. APPOINTMENTS (200) - TỪ 8 NGÀY TRƯỚC ĐẾN TƯƠNG LAI
+    const appData = [];
+    for (let i = 0; i < 200; i++) {
+        const date = new Date();
+        // Ngẫu nhiên từ -8 ngày đến +22 ngày
+        date.setDate(date.getDate() + getRandomInt(-8, 22));
+
+        appData.push({
+            id: generateUUID(), patientId: getRandom(patients).id, doctorId: getRandom(doctors),
+            date: date, shift: getRandomInt(1, 12), status: getRandom(['pending', 'confirmed', 'completed', 'cancelled']),
+            reason: "Khám định kỳ"
+        });
+    }
+    await prisma.appointment.createMany({ data: appData });
+
+    // 7. USER EVENTS (1000) - CHỈ TRONG 8 NGÀY GẦN ĐÂY
+    const EVENT_TYPES = ['VIEW_DOCTOR', 'VIEW_DISEASE', 'CHAT_AI_TOPIC', 'BOOK_APPOINTMENT', 'CANCEL_APPOINTMENT'];
+    const eventData = [];
+    for (let i = 0; i < 1000; i++) {
+        const type = getRandom(EVENT_TYPES);
+        const date = new Date();
+        // Chỉ loanh quanh trong 8 ngày qua
+        date.setDate(date.getDate() - getRandomInt(0, 8));
+        date.setHours(getRandomInt(0, 23), getRandomInt(0, 59));
+
+        let meta = {};
+        if (type === 'VIEW_DOCTOR') meta = { doctorId: getRandom(doctors) };
+        else if (type === 'VIEW_DISEASE') meta = { diseaseId: getRandom(diseaseIds) };
+        else if (type === 'CHAT_AI_TOPIC') meta = { sessionId: generateUUID(), topic: "Sức khỏe" };
+        else meta = { doctorId: getRandom(doctors), shift: getRandomInt(1, 12), date: date.toISOString().split('T')[0] };
+
+        eventData.push({
+            userId: Math.random() > 0.2 ? getRandom(patients).id : null,
+            eventType: type, metadata: meta, createdAt: date
+        });
+    }
+    await prisma.userEvent.createMany({ data: eventData.slice(0, 500) });
+    await prisma.userEvent.createMany({ data: eventData.slice(500, 1000) });
+
+    console.log("==================================================");
+    console.log("🎉 SEEDING HOÀN TẤT VỚI MẬT ĐỘ CAO TRONG 8 NGÀY!");
+    console.log("==================================================");
 }
 
-main()
-    .catch((e) => {
-        console.error("❌ Lỗi Seeding:", e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+main().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
