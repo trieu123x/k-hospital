@@ -7,6 +7,9 @@ export function OptionBar({ optionState = "profile", isDoctor = true }) {
     case "admin":
       optionBody = <AdminOption />
       break;
+    case "patient":
+       optionBody = <PatientOption/>
+       break;
     default:
       optionBody = <ProfileOption isDoctor={isDoctor} />
       break
@@ -56,24 +59,47 @@ function AdminOption() {
 
 function ProfileOption({ isDoctor = true }) {
   return <>
-    <LinkButton href="/profile"
+    <LinkButton href="/profile/doctor/detail"
       className="hover:bg-[#050355] justify-start rounded-none">
       Thông tin cá nhân
     </LinkButton>
 
-    <LinkButton href="/profile"
+    <LinkButton href="/profile/doctor/medical_record"
       className="hover:bg-[#050355] justify-start rounded-none">
       {isDoctor ? "Lịch sử khám bệnh" : "Lịch sử thăm khám"}
     </LinkButton>
 
-    <LinkButton href="/profile"
+    <LinkButton href="/profile/doctor/medical_record/not_done"
       className="hover:bg-[#050355] justify-start rounded-none">
-      Yêu cầu đã hoàn tất
+      Yêu cầu chưa hoàn tất
     </LinkButton>
 
-    {isDoctor && <LinkButton href="/profile"
+    {isDoctor && <LinkButton href="/profile/doctor/schedules"
       className="hover:bg-[#050355] justify-start rounded-none">
-      Lịch khám bệnh
+      Lịch làm việc
     </LinkButton>}
+    {isDoctor && <LinkButton href="/profile/doctor/appointment"
+      className="hover:bg-[#050355] justify-start rounded-none">
+      Xác nhận ca khám
+    </LinkButton>}
+  </>
+}
+
+function PatientOption() {
+  return <>
+    <LinkButton href="/profile/patient/detail"
+      className="hover:bg-[#050355] justify-start rounded-none">
+      Thông tin cá nhân
+    </LinkButton>
+
+    <LinkButton href="/profile/patient/medical_record"
+      className="hover:bg-[#050355] justify-start rounded-none">
+        Lịch sử thăm khám
+    </LinkButton>
+
+    <LinkButton href="/profile/patient/medical_record/upcoming"
+      className="hover:bg-[#050355] justify-start rounded-none">
+      Lịch thăm khám sắp tới
+    </LinkButton>
   </>
 }

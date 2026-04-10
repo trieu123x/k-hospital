@@ -65,7 +65,7 @@ export const appointmentRepository = {
     updateMedicalRecord: async (appointmentId) => {
         return await prisma.appointment.update({
             where: { id: appointmentId },
-            data: { status: 'completed' }
+            data: { status: 'COMPLETED' }
         })
     },
 
@@ -290,6 +290,19 @@ export const appointmentRepository = {
     findLeaveById: async (id) => {
         return await prisma.doctorLeave.findUnique({
             where: { id }
+        });
+    },
+
+    findLeavesByDoctorId: async (doctorId) => {
+        return await prisma.doctorLeave.findMany({
+            where: { doctorId },
+            select: {
+                id: true,
+                doctorId: true,
+                date: true,
+                shift: true,
+                reason: true
+            }
         });
     },
 

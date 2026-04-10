@@ -93,7 +93,7 @@ export function Table({
                               onChange={(e) => {
                                 e.stopPropagation();
                                 const isChecked = e.target.checked;
-                                onTick(isChecked, "");
+                                onTick(isChecked, row);
                               }}
                               className="w-[16px] h-[16px] cursor-pointer accent-blue-600 ite"
                             />

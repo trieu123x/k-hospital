@@ -1,5 +1,7 @@
 import { appointmentRepository } from "../repositories/appointment.js"
 
+const ALL_SHIFTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
 export const appointmentService = {
     getAllAppointments: async (filters) => {
         const appointments = await appointmentRepository.getAllAppointments(filters)
@@ -90,6 +92,18 @@ export const appointmentService = {
         }))
     },
 
+    getDoctorLeaves: async (doctorId) => {
+        const leaves = await appointmentRepository.findLeavesByDoctorId(doctorId);
+        
+        return leaves.map(leave => ({
+            id: leave.id,
+            doctorId: leave.doctorId,
+            date: leave.date,
+            shift: leave.shift,
+            reason: leave.reason
+        }));
+    },
+
     getAvailableSlots: async (filters) => {
         const { date, doctorId } = filters
 
@@ -127,7 +141,7 @@ export const appointmentService = {
         unavailable.doctorLeaves.forEach(leave => {
             if (doctorBusyMap[leave.doctorId]) {
                 if (leave.shift === null) {
-                    [1, 2, 3, 4].forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
+                    ALL_SHIFTS.forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
                 } else {
                     doctorBusyMap[leave.doctorId].add(leave.shift)
                 }
@@ -140,10 +154,9 @@ export const appointmentService = {
             }
         })
 
-        const allShifts = [1, 2, 3, 4]
         const result = []
 
-        allShifts.forEach(shift => {
+        ALL_SHIFTS.forEach(shift => {
             const availableDoctorsForShift = []
             
             targetDoctors.forEach(doc => {
@@ -167,9 +180,6 @@ export const appointmentService = {
     registerDoctorLeave: async (data) => {
         const { doctorId, date, shift, reason } = data;
         
-        const leaveDate = new Date(date);
-        const now = new Date();
-        
         const startOfLeaveDate = new Date(date);
         startOfLeaveDate.setHours(0, 0, 0, 0);
 
@@ -179,10 +189,16 @@ export const appointmentService = {
             throw Object.assign(new Error("Không thể đăng ký nghỉ cho ngày đã qua!"), { statusCode: 400 });
         }
 
-        const shiftStartHours = { 1: 8, 2: 10, 3: 13, 4: 15, null: 8 }; 
-        const targetTime = new Date(startOfLeaveDate);
-        targetTime.setHours(shiftStartHours[shift] || 8, 0, 0, 0);
+        const shiftStartHours = { 
+            1: 7, 2: 8, 3: 9, 4: 10, 5: 11, 6: 12, 
+            7: 13, 8: 14, 9: 15, 10: 16, 11: 17, 12: 18, 
+            null: 7 
+        }; 
 
+        const targetTime = new Date(startOfLeaveDate);
+        targetTime.setHours(shiftStartHours[shift] || 7, 0, 0, 0);
+
+        const now = new Date();
         const diffInHours = (targetTime - now) / (1000 * 60 * 60);
 
         if (diffInHours < 24) {
@@ -195,7 +211,7 @@ export const appointmentService = {
         const appointmentsOnDate = await appointmentRepository.findByDoctorId({
             doctorId,
             date: startOfLeaveDate,
-            limit: 50 
+            limit: 100 
         });
 
         const conflictingAppointments = appointmentsOnDate.filter(app => {
@@ -232,9 +248,9 @@ export const appointmentService = {
             throw Object.assign(new Error("Không tìm thấy lịch nghỉ này!"), { statusCode: 404 });
         }
 
-        if (leave.doctorId !== doctorId) {
-            throw Object.assign(new Error("Bạn không có quyền hủy lịch nghỉ của bác sĩ khác!"), { statusCode: 403 });
-        }
+        // if (leave.doctorId !== doctorId) {
+        //     throw Object.assign(new Error("Bạn không có quyền hủy lịch nghỉ của bác sĩ khác!"), { statusCode: 403 });
+        // }
 
         const leaveDate = new Date(leave.date);
         const today = new Date();
@@ -260,8 +276,8 @@ export const appointmentService = {
             throw Object.assign(new Error("Không thể đặt lịch khám đã qua!"), { statusCode: 400 })
         }
 
-        if (![1, 2, 3, 4].includes(shift)) {
-            throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 4)!"), { statusCode: 400 })
+        if (shift < 1 || shift > 12) {
+            throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 12)!"), { statusCode: 400 })
         }
 
         const newAppointment = await appointmentRepository.create({

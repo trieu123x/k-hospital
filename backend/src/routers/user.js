@@ -11,10 +11,12 @@ const router = express.Router()
 router.get("/", authenticate, authorizeRoles('admin'), validate(userSchema.getAll), userController.getAllUsers)
 
 // GET /users/:id: Fetch specific user
-router.get("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(userSchema.getById), userController.getUserById)
+//router.get("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(userSchema.getById), userController.getUserById)
+router.get("/:id", validate(userSchema.getById), userController.getUserById)
 
 // PATCH /users/:id: Update specific user profile
-router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(userSchema.update), userController.updateUser)
+//router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(userSchema.update), userController.updateUser)
+router.patch("/:id", validate(userSchema.update), userController.updateUser)
 
 // PATCH /users/:id/block: Block or unblock a user
 router.patch("/:id/block", authenticate, authorizeRoles('admin'), validate(userSchema.toggleBlock), userController.toggleBlockUser)

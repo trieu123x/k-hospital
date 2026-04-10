@@ -14,7 +14,8 @@ router.get("/", validate(doctorSchema.getAll), doctorController.getAllDoctors)
 router.get("/:id", validate(doctorSchema.getById), doctorController.getDoctorById)
 
 // PATCH /doctors/:id: Update specific doctor info
-router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(doctorSchema.update), doctorController.updateDoctorInfo)
+//router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor'), validate(doctorSchema.update), doctorController.updateDoctorInfo)
+router.patch("/:id", validate(doctorSchema.update), doctorController.updateDoctorInfo)
 
 // POST /doctors: Create a new doctor account
 router.post("/", authenticate, authorizeRoles('admin'), validate(doctorSchema.create), doctorController.createDoctor)

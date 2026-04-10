@@ -1,77 +1,248 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
+import { specialtyApi } from "@/routers/speciality/specialityRouter"; 
 
-export function BookingForm({ onConfirm }) {
-  const [selectedDoctor, setSelectedDoctor] = useState("");
+export function BookingForm({ patientId, onConfirm, onChangeData }) { 
+  const [formData, setFormData] = useState({
+    specialtyId: "",   
+    specialtyName: "", 
+    doctorId: "",      
+    doctorName: "",    
+    date: "",
+    shift: "",
+    reason: "" 
+  });
+  
+  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  
+  const [availableShifts, setAvailableShifts] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+  const [fetchingSpecs, setFetchingSpecs] = useState(true);
+  const [fetchingDocs, setFetchingDocs] = useState(false);
+  const [fetchingShifts, setFetchingShifts] = useState(false); 
+
+  useEffect(() => {
+    if (onChangeData) onChangeData(formData);
+  }, [formData]);
+
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const res = await specialtyApi.getAllSpecialties();
+        if (res && res.success) setSpecialties(res.data);
+      } catch (error) {
+        console.error("Lỗi tải khoa:", error);
+      } finally {
+        setFetchingSpecs(false);
+      }
+    };
+    fetchSpecialties();
+  }, []);
+
+  useEffect(() => {
+    if (!formData.specialtyId) {
+      setDoctors([]);
+      return;
+    }
+    const fetchDoctors = async () => {
+      setFetchingDocs(true);
+      try {
+        const res = await specialtyApi.getDoctorsBySpecialty(formData.specialtyId);
+        if (res && res.success) setDoctors(res.data);
+      } catch (error) {
+        console.error("Lỗi tải bác sĩ:", error);
+      } finally {
+        setFetchingDocs(false);
+      }
+    };
+    fetchDoctors();
+  }, [formData.specialtyId]);
+
+  useEffect(() => {
+    if (!formData.doctorId || !formData.date) {
+      setAvailableShifts([]);
+      setFormData(prev => ({ ...prev, shift: "" })); 
+      return;
+    }
+
+    const fetchAvailableShifts = async () => {
+      setFetchingShifts(true);
+      try {
+        const res = await appointmentApi.getAvailableSlots({
+          doctorId: formData.doctorId,
+          date: formData.date
+        });
+        
+        if (res && res.success) {
+          setAvailableShifts(res.data);
+        } else {
+          setAvailableShifts([]);
+        }
+      } catch (error) {
+        console.error("Lỗi tải ca khám trống:", error);
+        setAvailableShifts([]);
+      } finally {
+        setFetchingShifts(false);
+      }
+    };
+
+    fetchAvailableShifts();
+  }, [formData.doctorId, formData.date]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSpecialtyChange = (e) => {
+    const selectedId = e.target.value;
+    const selectedSpec = specialties.find(s => s.id === selectedId || s._id === selectedId); 
+    setFormData(prev => ({
+      ...prev,
+      specialtyId: selectedId,
+      specialtyName: selectedSpec ? selectedSpec.name : "",
+      doctorId: "",   
+      doctorName: "",
+      shift: "" 
+    }));
+  };
+
+  const handleDoctorChange = (e) => {
+    const selectedId = e.target.value;
+    const selectedDoc = doctors.find(d => d.id === selectedId || d._id === selectedId);
+    setFormData(prev => ({
+      ...prev,
+      doctorId: selectedId,
+      doctorName: selectedDoc ? `${selectedDoc.degree ? `${selectedDoc.degree} - ` : ""}${selectedDoc.profile?.fullName}` : "",
+      shift: "" 
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.doctorId || !formData.date || !formData.shift || !formData.reason) {
+      alert("Vui lòng điền đầy đủ các thông tin bắt buộc!");
+      return;
+    }
+
+    if (!patientId) {
+      alert("Không tìm thấy thông tin bệnh nhân (Thiếu ID trên URL)!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        patientId: patientId,
+        doctorId: formData.doctorId, 
+        date: formData.date,
+        shift: parseInt(formData.shift),
+        reason: formData.reason
+      };
+
+      const res = await appointmentApi.bookAppointment(payload);
+      
+      if (res && res.success) {
+        alert("Đặt lịch khám thành công!");
+        onConfirm(); 
+      } else {
+        alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
+      }
+    } catch (error) {
+      alert("Đã có lỗi xảy ra từ máy chủ.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatShiftTime = (shiftNum) => {
+    const startHour = 6 + parseInt(shiftNum);
+    return `Ca ${shiftNum} (${startHour}:00 - ${startHour + 1}:00)`;
+  };
 
   return (
-    <div className="w-full h-full flex flex-col p-4 lg:p-8 bg-[FBFBFB]">
-      
+    <div className="w-full h-full flex flex-col p-4 lg:p-8 bg-[#FBFBFB]">
       <div className="flex flex-col gap-5">
         
         <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Họ và tên</label>
+          <label className="rasa-font font-bold text-[24px] text-black">Chuyên khoa *</label>
+          <select value={formData.specialtyId} onChange={handleSpecialtyChange} disabled={fetchingSpecs} className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font">
+            <option value="" disabled hidden>{fetchingSpecs ? "Đang tải..." : "Lựa chọn khoa"}</option>
+            {specialties.map(spec => <option key={spec.id || spec._id} value={spec.id || spec._id}>{spec.name}</option>)}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="rasa-font font-bold text-[24px] text-black">Bác sĩ *</label>
+          <select value={formData.doctorId} onChange={handleDoctorChange} disabled={!formData.specialtyId || fetchingDocs} className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font">
+            <option value="" disabled hidden>{!formData.specialtyId ? "Chọn khoa trước" : fetchingDocs ? "Đang tải..." : "Lựa chọn bác sĩ"}</option>
+            {doctors.map(doc => <option key={doc.id || doc._id} value={doc.id || doc._id}>{doc.degree ? `${doc.degree} - ` : ""}{doc.profile?.fullName}</option>)}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="rasa-font font-bold text-[24px] text-black">Ngày khám *</label>
           <input 
-            type="text" 
-            placeholder="Nhập họ và tên của bạn"
-            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font placeholder:text-gray-500"
+            type="date" 
+            name="date" 
+            value={formData.date} 
+            onChange={handleChange} 
+            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font" 
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Chuyên khoa</label>
-          <select defaultValue="" className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font cursor-pointer">
-            <option value="" disabled hidden>Lựa chọn khoa khám</option>
-            <option value="mat">Khoa Mắt</option>
-            <option value="noi">Khoa Nội</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Bác sĩ</label>
-          <select 
-            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font cursor-pointer"
-            value={selectedDoctor}
-            onChange={(e) => setSelectedDoctor(e.target.value)}
-          >
-            <option value="" disabled hidden>Lựa chọn bác sĩ khám</option>
-            <option value="hung">TTND.PGS.TS.BS - Nguyễn Xuân Hùng</option>
-            <option value="bs2">Thạc sĩ, Bác sĩ Trần Thị B</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Ngày khám</label>
-          <select defaultValue="" className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font cursor-pointer">
-            <option value="" disabled hidden>Lựa chọn ngày khám: dd/mm/yy</option>
-            <option value="today">Hôm nay</option>
-            <option value="tomorrow">Ngày mai</option>
-          </select>
-        </div>
-
-        {selectedDoctor && (
+        {formData.doctorId && formData.date && (
           <div className="flex flex-col gap-1">
-            <label className="rasa-font font-bold text-[24px] text-black">Ca khám</label>
-            <select defaultValue="" className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font cursor-pointer">
-              <option value="" disabled hidden>Lựa chọn ca khám</option>
-              <option value="sang">Sáng (07:30 - 11:30)</option>
-              <option value="chieu">Chiều (13:30 - 17:00)</option>
+            <label className="rasa-font font-bold text-[24px] text-black">Ca khám *</label>
+            <select 
+              name="shift" 
+              value={formData.shift} 
+              onChange={handleChange} 
+              disabled={fetchingShifts || availableShifts.length === 0}
+              className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font"
+            >
+              <option value="" disabled hidden>
+                {fetchingShifts 
+                  ? "Đang tải ca trống..." 
+                  : availableShifts.length === 0 
+                    ? "Bác sĩ đã kín lịch hoặc nghỉ vào ngày này" 
+                    : "Lựa chọn ca khám"
+                }
+              </option>
+              
+              {availableShifts.map((slot) => (
+                <option key={slot.shift} value={slot.shift}>
+                  {formatShiftTime(slot.shift)}
+                </option>
+              ))}
+              
             </select>
           </div>
         )}
 
+        <div className="flex flex-col gap-1">
+          <label className="rasa-font font-bold text-[24px] text-black">Lý do khám *</label>
+          <textarea 
+            name="reason" 
+            value={formData.reason} 
+            onChange={handleChange} 
+            rows="3"
+            placeholder="Ví dụ: Đau đầu, chóng mặt và buồn nôn 2 ngày nay..." 
+            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font resize-none" 
+          />
+        </div>
+
       </div>
 
-      <div className="pt-60 flex justify-end">
-        <button 
-          onClick={onConfirm}
-          className="bg-[#0B1460] hover:bg-[#152085] transition-colors text-white rasa-font px-8 py-2 rounded-[20px] text-[15px]"
-        >
-          Xác nhận
+      <div className="mt-12 flex justify-end">
+        <button onClick={handleSubmit} disabled={loading} className={`text-white rasa-font px-8 py-2 rounded-[20px] text-[15px] ${loading ? 'bg-gray-400' : 'bg-[#0B1460] hover:bg-[#152085]'}`}>
+          {loading ? "Đang xử lý..." : "Xác nhận"}
         </button>
       </div>
 
     </div>
-  )
+  );
 }

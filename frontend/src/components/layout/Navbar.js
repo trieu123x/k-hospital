@@ -81,7 +81,7 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
               Tin tức
             </LinkButton>
 
-            <LinkButton href="/booking">
+            <LinkButton href="/appointment">
               Đặt lịch khám
             </LinkButton>
 
