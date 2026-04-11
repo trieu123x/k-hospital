@@ -5,7 +5,7 @@ from app.config.config import settings
 class AIProvider:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model_name = 'gemini-3-flash-preview'
+        self.model_name = 'gemini-2.5-flash-lite'
 
     async def generate_chat(self, prompt: str):
         """

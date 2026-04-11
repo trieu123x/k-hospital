@@ -1,10 +1,19 @@
+import { uploadHelper } from "../helpers/storage-helper.js";
 import { newsRespository } from "../repositories/news.js";
 
 export const newsService = {
+    getTotalCount: async () => {
+        return await newsRespository.countAll()
+    },
+
+    getNewsForAdmin: async (filters) => {
+        return await newsRespository.findAllForAdmin(filters)
+    },
+
     createNews: async (data, file) => {
         if (file) {
             const imageUrl = await uploadHelper.uploadFile(file, 'medicare', 'news');
-            data.newUrl = imageUrl; 
+            data.newUrl = imageUrl;
         }
 
         const newNews = await newsRespository.create(data);
@@ -29,11 +38,11 @@ export const newsService = {
         return await newsRespository.update(id, data);
     },
 
-    getNewsList: async(filter) => {
+    getNewsList: async (filter) => {
         return await newsRespository.findWithFilter(filter)
     },
 
-    getNewsDetail: async(id) => {
+    getNewsDetail: async (id) => {
         const news = await newsRespository.findById(id)
         if (!news) {
             throw Object.assign(new Error("Không tìm thấy thông tin tin tức!"), { statusCode: 404 })

@@ -3,20 +3,27 @@ import { log } from '../helpers/logger.js';
 export async function extractEvents(db, startDate, endDate) {
   log.info(`Đang hút events từ ${startDate} đến ${endDate} từ PostgreSQL...`);
 
-  // Copy toàn bộ events trong khoảng thời gian vào DuckDB in-memory
+  // 1. Ép ngày truyền vào thành chuẩn ISO String UTC tuyệt đối
+  // startDate/endDate đang là 'YYYY-MM-DD', khi tạo new Date() nó sẽ là 00:00:00 UTC
+  const startUTC = new Date(startDate).toISOString();
+
+  // Lấy endDate + 1 ngày để làm mốc kết thúc
+  const endObj = new Date(endDate);
+  endObj.setDate(endObj.getDate() + 1);
+  const endUTC = endObj.toISOString();
+
+  // 2. Query DuckDB để nhận chuẩn ISO TIMESTAMPTZ (Có múi giờ)
   await db.exec(`
     CREATE OR REPLACE TABLE daily_events AS
     SELECT
       id,
       user_id,
       event_type,
-      entity_id,
       metadata,
-      created_at,
-      EXTRACT(HOUR FROM created_at) AS event_hour
+      created_at
     FROM pg.public.user_events
-    WHERE created_at >= '${startDate}'::TIMESTAMP
-      AND created_at <  '${endDate}'::TIMESTAMP + INTERVAL '1 day';
+    WHERE created_at >= '${startUTC}'::TIMESTAMPTZ
+      AND created_at <  '${endUTC}'::TIMESTAMPTZ;
   `);
 
   const total = await db.count('daily_events');
@@ -43,7 +50,8 @@ export async function extractEvents(db, startDate, endDate) {
     CREATE OR REPLACE TABLE chat_events AS
     SELECT
       *,
-      metadata->>'topic' AS chat_topic
+      metadata->>'topic' AS chat_topic,
+      metadata->>'sessionId' AS session_id
     FROM daily_events
     WHERE event_type = 'CHAT_AI_TOPIC';
   `);

@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Filter, Search } from "lucide-react";
+import { Filter, Search, MessageCircle } from "lucide-react";
 import axiosInstance from "@/utils/axios";
+import { ROUTES } from "@/routers";
+import { useChatStore } from "@/stores/chat";
 
 export default function DoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
@@ -14,6 +16,7 @@ export default function DoctorsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const toggleChat = useChatStore(state => state.toggleChat);
 
   // Lấy danh sách chuyên khoa
   useEffect(() => {
@@ -129,10 +132,10 @@ export default function DoctorsPage() {
       {/* Doctor Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : doctors.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {doctors.map((doctor) => (
             <div 
               key={doctor.id} 
@@ -161,7 +164,7 @@ export default function DoctorsPage() {
                 
                 <div className="mt-auto text-center pt-2">
                   <Link 
-                    href={`/doctors/${doctor.id}`} 
+                    href={`${ROUTES.DOCTORS}/${doctor.id}`} 
                     className="text-blue-500 text-[11px] hover:text-blue-700 hover:underline underline-offset-2"
                   >
                     Xem chi tiết
@@ -213,6 +216,9 @@ export default function DoctorsPage() {
           </button>
         </div>
       )}
+
+
+
     </div>
   );
 }

@@ -1,24 +1,42 @@
 import { prisma } from "../configs/prisma-config.js"
 
 export const medicineRepository = {
+    countAll: async () => {
+        return await prisma.medicine.count()
+    },
+
+    findAllForAdmin: async ({ name, typeId, lastId, limit = 30 }) => {
+        const where = {}
+        if (name) where.name = { contains: name, mode: 'insensitive' }
+        if (typeId) where.typeId = typeId
+
+        if (lastId) {
+            where.id = { gt: lastId }
+        }
+
+        return await prisma.medicine.findMany({
+            where,
+            take: limit,
+            orderBy: { id: 'asc' },
+            include: { medicineType: true }
+        })
+    },
+
     findAll: async (filters = {}, skip = 0, limit = 10) => {
         const where = {}
 
         if (filters.name) {
             where.name = { contains: filters.name, mode: 'insensitive' }
         }
-        if (filters.medicineType) {
-            where.typeId = { equals: filters.medicineType }
+        if (filters.typeId) {
+            where.typeId = filters.typeId
         }
 
         const [medicines, total] = await Promise.all([
             prisma.medicine.findMany({
                 where,
                 skip,
-                take: limit,
-                include: {
-                    medicineType: true
-                }
+                take: limit
             }),
             prisma.medicine.count({ where })
         ])
@@ -47,14 +65,16 @@ export const medicineRepository = {
 
     create: async (data) => {
         return await prisma.medicine.create({
-            data
+            data,
+            include: { medicineType: true }
         })
     },
 
     update: async (id, data) => {
         return await prisma.medicine.update({
             where: { id },
-            data
+            data,
+            include: { medicineType: true }
         })
     },
 
@@ -63,5 +83,4 @@ export const medicineRepository = {
             where: { id }
         })
     }
-}   
-
+}

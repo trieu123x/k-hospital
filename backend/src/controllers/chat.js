@@ -65,3 +65,15 @@ export const updateTopic = catchError(async (req, res) => {
         data: { topic }
     })
 })
+
+export const deleteSession = catchError(async (req, res) => {
+    const { id } = req.params
+    const userId = req.user?.id || null
+
+    await chatService.deleteSession(id, userId)
+
+    res.status(200).json({
+        success: true,
+        message: "Xóa phiên chat thành công"
+    })
+})

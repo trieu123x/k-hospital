@@ -1,6 +1,10 @@
 import { prisma, Prisma } from "../configs/prisma-config.js"
 
 export const diseaseRepository = {
+    countAll: async () => {
+        return await prisma.disease.count()
+    },
+
     create: async (data) => {
         const { name, categoryId, specialtyId, symptoms, description, imageUrl, homeTreatment } = data
         
@@ -86,6 +90,54 @@ export const diseaseRepository = {
             })),
             total
         }
+    },
+
+    findAllForAdmin: async ({ categoryId, specialtyId, name, lastId, limit = 30 }) => {
+        const searchPattern = name ? `%${name.toLowerCase()}%` : null
+        const nameLower = name ? name.toLowerCase() : null
+
+        const cursorCondition = lastId 
+            ? Prisma.sql`AND d.id > ${lastId}::uuid` 
+            : Prisma.empty
+
+        const diseases = await prisma.$queryRaw`
+            SELECT 
+                d.id, 
+                d.name, 
+                d.image_url AS "imageUrl", 
+                d.description,
+                d.symptoms,
+                d.home_treatment AS "homeTreatment",
+                s.name AS "specialtyName",
+                dc.name AS "categoryName"
+            FROM diseases d
+            LEFT JOIN specialties s ON d.specialty_id = s.id
+            LEFT JOIN disease_categories dc ON d.category_id = dc.id
+            WHERE 1=1
+                ${categoryId ? Prisma.sql`AND d.category_id = ${categoryId}::uuid` : Prisma.empty}
+                ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
+                ${cursorCondition}
+                ${name ? Prisma.sql`
+                    AND (
+                        d.name_clean LIKE ${searchPattern} 
+                        OR d.name_clean % ${nameLower}
+                    )` : Prisma.empty}
+            ORDER BY 
+                ${name ? Prisma.sql`similarity(d.name_clean, ${nameLower}) DESC,` : Prisma.empty} 
+                d.id ASC
+            LIMIT ${limit}
+        `
+
+        return diseases.map(disease => ({
+            id: disease.id,
+            name: disease.name,
+            imageUrl: disease.imageUrl,
+            description: disease.description,
+            symptoms: disease.symptoms,
+            homeTreatment: disease.homeTreatment,
+            specialtyName: disease.specialtyName,
+            categoryName: disease.categoryName
+        }))
     },
 
     findById: async (id) => {

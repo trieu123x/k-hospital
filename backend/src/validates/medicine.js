@@ -6,7 +6,7 @@ export const medicineSchema = {
             page: z.string().regex(/^\d+$/).transform(Number).optional().default("1"),
             limit: z.string().regex(/^\d+$/).transform(Number).optional().default("10"),
             name: z.string().optional(),
-            medicineType: z.string().optional()
+            typeId: z.string().uuid({ message: "ID loại thuốc không hợp lệ" }).optional()
         })
     },
 
@@ -20,7 +20,7 @@ export const medicineSchema = {
         body: z.object({
             name: z.string().min(2, "Tên thuốc quá ngắn"),
             imageUrl: z.string().url().optional().nullable(),
-            medicineType: z.string().optional().nullable(),
+            typeId: z.string().uuid({ message: "ID loại thuốc không hợp lệ" }).optional().nullable(),
             ingredients: z.string().optional().nullable(),
             dosage: z.string().optional().nullable(),
             usageInstruction: z.string().optional().nullable(),
@@ -35,7 +35,7 @@ export const medicineSchema = {
         body: z.object({
             name: z.string().min(2).optional(),
             imageUrl: z.string().url().optional().nullable(),
-            medicineType: z.string().optional().nullable(),
+            typeId: z.string().uuid({ message: "ID loại thuốc không hợp lệ" }).optional().nullable(),
             ingredients: z.string().optional().nullable(),
             dosage: z.string().optional().nullable(),
             usageInstruction: z.string().optional().nullable(),

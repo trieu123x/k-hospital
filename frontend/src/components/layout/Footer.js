@@ -5,8 +5,8 @@ import { ROUTES } from "@/routers";
 export default function Footer() {
   return (
     <footer className={`
-    bg-white h-15 px-10 rasa-font
-      border-t border-gray-100 z-30
+    bg-white h-11 px-10 rasa-font
+      border-t border-gray-100 z-10
       flex flex-col lg:flex-row lg:items-center justify-between
     `}>
       <div className="flex flex-col lg:flex-row lg:gap-5">

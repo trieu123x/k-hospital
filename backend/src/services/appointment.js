@@ -38,7 +38,7 @@ export const appointmentService = {
                 dob: appointment.patient.dob
             } : null,
             doctor: appointment.doctor ? {
-                doctorId: appointment.doctor.id, 
+                doctorId: appointment.doctor.id,
                 name: appointment.doctor.fullName,
                 specialityName: appointment.doctor.doctor?.specialty?.name
             } : null,
@@ -79,7 +79,7 @@ export const appointmentService = {
             date: app.date,
             shift: app.shift,
             status: app.status,
-            reason: app.reason, 
+            reason: app.reason,
             patient: app.patient ? {
                 patientId: app.patient.id,
                 name: app.patient.fullName,
@@ -110,7 +110,7 @@ export const appointmentService = {
             targetDoctors = [{ id: doctorId }]
         } else {
             targetDoctors = await prisma.profile.findMany({
-                where: { role: 'doctor', isActive: true },
+                where: { role: 'DOCTOR', isActive: true },
                 select: { id: true }
             })
         }
@@ -124,10 +124,12 @@ export const appointmentService = {
             doctorBusyMap[doc.id] = new Set()
         })
 
+        const ALL_SHIFTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
         unavailable.doctorLeaves.forEach(leave => {
             if (doctorBusyMap[leave.doctorId]) {
                 if (leave.shift === null) {
-                    [1, 2, 3, 4].forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
+                    ALL_SHIFTS.forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
                 } else {
                     doctorBusyMap[leave.doctorId].add(leave.shift)
                 }
@@ -140,15 +142,14 @@ export const appointmentService = {
             }
         })
 
-        const allShifts = [1, 2, 3, 4]
         const result = []
 
-        allShifts.forEach(shift => {
+        ALL_SHIFTS.forEach(shift => {
             const availableDoctorsForShift = []
-            
+
             targetDoctors.forEach(doc => {
                 if (!doctorBusyMap[doc.id].has(shift)) {
-                    availableDoctorsForShift.push({ doctorId: doc.id }) 
+                    availableDoctorsForShift.push({ doctorId: doc.id })
                 }
             })
 
@@ -166,10 +167,10 @@ export const appointmentService = {
 
     registerDoctorLeave: async (data) => {
         const { doctorId, date, shift, reason } = data;
-        
+
         const leaveDate = new Date(date);
         const now = new Date();
-        
+
         const startOfLeaveDate = new Date(date);
         startOfLeaveDate.setHours(0, 0, 0, 0);
 
@@ -179,15 +180,19 @@ export const appointmentService = {
             throw Object.assign(new Error("Không thể đăng ký nghỉ cho ngày đã qua!"), { statusCode: 400 });
         }
 
-        const shiftStartHours = { 1: 8, 2: 10, 3: 13, 4: 15, null: 8 }; 
+        const shiftStartHours = {
+            1: 7, 2: 8, 3: 9, 4: 10, 5: 11,     // Sáng
+            6: 13, 7: 14, 8: 15, 9: 16, 10: 17, 11: 18, 12: 19, // Chiều
+            null: 7 // Nghỉ nguyên ngày thì tính từ 7h sáng
+        };
         const targetTime = new Date(startOfLeaveDate);
-        targetTime.setHours(shiftStartHours[shift] || 8, 0, 0, 0);
+        targetTime.setHours(shiftStartHours[shift] || 7, 0, 0, 0);
 
         const diffInHours = (targetTime - now) / (1000 * 60 * 60);
 
         if (diffInHours < 24) {
             throw Object.assign(
-                new Error("Bạn phải đăng ký nghỉ trước ít nhất 24 tiếng so với giờ bắt đầu ca khám!"), 
+                new Error("Bạn phải đăng ký nghỉ trước ít nhất 24 tiếng so với giờ bắt đầu ca khám!"),
                 { statusCode: 400 }
             );
         }
@@ -195,33 +200,33 @@ export const appointmentService = {
         const appointmentsOnDate = await appointmentRepository.findByDoctorId({
             doctorId,
             date: startOfLeaveDate,
-            limit: 50 
+            limit: 50
         });
 
         const conflictingAppointments = appointmentsOnDate.filter(app => {
             const isTargetShift = shift ? app.shift === shift : true;
-            const isConflictingStatus = ['pending', 'confirmed'].includes(app.status);
+            const isConflictingStatus = ['PENDING', 'CONFIRMED'].includes(app.status);
             return isTargetShift && isConflictingStatus;
         });
 
         if (conflictingAppointments.length > 0) {
             throw Object.assign(
-                new Error(`Đã có ${conflictingAppointments.length} lịch hẹn đã được đặt. Vui lòng xử lý hủy hoặc dời lịch trước khi báo nghỉ!`), 
+                new Error(`Đã có ${conflictingAppointments.length} lịch hẹn đã được đặt. Vui lòng xử lý hủy hoặc dời lịch trước khi báo nghỉ!`),
                 { statusCode: 409 }
             );
         }
 
         const duplicate = await appointmentRepository.findExistingLeave(doctorId, startOfLeaveDate, shift);
-        
+
         if (duplicate) {
             throw Object.assign(new Error("Bạn đã đăng ký lịch nghỉ này trước đó rồi."), { statusCode: 409 });
         }
 
-        return await appointmentRepository.createLeave({ 
-            doctorId, 
-            date: startOfLeaveDate, 
-            shift, 
-            reason 
+        return await appointmentRepository.createLeave({
+            doctorId,
+            date: startOfLeaveDate,
+            shift,
+            reason
         });
     },
 
@@ -250,27 +255,38 @@ export const appointmentService = {
     },
 
     bookAppointment: async (data) => {
-        const { doctorId, date, shift, reason, patientId } = data 
-        
-        const appointmentDate = new Date(date) 
+        const { doctorId, date, shift, reason, patientId } = data
+
+        const appointmentDate = new Date(date)
         const today = new Date()
-        today.setHours(0, 0, 0, 0) 
+        today.setHours(0, 0, 0, 0)
 
         if (appointmentDate < today) {
             throw Object.assign(new Error("Không thể đặt lịch khám đã qua!"), { statusCode: 400 })
         }
 
-        if (![1, 2, 3, 4].includes(shift)) {
-            throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 4)!"), { statusCode: 400 })
+        if (shift < 1 || shift > 12) {
+            throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 12)!"), { statusCode: 400 })
         }
 
         const newAppointment = await appointmentRepository.create({
             patientId,
             doctorId,
-            date, 
-            shift, 
+            date,
+            shift,
             reason
         })
+
+        try {
+            await notificationService.sendNotification({
+                userId: doctorId,
+                appointmentId: newAppointment.id,
+                title: "Lịch hẹn mới",
+                message: `Bạn có một lịch hẹn mới vào ngày ${format(appointmentDate, 'dd/MM/yyyy')}, ca ${shift}.`
+            })
+        } catch (error) {
+            console.error("Lỗi gửi thông báo đặt lịch:", error)
+        }
 
         return {
             appointmentId: newAppointment.id,
@@ -280,15 +296,15 @@ export const appointmentService = {
 
     cancelAppointment: async (id) => {
         const appointment = await appointmentRepository.findById(id)
-        
+
         if (!appointment) {
             throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
         }
-        if (appointment.status === "completed") {
+        if (appointment.status === "COMPLETED") {
             throw Object.assign(new Error("Lịch khám đã hoàn thành, không thể hủy!"), { statusCode: 400 })
         }
-        
-        const appointmentDate = new Date(appointment.date)  
+
+        const appointmentDate = new Date(appointment.date)
         const now = new Date()
 
         const diffInHours = (appointmentDate - now) / (1000 * 60 * 60)
@@ -297,22 +313,51 @@ export const appointmentService = {
             throw Object.assign(new Error("Chỉ có thể tự hủy lịch trước ngày khám ít nhất 24 tiếng. Vui lòng gọi điện cho phòng khám để được hỗ trợ!"), { statusCode: 400 })
         }
 
-        await appointmentRepository.updateStatus(id, "cancelled")
+        await appointmentRepository.updateStatus(id, "CANCELLED")
+
+        try {
+            const targetUserId = (requesterId === appointment.patient.id)
+                ? appointment.doctor.id
+                : appointment.patient.id;
+
+            await notificationService.sendNotification({
+                userId: targetUserId,
+                appointmentId: id,
+                title: "Lịch hẹn đã bị hủy",
+                message: `Lịch hẹn ngày ${format(appointmentDate, 'dd/MM/yyyy')} (ca ${appointment.shift}) đã bị hủy.`
+            });
+        } catch (error) {
+            console.error("Lỗi gửi thông báo hủy lịch:", error);
+        }
+
         return true
     },
 
     updateAppointmentStatus: async (id, status) => {
         const existingAppointment = await appointmentRepository.findById(id)
-        
+
         if (!existingAppointment) {
             throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
         }
 
-        if (existingAppointment.status === "completed") {
+        if (existingAppointment.status === "COMPLETED") {
             throw Object.assign(new Error("Lịch khám này đã hoàn thành, không thể thay đổi trạng thái!"), { statusCode: 400 })
         }
 
         const updatedAppointment = await appointmentRepository.updateStatus(id, status)
+
+        if (status === "CONFIRMED") {
+            try {
+                await notificationService.sendNotification({
+                    userId: existingAppointment.patient.id, // Báo cho bệnh nhân
+                    appointmentId: id,
+                    title: "Lịch hẹn đã được xác nhận",
+                    message: `Lịch hẹn của bạn với BS. ${existingAppointment.doctor.fullName} vào ngày ${format(new Date(existingAppointment.date), 'dd/MM/yyyy')} đã được xác nhận.`
+                });
+            } catch (error) {
+                console.error("Lỗi gửi thông báo xác nhận:", error);
+            }
+        }
         return updatedAppointment
     }
 }

@@ -20,6 +20,9 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from '@/stores/auth';
 import { SideBar } from "@/components/layout/SideBar";
 import { OptionBar } from "@/components/layout/OptionBar";
+import { ChatForm } from "@/components/chat/form";
+import { MessageCircle } from "lucide-react";
+import { useChatStore } from "@/stores/chat";
 
 export default function RootLayout({ children }) {
   // //Mấy cái này state để tạm để thử giao diện, chưa chắc là logic chính thức
@@ -30,6 +33,7 @@ export default function RootLayout({ children }) {
   const isLogin = useAuthStore(state => state.isLogin)
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor)
+  const toggleChat = useChatStore(state => state.toggleChat)
 
   useEffect(() => {
     fetchUser();
@@ -41,20 +45,24 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} relative antialiased flex flex-col min-h-screen bg-gray-50`}
       >
         <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
-        <main className="mt-15">
-          {children}
+        <main className="mt-15 grow w-full flex flex-col items-center">
+          <div className="w-full max-w-[1536px] grow flex flex-col">
+            {children}
+          </div>
         </main>
         <Footer />
 
         {
           isSidebarOpen &&
-          <SideBar isAdmin={isAdmin} isDoctor={isDoctor} setSidebarClose={() => setSidebarOpen(false)} />
+          <SideBar setSidebarClose={() => setSidebarOpen(false)} />
         }
 
         {
           isOptionbarOpen &&
           <OptionBar />
         }
+        
+        <ChatForm />
       </body>
     </html>
   );

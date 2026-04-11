@@ -8,7 +8,7 @@ export const reportSchema = {
           "raw_events",
           "top_doctors",
           "top_diseases",
-          "peak_hours",
+          "peak_shifts",
           "daily_summary",
           "chat_topics",
         ],

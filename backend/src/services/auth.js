@@ -1,5 +1,6 @@
 import { supabase } from "../configs/supabase-config.js";
 import { profileRepository } from "../repositories/auth.js";
+import { uploadHelper } from "../helpers/storage-helper.js";
 import { sendOtpEmail } from "./mail.js";
 import crypto from "crypto";
 
@@ -10,6 +11,75 @@ const otpStore = new Map();
 const registerOtpStore = new Map();
 
 export const authService = {
+  /**
+   * Tạo tài khoản bác sĩ (không cần gửi email OTP)
+   */
+  registerDoctor: async ({ email, fullName, phone, file, avatarCropData }) => {
+    // 1. Kiểm tra phone
+    const existingPhone = await profileRepository.findByPhone(phone);
+    if (existingPhone) {
+      throw Object.assign(new Error("Số điện thoại đã được sử dụng"), { statusCode: 409 });
+    }
+
+    if (email) {
+      const existingEmail = await profileRepository.findByEmail(email);
+      if (existingEmail) {
+        throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 });
+      }
+    }
+
+    // 2. Tạo user trên Supabase Auth với password mặc định
+    const { supabaseAdmin } = await import("../configs/supabase-config.js");
+    if (!supabaseAdmin) {
+      throw Object.assign(new Error("Cần cấu hình SUPABASE_SERVICE_ROLE_KEY"), { statusCode: 500 });
+    }
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: "medicare",
+      user_metadata: { full_name: fullName, phone },
+      email_confirm: true,
+      phone_confirm: true,
+    });
+
+    if (authError) {
+      throw Object.assign(new Error(authError.message), { statusCode: 400 });
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) {
+      throw Object.assign(new Error("Không thể tạo tài khoản"), { statusCode: 500 });
+    }
+
+    // 3. Upload avatar nếu có
+    let avatarUrl = null;
+    if (file) {
+      avatarUrl = await uploadHelper.uploadFile(file, 'medicare', 'users');
+    }
+
+    // 4. Record profile
+    const { prisma } = await import("../configs/prisma-config.js");
+    const profile = await prisma.profile.create({
+      data: {
+        id: userId,
+        fullName,
+        email: email,
+        phone,
+        role: "DOCTOR",
+        avatarUrl,
+        avatarCropData: avatarCropData ? JSON.parse(avatarCropData) : null
+      }
+    });
+
+    return {
+      userId: profile.id,
+      fullName: profile.fullName,
+      email: profile.email,
+      phone: profile.phone,
+      role: profile.role
+    };
+  },
+
   /**
    * Đăng ký tài khoản mới
    * - Tạo user trên Supabase Auth

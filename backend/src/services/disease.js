@@ -6,6 +6,10 @@ import axios from "axios"
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000'
 
 export const diseaseService = {
+    getTotalCount: async () => {
+        return await diseaseRepository.countAll()
+    },
+
     createDisease: async (data, file) => {
         if (file) {
             const imageUrl = await uploadHelper.uploadFile(file, 'medicare', 'diseases')
@@ -75,6 +79,12 @@ export const diseaseService = {
                 totalPages: Math.ceil(result.total / (filters.limit || 12))
             }
         }
+    },
+
+    getDiseasesForAdmin: async (filters) => {
+        const diseases = await diseaseRepository.findAllForAdmin(filters)
+
+        return diseases
     },
 
     getDiseaseDetail: async (id, userId = null) => {

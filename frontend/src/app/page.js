@@ -4,7 +4,7 @@ import { Bot } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-white overflow-hidden">
+    <div className="relative min-h-screen  overflow-hidden">
       <div className="max-w-7xl mx-auto px-8 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
         
         {/* Left Column: Text content */}
@@ -71,10 +71,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Floating Chatbot */}
-      <button className="fixed bottom-8 right-8 bg-[#6c8fff] w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-[#5b7cee] transition-all z-50">
-        <Bot className="w-7 h-7 md:w-8 md:h-8 text-white" />
-      </button>
+      
     </div>
   );
 }

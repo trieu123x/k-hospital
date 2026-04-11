@@ -18,6 +18,23 @@ export const register = catchError(async (req, res) => {
 })
 
 /**
+ * POST /auth/register-doctor
+ * Body: { email, fullName, phone, avatarCropData } + file
+ */
+export const registerDoctor = catchError(async (req, res) => {
+    const { email, fullName, phone, avatarCropData } = req.body
+    const file = req.file
+
+    const data = await authService.registerDoctor({ email, fullName, phone, file, avatarCropData })
+
+    res.status(201).json({
+        success: true,
+        message: "Tạo tài khoản bác sĩ thành công.",
+        data
+    })
+})
+
+/**
  * POST /auth/verify-register
  * Body: { email, otp }
  */

@@ -50,7 +50,7 @@ export const appointmentRepository = {
                     date: appointmentDate,
                     shift,
                     reason,
-                    status: "pending"
+                    status: "PENDING"
                 },
                 select: { 
                     id: true, 
@@ -65,7 +65,7 @@ export const appointmentRepository = {
     updateMedicalRecord: async (appointmentId) => {
         return await prisma.appointment.update({
             where: { id: appointmentId },
-            data: { status: 'completed' }
+            data: { status: 'COMPLETED' }
         })
     },
 
@@ -242,7 +242,7 @@ export const appointmentRepository = {
     },
 
     updateStatus: async (id, status) => {
-        if (status === "cancelled" || status === "canceled") {
+        if (status === "CANCELLED" || status === "canceled") {
             return await prisma.appointment.delete({
                 where: { id },
                 select: { 
