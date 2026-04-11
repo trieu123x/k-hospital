@@ -1,9 +1,32 @@
 import { newsService } from "../services/news.js";
-import { catchError } from "../helpers/catch-error.js"; 
+import { catchError } from "../helpers/catch-error.js";
+
+export const getTotalNews = catchError(async (req, res) => {
+    const total = await newsService.getTotalCount()
+    res.status(200).json({
+        success: true,
+        data: { total }
+    })
+})
+
+export const getNewsForAdmin = catchError(async (req, res) => {
+    const { title, lastId, date, limit } = req.query
+    const data = await newsService.getNewsForAdmin({
+        title,
+        lastId,
+        date,
+        limit: limit ? parseInt(limit) : 30
+    })
+    res.status(200).json({
+        success: true,
+        message: "Lấy danh sách tin tức cho admin thành công",
+        data
+    })
+})
 
 export const createNews = catchError(async (req, res) => {
     const newsData = req.body
-    const file = req.file 
+    const file = req.file
 
     const data = await newsService.createNews(newsData, file)
     res.status(201).json({
@@ -14,16 +37,17 @@ export const createNews = catchError(async (req, res) => {
 })
 
 export const getNewsList = catchError(async (req, res) => {
-    const { title, lastId, limit } = req.query;
+    const { title, lastId, date, limit } = req.query;
 
     const filter = {
         title: title || undefined,
         lastId: lastId || undefined,
+        date: date || undefined,
         limit: limit ? parseInt(limit, 10) : 30
     };
 
     const data = await newsService.getNewsList(filter);
-    
+
     res.status(200).json({
         success: true,
         message: "Lấy danh sách tin tức thành công",
@@ -32,10 +56,10 @@ export const getNewsList = catchError(async (req, res) => {
 });
 
 export const getNewsDetail = catchError(async (req, res) => {
-    const { newsId } = req.params; 
+    const { newsId } = req.params;
 
     const data = await newsService.getNewsDetail(newsId);
-    
+
     res.status(200).json({
         success: true,
         message: "Lấy chi tiết tin tức thành công",
@@ -46,7 +70,7 @@ export const getNewsDetail = catchError(async (req, res) => {
 export const updateNews = catchError(async (req, res) => {
     const { newsId } = req.params
     const updateData = req.body
-    const file = req.file 
+    const file = req.file
 
     const data = await newsService.updateNews(newsId, updateData, file)
     res.status(200).json({

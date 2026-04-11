@@ -6,7 +6,7 @@ import { authenticate, authorizeRoles } from '../middlewares/authenticate.js'
 
 const router = express.Router()
 
-router.post('', authenticate, authorizeRoles('admin'), validate({ body: eventSchema.body }), createEvent)
-router.get('', authenticate, authorizeRoles('admin'), validate({ query: eventSchema.query }), getEvents)
+router.post('', authenticate, authorizeRoles('ADMIN'), validate({ body: eventSchema.body }), createEvent)
+router.get('', authenticate, authorizeRoles('ADMIN'), validate({ query: eventSchema.query }), getEvents)
 
 export default router

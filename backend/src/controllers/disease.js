@@ -1,6 +1,14 @@
 import { diseaseService } from "../services/disease.js"
 import { catchError } from "../helpers/catch-error.js"
 
+export const getTotalDiseases = catchError(async (req, res) => {
+    const total = await diseaseService.getTotalCount()
+    res.status(200).json({
+        success: true,
+        data: { total }
+    })
+})
+
 export const createDisease = catchError(async (req, res) => {
     const diseaseData = req.body
     const file = req.file 
@@ -27,6 +35,24 @@ export const getDiseases = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Lấy danh sách bệnh thành công",
+        data
+    })
+})
+
+export const getDiseasesForAdmin = catchError(async (req, res) => { 
+    const { categoryId, specialtyId, name, lastId, limit } = req.query
+    
+    const data = await diseaseService.getDiseasesForAdmin({ 
+        categoryId, 
+        specialtyId, 
+        name, 
+        lastId,
+        limit: limit ? parseInt(limit) : 30 
+    })
+
+    res.status(200).json({
+        success: true,
+        message: "Lấy danh sách bệnh cho admin thành công",
         data
     })
 })

@@ -16,7 +16,7 @@ export const appointmentSchema = {
         .number({ invalid_type_error: "Ca khám phải là số" })
         .int()
         .min(1, "Ca khám nhỏ nhất là 1")
-        .max(4, "Ca khám lớn nhất là 4"),
+        .max(12, "Ca khám lớn nhất là 12"),
       reason: z
         .string()
         .min(5, "Lý do khám quá ngắn, vui lòng mô tả chi tiết hơn")
@@ -34,7 +34,7 @@ export const appointmentSchema = {
         })
         .optional(),
       status: z
-        .enum(["pending", "confirmed", "completed", "cancelled"])
+        .enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"])
         .optional(),
       lastId: z.string().uuid({ message: "lastId phải là UUID" }).optional(),
       limit: z
@@ -106,10 +106,10 @@ export const appointmentSchema = {
       appointmentId: z.string().uuid({ message: "ID lịch khám không hợp lệ" }),
     }),
     body: z.object({
-      status: z.enum(["pending", "accepted", "completed", "cancelled"], {
+      status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"], {
         errorMap: () => ({
           message:
-            "Trạng thái không hợp lệ (chỉ nhận: pending, accepted, completed, cancelled)",
+            "Trạng thái không hợp lệ (chỉ nhận: PENDING, CONFIRMED, COMPLETED, CANCELLED)",
         }),
       }),
     }),
@@ -144,7 +144,7 @@ export const appointmentSchema = {
         .number()
         .int({ message: "Ca nghỉ phải là số nguyên" })
         .min(1, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
-        .max(4, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
+        .max(12, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 12)" })
         .nullable()
         .optional(),
 

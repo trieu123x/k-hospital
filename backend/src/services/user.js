@@ -1,13 +1,22 @@
 import { userRepository } from "../repositories/user.js"
+import { uploadHelper } from "../helpers/storage-helper.js"
 
 export const userService = {
+    getTotalCount: async () => {
+        return await userRepository.countAll()
+    },
+
+    getUsersForAdmin: async (filters) => {
+        return await userRepository.findAllForAdmin(filters)
+    },
+
     getAllUsers: async (requesterRole, page = 1, limit = 10) => {
         let filters = {}
 
-        if (requesterRole === 'doctor') {
+        if (requesterRole === 'DOCTOR') {
             // Doctor can access all patients
-            filters.role = 'patient'
-        } else if (requesterRole === 'admin') {
+            filters.role = 'PATIENT'
+        } else if (requesterRole === 'ADMIN') {
             // Admin can access all profiles, no filter needed
         } else {
             // Others (patient or undefined) are not allowed
@@ -38,8 +47,8 @@ export const userService = {
         // Admin: Can view anyone
         // Doctor: Can view doctors and patients (Prompt: "nếu là dortor thì cũng xem đc thông tin cụ thể của patient") -> basically anyone
         // Patient: Can view doctors, and themselves. Cannot view other patients.
-        if (requesterRole === 'patient') {
-            if (user.role !== 'doctor' && user.id !== requesterId) {
+        if (requesterRole === 'PATIENT') {
+            if (user.role !== 'DOCTOR' && user.id !== requesterId) {
                 throw Object.assign(new Error("Không có quyền xem thông tin người dùng này"), { statusCode: 403 })
             }
         }
@@ -47,7 +56,7 @@ export const userService = {
         return user
     },
 
-    updateUser: async (id, requesterId, updateData) => {
+    updateUser: async (id, requesterId, updateData, file) => {
         // Only allow self-updating 
         if (id !== requesterId) {
             throw Object.assign(new Error("Chỉ có thể cập nhật thông tin của chính mình"), { statusCode: 403 })
@@ -59,6 +68,19 @@ export const userService = {
         // Parse dob to Date if provided as string
         if (allowedData.dob) {
             allowedData.dob = new Date(allowedData.dob);
+        }
+
+        if (file) {
+            const existingUser = await userRepository.findById(id);
+            if (existingUser && existingUser.avatarUrl) {
+                try {
+                    await uploadHelper.deleteFile(existingUser.avatarUrl, 'medicare');
+                } catch (e) {
+                    console.error("Lỗi xóa ảnh cũ:", e);
+                }
+            }
+            const imageUrl = await uploadHelper.uploadFile(file, 'medicare', 'users');
+            allowedData.avatarUrl = imageUrl;
         }
 
         const updatedUser = await userRepository.update(id, allowedData)

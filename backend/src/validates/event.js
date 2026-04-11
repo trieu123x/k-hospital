@@ -17,11 +17,6 @@ export const eventSchema = {
       ],
       { errorMap: () => ({ message: "Loại sự kiện không hợp lệ" }) },
     ),
-    entityId: z
-      .string()
-      .uuid({ message: "Entity ID phải là UUID" })
-      .optional()
-      .nullable(),
     metadata: z.any().optional().nullable(),
   }),
 

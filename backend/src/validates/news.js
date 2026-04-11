@@ -8,6 +8,10 @@ export const newsSchema = {
   query: z.object({
     title: z.string().optional(),
     lastId: z.string().uuid({ message: "lastId không hợp lệ" }).optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Định dạng ngày không hợp lệ. Vui lòng dùng YYYY-MM-DD")
+      .optional(),
     limit: z
       .string()
       .optional()

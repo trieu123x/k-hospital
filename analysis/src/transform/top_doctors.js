@@ -34,7 +34,7 @@ export async function transformTopDoctors(db) {
     LEFT JOIN pg.public.profiles p ON d.id = p.id
     LEFT JOIN pg.public.specialties s ON d.specialty_id = s.id
     WHERE rs.popularity_score > 0
-    ORDER BY specialty_name, rank_in_specialty;
+    ORDER BY rs.popularity_score DESC
   `);
 
   return db.count('result_top_doctors');

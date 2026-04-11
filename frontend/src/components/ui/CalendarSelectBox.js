@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useRef, useEffect } from "react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "./Button"
@@ -13,7 +14,6 @@ export function CalendarSelectBox({
   placeholder = "Ngày bắt đầu"
 }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(value)
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -26,8 +26,8 @@ export function CalendarSelectBox({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const formattedDate = selectedDate
-    ? format(selectedDate, "dd/MM/yyyy")
+  const formattedDate = value
+    ? format(value, "dd/MM/yyyy")
     : ""
 
   return (
@@ -40,8 +40,8 @@ export function CalendarSelectBox({
           px-2 py-1 text-[14px] focus:outline-none
         `}
       >
-        <span className={`flex-1 text-left truncate ${!selectedDate ? "text-gray-500" : "text-black"}`}>
-          {selectedDate ? formattedDate : placeholder}
+        <span className={`flex-1 text-left truncate ${!value ? "text-gray-500" : "text-black"}`}>
+          {value ? formattedDate : placeholder}
         </span>
         <CalendarIcon className="w-4 h-4 text-gray-600" />
       </Button>
@@ -50,9 +50,8 @@ export function CalendarSelectBox({
         <div className="absolute top-full left-0 z-20 mt-1 bg-white border border-gray-200 rounded-[4px] shadow-lg p-3">
           <DayPicker
             mode="single"
-            selected={selectedDate}
+            selected={value}
             onSelect={(date) => {
-              setSelectedDate(date)
               if (onChange) onChange(date)
               setIsOpen(false)
             }}

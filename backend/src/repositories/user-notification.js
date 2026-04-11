@@ -3,12 +3,21 @@ import { prisma } from "../configs/prisma-config.js"
 export const notificationRepository = {
     findByUserId: async (userId, limit = 10, lastId = null) => {
         return await prisma.notification.findMany({
-            where: { 
-                userId,
-                ...(lastId && { id: { lt: lastId } }) 
+            where: {
+                userId: userId
             },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
+            orderBy: {
+                createdAt: 'desc'
+            },
+            take: Number(limit),
+
+            ...(lastId && {
+                cursor: {
+                    id: lastId
+                },
+                skip: 1
+            }),
+
             select: {
                 id: true,
                 title: true,
@@ -18,7 +27,13 @@ export const notificationRepository = {
                 appointmentId: true,
                 appointment: {
                     select: {
-                        status: true
+                        status: true,
+                        doctor: {
+                            select: {
+                                fullName: true,
+                                avatarUrl: true
+                            }
+                        }
                     }
                 }
             }
@@ -58,9 +73,9 @@ export const notificationRepository = {
 
     deleteReadNotificationsByUserId: async (userId) => {
         return await prisma.notification.deleteMany({
-            where: { 
+            where: {
                 userId: userId,
-                isRead: true 
+                isRead: true
             }
         });
     }

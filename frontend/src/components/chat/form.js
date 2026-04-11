@@ -1,28 +1,174 @@
-import { useRef, useState } from "react"
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ChatIcon } from "./icon"
-import { Plus, Menu } from "lucide-react"
+import { Plus, Menu, MoreHorizontal } from "lucide-react"
 import Image from "next/image"
 import { useChatStore } from "@/stores/chat"
+import { aiChatApi, createChatSession, getSessionHistory, saveChatMessage } from "@/routers/chat-api"
 import { ChatHistory } from "./history"
 
 export function ChatForm() {
   const [isOpen, setOpen] = useState(false)
   const [isHistoryOpen, setHistoryOpen] = useState(false)
-
+  const [inputText, setInputText] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const textareaRef = useRef(null)
-  const textInput = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const isFetchingRef = useRef(false)
+  const { session, chatSessions, addChatSession, resetSession, setSession } = useChatStore(state => state)
 
-  const session = useChatStore(state => state.session)
-
-  const handleInput = (e) => {
-    const value = e.target.value;
-    textInput.current = value.trim() === "" ? null : value
-
-    // --- LOGIC TỰ ĐỘNG NỞ CHIỀU CAO ---
+  useEffect(() => {
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = 'auto'
       textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [inputText])
+
+  useEffect(() => {
+    const fetchInitialMessages = async () => {
+      if (session && isOpen) {
+        try {
+          if (chatSessions.length === 0) {
+            const response = await getSessionHistory(session, { limit: 20 })
+            const msgs = response.data.messages || []
+            const formattedMsgs = msgs.map(m => ({
+              id: m.id,
+              role: m.role,
+              message: m.content
+            }))
+
+            setSession(session, formattedMsgs)
+            setHasMore(msgs.length === 20)
+          }
+        } catch (error) {
+          console.error("Lỗi lấy lịch sử chat:", error)
+        }
+      }
+    }
+    fetchInitialMessages()
+  }, [session, isOpen, chatSessions.length, setSession])
+
+  const handleScroll = useCallback(async () => {
+    const container = scrollContainerRef.current
+    if (!container || !session || !hasMore || isFetchingRef.current) return
+
+    const isNearTop = container.scrollHeight + container.scrollTop <= container.clientHeight + 50
+
+    if (isNearTop) {
+      isFetchingRef.current = true
+      setIsLoadingMore(true)
+
+      try {
+        const oldestMsgId = chatSessions[chatSessions.length - 1]?.id
+
+        if (oldestMsgId) {
+          const response = await getSessionHistory(session, {
+            limit: 20,
+            lastId: oldestMsgId
+          })
+
+          const newMsgs = response.data.messages || []
+
+          if (newMsgs.length > 0) {
+            const formattedMsgs = newMsgs.map(m => ({
+              id: m.id,
+              role: m.role,
+              message: m.content
+            }))
+            setSession(session, [...chatSessions, ...formattedMsgs])
+          }
+
+          setHasMore(newMsgs.length === 20)
+        }
+      } catch (error) {
+        console.error("Lỗi tải thêm tin nhắn:", error)
+      } finally {
+        setIsLoadingMore(false)
+        isFetchingRef.current = false
+      }
+    }
+  }, [session, hasMore, chatSessions, setSession])
+
+  const handleInput = (e) => {
+    setInputText(e.target.value)
+  }
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return
+
+    const questionToAsk = inputText
+    setInputText("")
+
+    setIsTyping(true)
+    setIsThinking(true)
+
+    let currentSessionId = session
+
+    try {
+      addChatSession({ id: crypto.randomUUID(), role: "USER", message: questionToAsk })
+
+      if (!currentSessionId) {
+        const newSessionData = await createChatSession({ content: questionToAsk })
+        currentSessionId = newSessionData.data.session.id
+        setSession(
+          currentSessionId,
+          [{
+            id: newSessionData.data.message.id,
+            role: newSessionData.data.message.role,
+            message: newSessionData.data.message.content
+          }]
+        )
+      } else {
+        await saveChatMessage(currentSessionId, { role: "USER", content: questionToAsk })
+      }
+
+      let fullResponseText = ""
+
+      await aiChatApi(
+        currentSessionId,
+        questionToAsk,
+        (newChunk) => {
+          setIsThinking(false)
+          fullResponseText += newChunk
+        },
+        async () => {
+          try {
+            await saveChatMessage(currentSessionId, { role: "AI", content: fullResponseText })
+            setIsTyping(false)
+            addChatSession({ id: crypto.randomUUID(), role: "AI", message: fullResponseText })
+
+          } catch (err) {
+            console.log("Lỗi lưu AI message DB:", err)
+            setIsTyping(false)
+            addChatSession({ id: crypto.randomUUID(), role: "AI", message: fullResponseText })
+          }
+        },
+        (error) => {
+          console.log("Lỗi khi chat: ", error)
+          setIsThinking(false)
+          setIsTyping(false)
+          addChatSession({ id: crypto.randomUUID(), role: "AI", message: "Xin lỗi, tôi đang gặp sự cố kết nối..." })
+        }
+      )
+
+    } catch (error) {
+      console.error("Lỗi mạng hoặc server không phản hồi:", error)
+      setIsThinking(false)
+      setIsTyping(false)
+      setInputText(questionToAsk)
+      alert("Đã có lỗi xảy ra, vui lòng thử lại.")
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
     }
   }
 
@@ -35,7 +181,11 @@ export function ChatForm() {
             <span className="w-[85%] text-center truncate">MediCare Bot</span>
           </header>
 
-          <div className="flex flex-col-reverse gap-2 h-135 overflow-y-scroll hide-scrollbar">
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex flex-col-reverse gap-2 h-135 overflow-y-scroll hide-scrollbar"
+          >
             {
               !session ?
                 <>
@@ -51,13 +201,30 @@ export function ChatForm() {
                   </div>
                 </> :
                 <>
-                  <MessageForm role="USER" />
-                  <MessageForm />
-                  <MessageForm />
-                  <MessageForm />
-                  <MessageForm />
-                  <MessageForm />
-                  <MessageForm />
+                  {isThinking && (
+                    <div className="w-full flex gap-2 px-4">
+                      <LogoMessage />
+                      <div className="flex flex-col gap-2 animate-pulse">
+                        <div className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 flex items-center">
+                          Đang suy nghĩ <MoreHorizontal className="ml-1 w-5 h-5 animate-bounce" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {chatSessions.map((chat) => (
+                    <MessageForm
+                      key={chat.id}
+                      messageData={chat.message}
+                      role={chat.role}
+                    />
+                  ))}
+
+                  {isLoadingMore && (
+                    <div className="w-full py-2 flex justify-center items-center text-white/70">
+                      <MoreHorizontal className="animate-pulse" />
+                    </div>
+                  )}
                 </>
             }
           </div>
@@ -65,7 +232,9 @@ export function ChatForm() {
           <div className="relative h-22 flex text-[16px]">
             <textarea
               ref={textareaRef}
+              value={inputText}
               onChange={handleInput}
+              onKeyDown={handleKeyDown}
               rows={1}
               placeholder="Hỏi Medicare"
               className={`
@@ -84,7 +253,7 @@ export function ChatForm() {
         </ChatIcon>
 
         {isOpen && <>
-          <ChatIcon onClick={() => { }}>
+          <ChatIcon onClick={() => { resetSession() }}>
             <Plus className="size-12" />
           </ChatIcon>
 
@@ -103,7 +272,7 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
   return <div className={`w-full flex ${role === "USER" && "flex-row-reverse"} gap-2 px-4`}>
     <LogoMessage />
     <div className="flex flex-col gap-2">
-      <TextMessage />
+      <TextMessage message={messageData} />
       {haveObject && <ObjectMessage />}
     </div>
   </div>
@@ -111,7 +280,7 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
 
 function TextMessage({ message = "" }) {
   return <p className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word">
-    Tôi hiện tại trong người đang cảm thấy thường xuyên bị tức ngực, khó thở và 1 số biểu hiện khác liên quan đến thở, theo bạn tôi đang bị gì?
+    {message}
   </p>
 }
 

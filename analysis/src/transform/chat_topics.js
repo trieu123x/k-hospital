@@ -11,7 +11,7 @@ export async function transformChatTopics(db) {
     WHERE chat_topic IS NOT NULL
       AND chat_topic != ''
     GROUP BY chat_topic
-    ORDER BY mention_count DESC
+    ORDER BY total_sessions DESC
   `);
 
   return db.count('result_chat_topics');

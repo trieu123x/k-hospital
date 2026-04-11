@@ -14,6 +14,8 @@ import medicineRouter from "./routers/medicine.js"
 import newsRouter from "./routers/news.js"
 import eventRouter from "./routers/event.js"
 import reportRouter from "./routers/report.js"
+import degreeRouter from "./routers/degree.js"
+import medicineTypeRouter from "./routers/medicine-type.js"
 import { globalErrorHandler } from "./middlewares/error-handler.js"
 import dotenv from "dotenv"
 import { setupSwagger } from "./configs/swagger-config.js"
@@ -53,6 +55,8 @@ app.use("/medicines", medicineRouter)
 app.use("/news", newsRouter)
 app.use("/event", eventRouter)
 app.use("/report", reportRouter)
+app.use("/degrees", degreeRouter)
+app.use("/medicine-types", medicineTypeRouter)
 
 app.use(globalErrorHandler)
 
