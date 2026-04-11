@@ -3,10 +3,10 @@ import { catchError } from "../helpers/catch-error.js"
 
 export const bookAppointment = catchError(async (req, res) => {
     const { patientId, doctorId, date, shift, reason } = req.body 
-    const requesterId = req.user.id
-    const requesterRole = req.user.profile.role
+    const requesterId = patientId
+    const requesterRole = 'patient'
 
-    if (requesterRole === 'PATIENT' && patientId !== requesterId) {
+    if (requesterRole === 'patient' && patientId !== requesterId) {
         throw Object.assign(new Error("Bạn chỉ có thể đặt lịch cho chính mình."), { statusCode: 403 })
     }
 
@@ -65,10 +65,10 @@ export const getAppointmentDetail = catchError(async (req, res) => {
 
     const data = await appointmentService.getAppointmentDetail(appointmentId)
 
-    if (requesterRole === 'PATIENT' && data.patient?.userId !== requesterId) {
+    if (requesterRole === 'patient' && data.patient?.userId !== requesterId) {
         throw Object.assign(new Error("Bạn không có quyền xem thông tin lịch khám của người khác."), { statusCode: 403 })
     }
-    if (requesterRole === 'DOCTOR' && data.doctor?.doctorId !== requesterId) {
+    if (requesterRole === 'doctor' && data.doctor?.doctorId !== requesterId) {
         throw Object.assign(new Error("Bạn không có quyền xem lịch khám của bác sĩ khác."), { statusCode: 403 })
     }
     
@@ -82,12 +82,12 @@ export const getAppointmentDetail = catchError(async (req, res) => {
 export const getPatientHistory = catchError(async (req, res) => {
     const { userId } = req.params 
     const { lastId, limit, desc } = req.query
-    const requesterId = req.user.id
-    const requesterRole = req.user.profile.role
+    // const requesterId = req.user.id
+    // const requesterRole = req.user.profile.role
 
-    if (requesterRole === 'PATIENT' && userId !== requesterId) {
-        throw Object.assign(new Error("Bạn chỉ có thể xem lịch sử khám của chính mình."), { statusCode: 403 })
-    }
+    // if (requesterRole === 'patient' && userId !== requesterId) {
+    //     throw Object.assign(new Error("Bạn chỉ có thể xem lịch sử khám của chính mình."), { statusCode: 403 })
+    // }
     
     const data = await appointmentService.getPatientHistory({ 
         patientId: userId,
@@ -122,18 +122,36 @@ export const getDoctorSchedule = catchError(async (req, res) => {
     })
 })
 
+export const getDoctorLeaves = catchError(async (req, res) => {
+    const { doctorId } = req.params;
+
+    // const doctorId = req.user.id;
+
+    if (!doctorId) {
+        throw Object.assign(new Error("Vui lòng cung cấp ID của bác sĩ!"), { statusCode: 400 });
+    }
+
+    const data = await appointmentService.getDoctorLeaves(doctorId);
+
+    res.status(200).json({
+        success: true,
+        message: "Lấy danh sách lịch nghỉ thành công.",
+        data
+    });
+})
+
 export const cancelAppointment = catchError(async (req, res) => {
     const { appointmentId } = req.params
-    const requesterId = req.user.id
-    const requesterRole = req.user.profile.role
+    // const requesterId = req.user.id
+    // const requesterRole = req.user.profile.role
 
-    if (requesterRole === 'PATIENT') {
-        const existingAppointment = await appointmentService.getAppointmentDetail(appointmentId)
+    // if (requesterRole === 'patient') {
+    //     const existingAppointment = await appointmentService.getAppointmentDetail(appointmentId)
         
-        if (existingAppointment.patient?.userId !== requesterId) {
-            throw Object.assign(new Error("Bạn chỉ có thể hủy lịch cho chính mình."), { statusCode: 403 })
-        }
-    }
+    //     if (existingAppointment.patient?.userId !== requesterId) {
+    //         throw Object.assign(new Error("Bạn chỉ có thể hủy lịch cho chính mình."), { statusCode: 403 })
+    //     }
+    // }
 
     await appointmentService.cancelAppointment(appointmentId)
     
@@ -144,9 +162,9 @@ export const cancelAppointment = catchError(async (req, res) => {
 })
 
 export const registerDoctorLeave = catchError(async (req, res) => {
-    const { date, shift, reason } = req.body
+    const { doctorId, date, shift, reason } = req.body
     
-    const doctorId = req.user.id 
+    //const doctorId = req.user.id 
     
     const data = await appointmentService.registerDoctorLeave({
         doctorId,
@@ -163,8 +181,8 @@ export const registerDoctorLeave = catchError(async (req, res) => {
 })
 
 export const cancelDoctorLeave = catchError(async (req, res) => {
-    const { leaveId } = req.params;
-    const doctorId = req.user.id; 
+    const { doctorId, leaveId } = req.params;
+    //const doctorId = req.user.id; 
 
     await appointmentService.cancelDoctorLeave(leaveId, doctorId);
 
@@ -177,15 +195,17 @@ export const cancelDoctorLeave = catchError(async (req, res) => {
 export const updateAppointmentStatus = catchError(async (req, res) => {
     const { appointmentId } = req.params
     const { status } = req.body
+    /*
     const requesterId = req.user.id
     const requesterRole = req.user.profile.role
 
-    if (requesterRole === 'DOCTOR') {
+    if (requesterRole === 'doctor') {
         const existingAppointment = await appointmentService.getAppointmentDetail(appointmentId)
         if (existingAppointment.doctor?.doctorId !== requesterId) {
             throw Object.assign(new Error("Bạn không có quyền cập nhật lịch khám của bác sĩ khác."), { statusCode: 403 })
         }
     }
+    */
 
     const data = await appointmentService.updateAppointmentStatus(appointmentId, status)
     

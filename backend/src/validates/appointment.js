@@ -109,7 +109,7 @@ export const appointmentSchema = {
       status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"], {
         errorMap: () => ({
           message:
-            "Trạng thái không hợp lệ (chỉ nhận: PENDING, CONFIRMED, COMPLETED, CANCELLED)",
+            "Trạng thái không hợp lệ (chỉ nhận: pending, accepted, completed, cancelled)",
         }),
       }),
     }),
@@ -144,7 +144,7 @@ export const appointmentSchema = {
         .number()
         .int({ message: "Ca nghỉ phải là số nguyên" })
         .min(1, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
-        .max(12, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 12)" })
+        .max(12, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
         .nullable()
         .optional(),
 
@@ -163,4 +163,9 @@ export const appointmentSchema = {
       leaveId: z.string().uuid({ message: "ID lịch nghỉ không hợp lệ" }),
     }),
   },
+  getLeaves: {
+    params: z.object({
+      doctorId: z.string().uuid({ message: "ID bác sĩ không hợp lệ (phải là UUID)" }),
+    }),
+  }
 };

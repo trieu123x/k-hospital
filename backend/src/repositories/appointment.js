@@ -50,7 +50,7 @@ export const appointmentRepository = {
                     date: appointmentDate,
                     shift,
                     reason,
-                    status: "PENDING"
+                    status: "pending"
                 },
                 select: { 
                     id: true, 
@@ -242,7 +242,7 @@ export const appointmentRepository = {
     },
 
     updateStatus: async (id, status) => {
-        if (status === "CANCELLED" || status === "canceled") {
+        if (status === "cancelled" || status === "canceled") {
             return await prisma.appointment.delete({
                 where: { id },
                 select: { 
@@ -290,6 +290,19 @@ export const appointmentRepository = {
     findLeaveById: async (id) => {
         return await prisma.doctorLeave.findUnique({
             where: { id }
+        });
+    },
+
+    findLeavesByDoctorId: async (doctorId) => {
+        return await prisma.doctorLeave.findMany({
+            where: { doctorId },
+            select: {
+                id: true,
+                doctorId: true,
+                date: true,
+                shift: true,
+                reason: true
+            }
         });
     },
 

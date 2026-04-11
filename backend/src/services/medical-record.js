@@ -11,7 +11,7 @@ export const medicalRecordService = {
             throw Object.assign(new Error("Không tìm thấy lịch khám!"), { statusCode: 404 })
         }
 
-        if (appointment.status === "completed") {
+        if (appointment.status === "COMPLETED") {
             throw Object.assign(new Error("Lịch khám này đã được hoàn thành trước đó!"), { statusCode: 400 })
         }
 
@@ -25,7 +25,7 @@ export const medicalRecordService = {
 
             await tx.appointment.update({
                 where: { id: appointmentId },
-                data: { status: "completed" }
+                data: { status: "COMPLETED" }
             })
 
             return newRecord
