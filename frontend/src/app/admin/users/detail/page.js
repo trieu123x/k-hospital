@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button"
 import { useSearchParams, useRouter } from "next/navigation"
 import { getUserById, updateUser, createDoctorAccount } from "@/routers/user-api"
 import { getAllDegrees } from "@/routers/degree-api"
+import { getSpecialties } from "@/routers/specialty-api"
 
 export default function Detail() {
   const searchParams = useSearchParams()
@@ -22,6 +23,7 @@ export default function Detail() {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [degree, setDegree] = useState("")
+  const [specialty, setSpecialty] = useState("")
   const [education, setEducation] = useState("")
   const [experience, setExperience] = useState("")
   const [achievements, setAchievements] = useState("")
@@ -33,6 +35,7 @@ export default function Detail() {
   const [previewImage, setPreviewImage] = useState(null)
   const [loading, setLoading] = useState(isEditMode)
   const [degreeOptions, setDegreeOptions] = useState([])
+  const [specialtyOptions, setSpecialtyOptions] = useState([])
 
   useEffect(() => {
     const initData = async () => {
@@ -41,13 +44,17 @@ export default function Detail() {
           let dataToUse = null
 
           // Lấy degrees song song với user
-          const [degreesRes, userRes] = await Promise.all([
+          const [degreesRes, specialtiesRes, userRes] = await Promise.all([
             getAllDegrees(),
+            getSpecialties(),
             getUserById(id)
           ])
 
           if (degreesRes.data) {
             setDegreeOptions(degreesRes.data)
+          }
+          if (specialtiesRes.data) {
+            setSpecialtyOptions(specialtiesRes.data)
           }
 
           if (userRes && userRes.data) {
@@ -61,6 +68,7 @@ export default function Detail() {
             setPhone(dataToUse.phone || "")
 
             setDegree(dataToUse.doctor?.degree?.name || "")
+            setSpecialty(dataToUse.doctor?.specialty?.name || "")
             setEducation(dataToUse.doctor?.education || "")
             setExperience(dataToUse.doctor?.experience || "")
             setAchievements(dataToUse.doctor?.achievements || "")
@@ -72,7 +80,8 @@ export default function Detail() {
               hometown: dataToUse.address || "",
               email: dataToUse.email || "",
               phone: dataToUse.phone || "",
-              degree: dataToUse.doctor?.degree || "",
+              degree: dataToUse.doctor?.degree?.name || "",
+              specialty: dataToUse.doctor?.specialty?.name || "",
               education: dataToUse.doctor?.education || "",
               experience: dataToUse.doctor?.experience || "",
               achievements: dataToUse.doctor?.achievements || ""
@@ -80,14 +89,20 @@ export default function Detail() {
           }
         } else {
           // Bật lấy độ nếu tạo mới
-          const degreesRes = await getAllDegrees()
+          const [degreesRes, specialtiesRes] = await Promise.all([
+            getAllDegrees(),
+            getSpecialties()
+          ])
           if (degreesRes.data) {
             setDegreeOptions(degreesRes.data)
+          }
+          if (specialtiesRes.data) {
+            setSpecialtyOptions(specialtiesRes.data)
           }
           // Chế độ thêm mới -> form rỗng
           setInitialData({
             fullName: "", hometown: "", email: "", phone: "",
-            degree: "", education: "", experience: "", achievements: ""
+            degree: "", specialty: "", education: "", experience: "", achievements: ""
           })
         }
       } catch (error) {
@@ -107,7 +122,7 @@ export default function Detail() {
 
   // Hàm gom dữ liệu hiện tại để so sánh
   const getCurrentData = () => ({
-    fullName, hometown, email, phone, degree, education, experience, achievements
+    fullName, hometown, email, phone, degree, specialty, education, experience, achievements
   })
 
   // Logic kiểm tra có thay đổi hay không
@@ -142,6 +157,13 @@ export default function Detail() {
         } else {
           payload.append("degreeId", "")
         }
+
+        const selectedSpecialty = specialtyOptions.find(s => s.name === specialty)
+        if (selectedSpecialty) {
+          payload.append("specialtyId", selectedSpecialty.id)
+        } else {
+          payload.append("specialtyId", "")
+        }
         payload.append("education", education)
         payload.append("experience", experience)
         payload.append("achievements", achievements)
@@ -173,13 +195,15 @@ export default function Detail() {
           value={email} setValue={(value) => setEmail(value)} />
         <InputForm label={"Số điện thoại"} placeholder={"Nhập số điện thoại"}
           value={phone} setValue={(value) => setPhone(value)} />
-        
+
         {isEditMode && (
           <>
             <InputForm label={"Quê quán"} placeholder={"Nhập quên quán của bạn"}
               value={hometown} setValue={(value) => setHometown(value)} />
             <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
               value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
+            <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
+              value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
             <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
               value={education} setValue={(value) => setEducation(value)} />
             <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}

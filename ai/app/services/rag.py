@@ -85,17 +85,16 @@ class RAGService:
         - Tuyệt đối không tự ý kê đơn thuốc mạnh, hãy khuyên bệnh nhân đi khám nếu tình trạng nặng.
         """
         
-        # 6. Gọi Gemini và stream kết quả
         try:
-            async for chunk in ai_provider.generate_chat(system_prompt):
-                yield chunk 
+            async for text in ai_provider.generate_chat(system_prompt):
+                yield f"data: {text}\n\n" 
                 
         except errors.APIError as e:
-            print(f"Lỗi từ Google API: {e}")
-            yield "Xin lỗi, hệ thống AI đang quá tải tạm thời. Bạn vui lòng thử lại sau vài phút nhé!"
+            print(f"Lỗi hệ thống: {e}")
+            yield f"data: Xin lỗi, hệ thống AI đang quá tải...\n\n"
             
         except Exception as e:
             print(f"Lỗi hệ thống: {e}")
-            yield "Đã xảy ra lỗi kết nối. Vui lòng thử lại sau."
+            yield f"data: Đã xảy ra lỗi kết nối. Vui lòng thử lại sau.\n\n"
 
 rag_service = RAGService()

@@ -7,6 +7,7 @@ import Image from "next/image"
 import { useChatStore } from "@/stores/chat"
 import { aiChatApi, createChatSession, getSessionHistory, saveChatMessage } from "@/routers/chat-api"
 import { ChatHistory } from "./history"
+import ReactMarkdown from 'react-markdown'
 
 export function ChatForm() {
   const [isOpen, setOpen] = useState(false)
@@ -19,7 +20,7 @@ export function ChatForm() {
   const textareaRef = useRef(null)
   const scrollContainerRef = useRef(null)
   const isFetchingRef = useRef(false)
-  const { session, chatSessions, addChatSession, resetSession, setSession } = useChatStore(state => state)
+  const { session, chatSessions, addChatSession, resetSession, setSession, updateLastAIMessage } = useChatStore(state => state)
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -128,31 +129,39 @@ export function ChatForm() {
       }
 
       let fullResponseText = ""
+      let hasCreatedAIBubble = false
 
       await aiChatApi(
         currentSessionId,
         questionToAsk,
         (newChunk) => {
-          setIsThinking(false)
+          if (!hasCreatedAIBubble) {
+            setIsThinking(false)
+            addChatSession({ id: crypto.randomUUID(), role: "AI", message: "" })
+            hasCreatedAIBubble = true
+          }
           fullResponseText += newChunk
+          updateLastAIMessage(newChunk)
         },
         async () => {
           try {
             await saveChatMessage(currentSessionId, { role: "AI", content: fullResponseText })
             setIsTyping(false)
-            addChatSession({ id: crypto.randomUUID(), role: "AI", message: fullResponseText })
 
           } catch (err) {
             console.log("Lỗi lưu AI message DB:", err)
             setIsTyping(false)
-            addChatSession({ id: crypto.randomUUID(), role: "AI", message: fullResponseText })
           }
         },
         (error) => {
           console.log("Lỗi khi chat: ", error)
           setIsThinking(false)
           setIsTyping(false)
-          addChatSession({ id: crypto.randomUUID(), role: "AI", message: "Xin lỗi, tôi đang gặp sự cố kết nối..." })
+          if (!hasCreatedAIBubble) {
+            addChatSession({ id: crypto.randomUUID(), role: "AI", message: "(Lỗi kết nối. Vui lòng thử lại)" });
+          } else {
+            updateLastAIMessage("\n\n(Lỗi kết nối. Vui lòng thử lại)")
+          }
         }
       )
 
@@ -161,7 +170,6 @@ export function ChatForm() {
       setIsThinking(false)
       setIsTyping(false)
       setInputText(questionToAsk)
-      alert("Đã có lỗi xảy ra, vui lòng thử lại.")
     }
   }
 
@@ -279,9 +287,9 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
 }
 
 function TextMessage({ message = "" }) {
-  return <p className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word">
-    {message}
-  </p>
+  return <div className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word">
+    <ReactMarkdown>{message}</ReactMarkdown>
+  </div>
 }
 
 function ObjectMessage() {

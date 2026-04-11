@@ -45,6 +45,11 @@ export const userSchema = {
           return null;
         }
       }),
+      specialtyId: z.string().optional().nullable(),
+      degreeId: z.string().optional().nullable(),
+      experience: z.string().optional().nullable(),
+      education: z.string().optional().nullable(),
+      achievements: z.string().optional().nullable(),
     }),
   },
 

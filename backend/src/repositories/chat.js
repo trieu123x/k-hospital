@@ -61,5 +61,11 @@ export const chatRepository = {
 
         const messages = await prisma.chatMessage.findMany(query)
         return messages
+    },
+
+    deleteSession: async (id) => {
+        return await prisma.chatSession.delete({
+            where: { id }
+        })
     }
 }

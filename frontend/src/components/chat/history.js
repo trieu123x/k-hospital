@@ -2,7 +2,7 @@ import { useChatStore } from "@/stores/chat"
 import { Button } from "../ui/Button"
 import { Trash2, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { getChatSessions } from "@/routers/chat-api"
+import { getChatSessions, deleteChatSession } from "@/routers/chat-api"
 
 export function ChatHistory({ setHistoryOpen = () => { } }) {
   const [sessionsList, setSessionsList] = useState([])
@@ -39,6 +39,18 @@ export function ChatHistory({ setHistoryOpen = () => { } }) {
   const currentSessionObj = session ? sessionsList.find(s => s.id === session) : null
   const previousSessions = sessionsList.filter(s => s.id !== session)
 
+  const handleDeleteSession = async (id) => {
+    try {
+      await deleteChatSession(id)
+      setSessionsList(prev => prev.filter(s => s.id !== id))
+      if (session === id) {
+        setSession(null, [])
+      }
+    } catch (error) {
+      console.error("Lỗi xóa session:", error)
+    }
+  }
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-40 text-white rasa-font bg-black/20">
       <div ref={chatHistoryRef} className="w-130 h-75 rounded-[10px] bg-[#5C90EF]">
@@ -56,6 +68,8 @@ export function ChatHistory({ setHistoryOpen = () => { } }) {
                 name={currentSessionObj.title || "Trò chuyện mới"}
                 selected={true}
                 setHistoryOpen={setHistoryOpen}
+                setSession={setSession}
+                onDeleteSession={handleDeleteSession}
               />
             </div>
           )}
@@ -70,6 +84,7 @@ export function ChatHistory({ setHistoryOpen = () => { } }) {
                   name={item.title || "Trò chuyện mới"}
                   setHistoryOpen={setHistoryOpen}
                   setSession={setSession}
+                  onDeleteSession={handleDeleteSession}
                 />
               ))}
             </div>
@@ -92,7 +107,8 @@ function SessionSelection({
   selected = false,
   name = "Theo như những dấu hiệu bạn mô tả...",
   setHistoryOpen = () => { },
-  setSession = () => { }
+  setSession = () => { },
+  onDeleteSession = () => { }
 }) {
 
   const handleSelectSession = () => {
@@ -114,7 +130,7 @@ function SessionSelection({
       <Trash2
         onClick={(e) => {
           e.stopPropagation()
-          console.log("Gọi API xóa session ID:", id)
+          onDeleteSession(id)
         }}
         className="size-4 opacity-60 transition-all duration-300 ease-in-out hover:opacity-100"
       />

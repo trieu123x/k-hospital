@@ -17,6 +17,10 @@ export const saveChatMessage = async (sessionId, messageData) => {
   return await axiosInstance.post(`/chat/${sessionId}/messages`, messageData)
 }
 
+export const deleteChatSession = async (sessionId) => {
+  return await axiosInstance.delete(`/chat/${sessionId}`)
+}
+
 export const aiChatApi = async (
   sessionId,
   userInput,
@@ -58,7 +62,14 @@ export const aiChatApi = async (
       }
 
       const chunkText = decoder.decode(value, { stream: true })
-      onChunkReceived(chunkText)
+      const events = chunkText.split('\n\n')
+      for (const event of events) {
+        if (event.startsWith('data: ')) {
+          const cleanText = event.substring(6)
+          console.log("CLEAN TEXT: ", cleanText)
+          onChunkReceived(cleanText)
+        }
+      }
     }
   } catch (error) {
     console.error('Lỗi khi chat AI:', error)

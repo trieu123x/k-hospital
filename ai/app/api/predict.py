@@ -11,7 +11,5 @@ async def predict_topic(request: TopicPredictRequest):
 
 @router.post("/title")
 async def predict_title(request: TitlePredictRequest) -> TitlePredictResponse:
-    print("START!")
     generated_title = await prediction_service.predict_chat_title(request.first_message)
-    print("END!")
     return TitlePredictResponse(title=generated_title)

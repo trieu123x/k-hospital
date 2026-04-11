@@ -59,5 +59,13 @@ export const chatService = {
             console.error("Lỗi khi cập nhật topic từ AI:", error.message)
             return null
         }
+    },
+
+    deleteSession: async (sessionId, userId) => {
+        const session = await chatRepository.getSessionById(sessionId)
+        if (!session || (userId && session.userId !== userId)) {
+            throw Object.assign(new Error("Không tìm thấy phiên chat!"), { statusCode: 404 })
+        }
+        return await chatRepository.deleteSession(sessionId)
     }
 }

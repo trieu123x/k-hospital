@@ -9,6 +9,7 @@ import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getReportsByTimeRange } from "@/routers/report-api"
+import { aggregateAndSortTopList } from "@/helper/aggregate-format"
 
 const DOCTOR_COLUMNS = [
   { key: "doctor_name", label: "Tên Bác sĩ", width: "30%" },
@@ -28,6 +29,7 @@ const DISEASE_COLUMNS = [
 export default function Aggregate() {
   const [startDate, setStartDate] = useState(startOfDay(subDays(new Date(), 30)))
   const [endDate, setEndDate] = useState(endOfDay(new Date()))
+  const [isLoading, setLoading] = useState(true)
 
   const [kpis, setKpis] = useState({ events: 0, visits: 0, chats: 0 })
   const [peakShifts, setPeakShifts] = useState([])
@@ -54,6 +56,7 @@ export default function Aggregate() {
       else if (rep?.previewData) rows = [...rows, ...rep.previewData]
       else if (rep?.data?.previewData) rows = [...rows, ...rep.data.previewData]
     })
+    setLoading(false)
     return rows
   }
 
@@ -118,9 +121,13 @@ export default function Aggregate() {
           .slice(0, 10)
 
         setChatTopics(formattedChats)
+        console.log(extractRows(doctorRes))
 
-        setTopDoctors(extractRows(doctorRes).slice(0, 10))
-        setTopDiseases(extractRows(diseaseRes).slice(0, 10))
+        const doctorRows = extractRows(doctorRes)
+        const diseaseRows = extractRows(diseaseRes)
+
+        setTopDoctors(aggregateAndSortTopList(doctorRows, "doctor"))
+        setTopDiseases(aggregateAndSortTopList(diseaseRows, "disease"))
 
       } catch (error) {
         console.error("Lỗi lấy báo cáo:", error)
@@ -129,6 +136,8 @@ export default function Aggregate() {
 
     handleFetchReport()
   }, [startDate, endDate])
+
+  if (isLoading) return <div className="p-10 italic text-gray-500">Đang tải dữ liệu...</div>
 
   return <div className="grow flex flex-col rasa-font bg-white">
     <div className="flex h-15 px-10 items-end justify-between">

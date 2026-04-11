@@ -1,5 +1,5 @@
 import express from "express"
-import { createSession, getSessions, getSessionHistory, saveMessage, updateTopic } from "../controllers/chat.js"
+import { createSession, getSessions, getSessionHistory, saveMessage, updateTopic, deleteSession } from "../controllers/chat.js"
 import { validate } from "../middlewares/validate-handler.js"
 import { chatSchema } from "../validates/chat.js"
 import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
@@ -35,5 +35,7 @@ router.post("/:id/messages", validate({
 }), saveMessage)
 
 router.post("/:id/topic", authorizeRoles("admin"), validate({ params: chatSchema.params }), updateTopic)
+
+router.delete("/:id", validate({ params: chatSchema.params }), deleteSession)
 
 export default router

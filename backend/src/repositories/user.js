@@ -63,8 +63,8 @@ export const userRepository = {
         })
     },
 
-    update: async (id, data) => {
-        return await prisma.profile.update({
+    update: async (id, data, doctorData = null) => {
+        const updatePayload = {
             where: { id },
             data,
             include: {
@@ -75,7 +75,15 @@ export const userRepository = {
                     }
                 }
             }
-        })
+        }
+
+        if (doctorData) {
+            updatePayload.data.doctor = {
+                update: doctorData
+            }
+        }
+
+        return await prisma.profile.update(updatePayload)
     },
 
     delete: async (id) => {

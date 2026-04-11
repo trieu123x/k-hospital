@@ -63,7 +63,7 @@ export const userService = {
         }
 
         // Filter out fields that shouldn't be updated here directly (like role, id, relational fields)
-        const { role, id: profileId, createdAt, doctor, ...allowedData } = updateData;
+        const { role, id: profileId, createdAt, doctor, degreeId, specialtyId, experience, education, achievements, ...allowedData } = updateData;
 
         // Parse dob to Date if provided as string
         if (allowedData.dob) {
@@ -83,7 +83,14 @@ export const userService = {
             allowedData.avatarUrl = imageUrl;
         }
 
-        const updatedUser = await userRepository.update(id, allowedData)
+        const doctorData = {}
+        if (degreeId !== undefined) doctorData.degreeId = degreeId === "" ? null : degreeId
+        if (specialtyId !== undefined) doctorData.specialtyId = specialtyId === "" ? null : specialtyId
+        if (experience !== undefined) doctorData.experience = experience
+        if (education !== undefined) doctorData.education = education
+        if (achievements !== undefined) doctorData.achievements = achievements
+
+        const updatedUser = await userRepository.update(id, allowedData, Object.keys(doctorData).length > 0 ? doctorData : null)
         return updatedUser
     },
 
