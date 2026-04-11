@@ -4,11 +4,7 @@ import { ROUTES } from "@/routers";
 
 export default function Footer() {
   return (
-    <footer className={`
-    bg-white h-11 px-10 rasa-font
-      border-t border-gray-100 z-10
-      flex flex-col lg:flex-row lg:items-center justify-between
-    `}>
+    <footer className="bg-white py-3 px-10 rasa-font border-t border-gray-100 relative z-10 flex flex-col lg:flex-row lg:items-center justify-between">
       <div className="flex flex-col lg:flex-row lg:gap-5">
         {/* Left: Contact Info */}
         <div className="flex items-center space-x-2">
@@ -24,7 +20,7 @@ export default function Footer() {
       </div>
 
       {/* Right: Links */}
-      <div className="flex space-x-12 mx-auto justify-end mb-6 text-[18px]">
+      <div className="flex space-x-12 justify-end text-[18px]">
         <Link href={ROUTES.POLICY} className="hover:underline">
           Chính sách bảo mật
         </Link>

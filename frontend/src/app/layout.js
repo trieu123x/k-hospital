@@ -45,8 +45,8 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} relative antialiased flex flex-col min-h-screen bg-gray-50`}
       >
         <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
-        <main className="mt-15 grow w-full flex flex-col items-center">
-          <div className="w-full max-w-[1536px] grow flex flex-col">
+        <main className="mt-15 grow w-full flex flex-col">
+          <div className="w-full grow flex flex-col">
             {children}
           </div>
         </main>
