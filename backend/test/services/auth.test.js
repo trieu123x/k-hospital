@@ -91,18 +91,18 @@ describe('authService', () => {
 
     it('should create user successfully', async () => {
       supabase.auth.signUp.mockResolvedValue({ data: { user: { id: 'user-123', email: 'test@a.com' } }, error: null })
-      profileRepository.create.mockResolvedValue({ id: 'user-123', fullName: 'Test Name', phone: '123', role: 'patient' })
+      profileRepository.create.mockResolvedValue({ id: 'user-123', fullName: 'Test Name', phone: '123', role: 'PATIENT' })
       
       const result = await authService.verifyRegister({ email, otp })
       
       expect(result.userId).toBe('user-123')
-      expect(result.role).toBe('patient')
+      expect(result.role).toBe('PATIENT')
       expect(profileRepository.create).toHaveBeenCalledWith({
         id: 'user-123',
         fullName: 'Test Name',
         email: 'test@a.com',
         phone: '123',
-        role: 'patient'
+        role: 'PATIENT'
       })
     })
   })
@@ -124,7 +124,7 @@ describe('authService', () => {
         data: { user: { id: 'u1', email: 'a@a.com' }, session: { access_token: 'acc', refresh_token: 'ref' } }, 
         error: null 
       })
-      profileRepository.findById.mockResolvedValue({ id: 'u1', fullName: 'John', role: 'patient' })
+      profileRepository.findById.mockResolvedValue({ id: 'u1', fullName: 'John', role: 'PATIENT' })
       const result = await authService.login({ email: 'a@a.com', password: '123' })
       expect(result.accessToken).toBe('acc')
       expect(result.user.fullName).toBe('John')
