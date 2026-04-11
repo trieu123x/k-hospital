@@ -100,7 +100,7 @@ export const authService = {
       fullName,
       email,
       phone,
-      role: "patient",
+      role: "PATIENT",
     });
 
     // Xóa thông tin tạm

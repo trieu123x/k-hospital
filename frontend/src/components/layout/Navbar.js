@@ -7,8 +7,12 @@ import { Button } from "../ui/Button";
 import { Bell } from "lucide-react";
 import Image from "next/image";
 import { NotificationForm } from "../notification/form";
+import { ROUTES } from "@/routers";
+import { useAuthStore } from "@/stores/auth";
 
-export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpen = () => { } }) {
+export default function Navbar({ setSidebarOpen = () => { } }) {
+  const isLogin = useAuthStore(state => state.isLogin);
+  const isAdmin = useAuthStore(state => state.isAdmin);
   const [isLookUpOpen, setLookUpOpen] = useState(false)
   const [isNotiOpen, setNotiOpen] = useState(false)
   const lookUpRef = useRef(null)
@@ -40,7 +44,7 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
         `}>
           {/* Logo */}
           <div className="flex items-center ml-13">
-            <LinkButton href="/" className="text-[26px] font-bold">
+            <LinkButton href={ROUTES.HOME} className="text-[26px] font-bold">
               <span className="text-white">Medi</span>
               <span className="text-blue-800">Care</span>
             </LinkButton>
@@ -48,11 +52,11 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
 
           {/* Center Links */}
           <div className={`hidden xl:flex items-center space-x-5 text-[20px] ${isAdmin ? "mr-[12%]" : "mr-[18%]"}`}>
-            <LinkButton href="/">
+            <LinkButton href={ROUTES.HOME}>
               Trang chủ
             </LinkButton>
 
-            <LinkButton href="/doctors">
+            <LinkButton href={ROUTES.DOCTORS}>
               Bác sĩ
             </LinkButton>
 
@@ -67,25 +71,25 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
                   bg-[#070575] rounded-xl overflow-hidden 
                   flex flex-col text-[12px]
                 `}>
-                  <LinkButton href="/diseases" className="hover:bg-[#3040A8] rounded-none px-12 py-2">
+                  <LinkButton href={ROUTES.DISEASES} className="hover:bg-[#3040A8] rounded-none px-12 py-2">
                     Bệnh
                   </LinkButton>
-                  <LinkButton href="/medicines" className="hover:bg-[#3040A8] rounded-none px-12 py-2">
+                  <LinkButton href={ROUTES.MEDICINES} className="hover:bg-[#3040A8] rounded-none px-12 py-2">
                     Thuốc
                   </LinkButton>
                 </div>
               }
             </Button>
 
-            <LinkButton href="/news">
+            <LinkButton href={ROUTES.NEWS}>
               Tin tức
             </LinkButton>
 
-            <LinkButton href="/booking">
+            <LinkButton href={ROUTES.BOOKING}>
               Đặt lịch khám
             </LinkButton>
 
-            {isAdmin && <LinkButton href="/admin">
+            {isAdmin && <LinkButton href={ROUTES.ADMIN}>
               Quản lý
             </LinkButton>}
           </div>
@@ -111,7 +115,7 @@ export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpe
 function UnLoginOption1() {
   return <div className="hidden xl:flex w-1/5 justify-center items-center gap-4">
     <LinkButton
-      href="/login"
+      href={ROUTES.LOGIN}
       className={`py-1.5
         border border-[#8482F1] text-[#8482F1] 
         hover:border-[#5C59FF] hover:text-[#5C59FF]
@@ -120,7 +124,7 @@ function UnLoginOption1() {
       Đăng nhập
     </LinkButton>
 
-    <LinkButton href="/register" className="bg-[#0a0068] hover:bg-[#150a8b] text-white py-1.5">
+    <LinkButton href={ROUTES.REGISTER} className="bg-[#0a0068] hover:bg-[#150a8b] text-white py-1.5">
       Đăng ký
     </LinkButton>
   </div>
@@ -128,10 +132,10 @@ function UnLoginOption1() {
 
 function UnLoginOption2({ setSidebarOpen }) {
   return <div className="flex xl:hidden items-center gap-3.5 mr-5">
-    <LinkButton href="/login" className="border border-white">
+    <LinkButton href={ROUTES.LOGIN} className="border border-white">
       Đăng nhập
     </LinkButton>
-    <LinkButton href="/register" className="bg-white text-[#070575]">
+    <LinkButton href={ROUTES.REGISTER} className="bg-white text-[#070575]">
       Đăng ký
     </LinkButton>
     <button id="sidebar-menu-btn" onClick={setSidebarOpen}>

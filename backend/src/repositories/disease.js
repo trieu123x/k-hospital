@@ -38,13 +38,29 @@ export const diseaseRepository = {
         `
     },
 
-    findWithFilter: async ({ categoryId, specialtyId, name, lastId, limit = 30 }) => {
+    findWithFilter: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
         const searchPattern = name ? `%${name.toLowerCase()}%` : null
         const nameLower = name ? name.toLowerCase() : null
+        const offset = (page - 1) * limit
 
-        const cursorCondition = lastId 
-            ? Prisma.sql`AND id > ${lastId}::uuid` 
-            : Prisma.empty
+        const filterConditions = Prisma.sql`
+            1=1
+            ${categoryId ? Prisma.sql`AND category_id = ${categoryId}::uuid` : Prisma.empty}
+            ${specialtyId ? Prisma.sql`AND specialty_id = ${specialtyId}::uuid` : Prisma.empty}
+            ${name ? Prisma.sql`
+                AND (
+                    name_clean LIKE ${searchPattern} 
+                    OR name_clean % ${nameLower}
+                )` : Prisma.empty}
+        `
+
+        // Query total count
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM diseases
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
 
         const diseases = await prisma.$queryRaw`
             SELECT 
@@ -53,27 +69,23 @@ export const diseaseRepository = {
                 image_url AS "imageUrl", 
                 description
             FROM diseases
-            WHERE 1=1
-                ${categoryId ? Prisma.sql`AND category_id = ${categoryId}::uuid` : Prisma.empty}
-                ${specialtyId ? Prisma.sql`AND specialty_id = ${specialtyId}::uuid` : Prisma.empty}
-                ${cursorCondition}
-                ${name ? Prisma.sql`
-                    AND (
-                        name_clean LIKE ${searchPattern} 
-                        OR name_clean % ${nameLower}
-                    )` : Prisma.empty}
+            WHERE ${filterConditions}
             ORDER BY 
                 ${name ? Prisma.sql`similarity(name_clean, ${nameLower}) DESC,` : Prisma.empty} 
                 id ASC
             LIMIT ${limit}
+            OFFSET ${offset}
         `
 
-        return diseases.map(disease => ({
-            id: disease.id,
-            name: disease.name,
-            imageUrl: disease.imageUrl,
-            description: disease.description
-        }))
+        return {
+            items: diseases.map(disease => ({
+                id: disease.id,
+                name: disease.name,
+                imageUrl: disease.imageUrl,
+                description: disease.description
+            })),
+            total
+        }
     },
 
     findById: async (id) => {

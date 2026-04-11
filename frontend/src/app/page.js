@@ -5,10 +5,10 @@ import { Bot } from "lucide-react";
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-2 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
+      <div className="max-w-7xl mx-auto px-8 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
         
         {/* Left Column: Text content */}
-        <div className="flex flex-col space-y-8 pr-0 lg:pr-8">
+        <div className="flex flex-col space-y-8 pr-4 lg:pr-8">
           <h1 className="text-3xl md:text-5xl lg:text-5xl font-bold font-serif leading-tight">
             <span className="text-gray-900">Lý do để khách hàng</span>
             <br />

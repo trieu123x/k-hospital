@@ -12,6 +12,8 @@ export default function DoctorsPage() {
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Lấy danh sách chuyên khoa
   useEffect(() => {
@@ -46,19 +48,23 @@ export default function DoctorsPage() {
         if (searchQuery && searchQuery.trim() !== "") {
           params.append("name", searchQuery.trim());
         }
-        params.append("limit", "50");
+        params.append("limit", "12");
+        params.append("page", page.toString());
 
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
 
         const res = await axiosInstance.get(url);
-        if (res.data?.data) {
-          setDoctors(res.data.data);
-        } else if (Array.isArray(res.data)) {
+        if (res.success && res.data) {
           setDoctors(res.data);
+          setTotalPages(res.pagination?.totalPages || 1);
+        } else if (Array.isArray(res)) {
+          setDoctors(res);
+          setTotalPages(1);
         } else {
           setDoctors([]);
+          setTotalPages(1);
         }
       } catch (err) {
         console.error("Failed to fetch doctors", err);
@@ -72,6 +78,10 @@ export default function DoctorsPage() {
     }, 400);
 
     return () => clearTimeout(timeoutId);
+  }, [selectedSpecialty, searchQuery, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [selectedSpecialty, searchQuery]);
 
   return (
@@ -142,7 +152,7 @@ export default function DoctorsPage() {
               {/* Doctor Info */}
               <div className="p-3.5 flex flex-col bg-white text-left h-full">
                 <h3 className="font-bold  text-gray-900 text-2sm leading-snug mb-1">
-                  {doctor.degree ? `${doctor.degree.normalize('NFC')} - ` : ""} {doctor.profile?.fullName?.normalize('NFC')}
+                  {doctor.degree ? `${doctor.degree.name?.normalize('NFC')} - ` : ""} {doctor.profile?.fullName?.normalize('NFC')}
                 </h3>
                 
                 <p className="text-gray-500 text-[11px] mb-4 line-clamp-2">
@@ -166,6 +176,41 @@ export default function DoctorsPage() {
           <Search className="w-10 h-10 text-gray-300 mb-4" />
           <p className="text-base font-medium text-gray-600 mb-1">Không tìm thấy bác sĩ</p>
           <p className="text-sm">Hãy thử tìm với từ khóa hoặc chuyên khoa khác.</p>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center items-center mt-10 gap-2 mb-6">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm font-medium transition-colors"
+          >
+            Trước
+          </button>
+          <div className="flex gap-1">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`w-10 h-10 rounded-md border text-sm font-medium transition-colors ${
+                  page === i + 1
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 border border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm font-medium transition-colors"
+          >
+            Sau
+          </button>
         </div>
       )}
     </div>

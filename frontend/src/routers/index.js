@@ -1,0 +1,21 @@
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  VERIFY_REGISTER: '/verify-register',
+  FORGET_PASSWORD: '/forget-password',
+  PROFILE: '/profile',
+  DOCTORS: '/doctors',
+  DISEASES: '/diseases',
+  MEDICINES: '/medicines',
+  NEWS: '/news',
+  BOOKING: '/booking',
+  POLICY: '/policy',
+  PROCEDURES: '/procedures',
+  ADMIN: '/admin',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_MEDICINES: '/admin/medicines',
+  ADMIN_DISEASES: '/admin/diseases',
+  ADMIN_NEWS: '/admin/news',
+  ADMIN_AGGREGATE: '/admin/aggregate'
+};

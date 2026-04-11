@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, MapPin } from "lucide-react";
+import { ROUTES } from "@/routers";
 
 export default function Footer() {
   return (
@@ -23,12 +24,12 @@ export default function Footer() {
       </div>
 
       {/* Right: Links */}
-      <div className="flex items-center space-x-6 text-blue-600">
-        <Link href="/policy" className="hover:underline">
-          Chính sách
+      <div className="flex space-x-12 mx-auto justify-end mb-6 text-[18px]">
+        <Link href={ROUTES.POLICY} className="hover:underline">
+          Chính sách bảo mật
         </Link>
-        <Link href="/procedures" className="hover:underline">
-          Thủ tục
+        <Link href={ROUTES.PROCEDURES} className="hover:underline">
+          Thủ tục khám bệnh
         </Link>
       </div>
     </footer>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import axiosInstance from "@/utils/axios";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/routers";
 
 export default function ForgetPassword() {
   const router = useRouter();
@@ -95,7 +96,7 @@ export default function ForgetPassword() {
         </form>
 
         <div className="mt-8 text-center text-sm font-medium">
-          <Link href="/login" className="text-blue-500 hover:underline text-xs block mt-1">
+          <Link href={ROUTES.LOGIN} className="text-blue-500 hover:underline text-xs block mt-1">
             Trở về trang đăng nhập
           </Link>
         </div>

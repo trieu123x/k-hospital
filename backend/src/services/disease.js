@@ -64,9 +64,17 @@ export const diseaseService = {
     },
 
     getDiseases: async (filters) => {
-        const diseases = await diseaseRepository.findWithFilter(filters)
+        const result = await diseaseRepository.findWithFilter(filters)
 
-        return diseases
+        return {
+            items: result.items,
+            pagination: {
+                total: result.total,
+                page: filters.page || 1,
+                limit: filters.limit || 12,
+                totalPages: Math.ceil(result.total / (filters.limit || 12))
+            }
+        }
     },
 
     getDiseaseDetail: async (id, userId = null) => {

@@ -103,7 +103,7 @@ export default function DoctorDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Bằng cấp</p>
-                        <p className="text-sm font-medium text-gray-900">{degree || "Bác sĩ"}</p>
+                        <p className="text-sm font-medium text-gray-900">{degree?.name || "Bác sĩ"}</p>
                       </div>
                     </div>
 
@@ -131,7 +131,7 @@ export default function DoctorDetailPage() {
           <div className="lg:w-2/3 xl:w-3/4">
             <header className="mb-10">
               <h1 className="text-3xl md:text-3xl font-extrabold text-gray-900 leading-tight">
-                {degree ? `${degree} - ` : ""} {profile?.fullName}
+                {degree ? `${degree.name} - ` : ""} {profile?.fullName}
               </h1>
               <div className="mt-4 h-1.5 w-24 bg-blue-600 rounded-full"></div>
             </header>

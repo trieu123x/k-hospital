@@ -9,10 +9,14 @@ export const useNotificationStore = create((set) => ({
     })),
 
   markAsRead: (id) =>
-    set(),
+    set((state) => ({
+      notifications: state.notifications.map((n) => n.id === id ? { ...n, isRead: true } : n)
+    })),
 
   removeNotification: (id) =>
-    set(),
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id)
+    })),
 
   clearAll: () => set({ notifications: [] }),
 }));

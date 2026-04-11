@@ -14,6 +14,8 @@ export default function DiseaseLookupPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Fetch filters data
   useEffect(() => {
@@ -54,10 +56,17 @@ export default function DiseaseLookupPage() {
         if (selectedSpecialty) params.append("specialtyId", selectedSpecialty);
         if (selectedCategory) params.append("categoryId", selectedCategory);
         if (searchQuery) params.append("name", searchQuery);
+        params.append("page", page.toString());
         
         const res = await axiosInstance.get(`/disease?${params.toString()}`);
         if (res.success) {
-          setDiseases(res.data);
+          if (res.data.items) {
+            setDiseases(res.data.items);
+            setTotalPages(res.data.pagination?.totalPages || 1);
+          } else {
+            setDiseases(res.data);
+            setTotalPages(1);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch diseases", err);
@@ -68,6 +77,11 @@ export default function DiseaseLookupPage() {
 
     const timeoutId = setTimeout(fetchDiseases, 300);
     return () => clearTimeout(timeoutId);
+  }, [selectedSpecialty, selectedCategory, searchQuery, page]);
+
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setPage(1);
   }, [selectedSpecialty, selectedCategory, searchQuery]);
 
   return (
@@ -173,6 +187,41 @@ export default function DiseaseLookupPage() {
             <Search className="w-16 h-16 mb-4 opacity-20" />
             <p className="text-lg font-medium">Không tìm thấy bệnh nào phù hợp</p>
             <p className="text-sm">Vui lòng thử lại với từ khóa khác hoặc xóa bộ lọc</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center items-center mt-10 gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm font-medium transition-colors"
+            >
+              Trước
+            </button>
+            <div className="flex gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i + 1)}
+                  className={`w-10 h-10 rounded-md border text-sm font-medium transition-colors ${
+                    page === i + 1
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 border border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm font-medium transition-colors"
+            >
+              Sau
+            </button>
           </div>
         )}
       </div>

@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "message": "Lấy danh sách bệnh thành công",
+  "data": [
+    {
+      "id": "0855cd34-0f10-4d6d-a90a-1e38608ba0be",
+      "name": "Hen suyễn (Thể 35)",
+      "imageUrl": null,
+      "description": "Bệnh viêm mãn tính đường thở gây co thắt phế quản, khó thở và ho kéo dài."
+    },
+    {
+      "id": "0b9b10e0-3c58-4bb5-a508-9b7191087618",
+      "name": "Viêm xoang (Thể 36)",
+      "imageUrl": null,
+      "description": "Tình trạng viêm niêm mạc xoang mũi do nhiễm trùng vi khuẩn, virus hoặc dị ứng."
+    }
+  ]
+}

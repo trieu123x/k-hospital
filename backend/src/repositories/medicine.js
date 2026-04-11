@@ -8,14 +8,17 @@ export const medicineRepository = {
             where.name = { contains: filters.name, mode: 'insensitive' }
         }
         if (filters.medicineType) {
-            where.medicineType = { equals: filters.medicineType }
+            where.typeId = { equals: filters.medicineType }
         }
 
         const [medicines, total] = await Promise.all([
             prisma.medicine.findMany({
                 where,
                 skip,
-                take: limit
+                take: limit,
+                include: {
+                    medicineType: true
+                }
             }),
             prisma.medicine.count({ where })
         ])
@@ -27,6 +30,7 @@ export const medicineRepository = {
         return await prisma.medicine.findUnique({
             where: { id },
             include: {
+                medicineType: true,
                 diseases: {
                     include: {
                         disease: {

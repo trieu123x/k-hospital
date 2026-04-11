@@ -1,0 +1,5 @@
+{
+  "success": false,
+  "status": "error",
+  "message": "\nInvalid `prisma.doctor.findMany()` invocation:\n\n\nThe column `(not available)` does not exist in the current database."
+}
