@@ -34,11 +34,11 @@ export default function RootLayout({ children }) {
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor)
   const toggleChat = useChatStore(state => state.toggleChat)
-
+  const user = useAuthStore(state => state.user)
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
-
+console.log(user)
   return (
     <html lang="en">
       <body

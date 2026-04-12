@@ -50,7 +50,7 @@ export const appointmentRepository = {
                     date: appointmentDate,
                     shift,
                     reason,
-                    status: "pending"
+                    status: "PENDING"
                 },
                 select: { 
                     id: true, 

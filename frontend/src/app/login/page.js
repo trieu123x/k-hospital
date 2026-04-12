@@ -6,9 +6,11 @@ import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/routers";
+import { useAuthStore } from "@/stores/auth";
 
 export default function Login() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +25,10 @@ export default function Login() {
       const res = await axiosInstance.post("/auth/login", { email, password });
       
       console.log("Thông tin user sau khi đăng nhập:", res.data || res);
+      
+      if (res.data) {
+        setUser(res.data);
+      }
       
       // Redirect based on role or to home
       router.push(ROUTES.HOME);

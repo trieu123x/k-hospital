@@ -9,7 +9,7 @@ export const ROUTES = {
   DISEASES: '/diseases',
   MEDICINES: '/medicines',
   NEWS: '/news',
-  BOOKING: '/booking',
+  BOOKING: '/appointment',
   POLICY: '/policy',
   PROCEDURES: '/procedures',
   ADMIN: '/admin',

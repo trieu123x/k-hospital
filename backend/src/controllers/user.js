@@ -24,7 +24,7 @@ export const userController = {
             const { id } = req.params
             //const requesterRole = req.user.profile.role
             //const requesterId = req.user.id
-            const requesterRole = 'admin'; 
+            const requesterRole = 'ADMIN'; 
             const requesterId = 'fake-id-123';
             
             const user = await userService.getUserById(id, requesterRole, requesterId)
