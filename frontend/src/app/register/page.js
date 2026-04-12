@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/routers";
 
 export default function Register() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function Register() {
       });
       
       // Navigate to verify register page and pass email along via query string
-      router.push(`/verify-register?email=${encodeURIComponent(email)}`);
+      router.push(`${ROUTES.VERIFY_REGISTER}?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err.response?.data?.message || "Email already use!");
     } finally {
@@ -129,7 +130,7 @@ export default function Register() {
 
         <div className="mt-8 text-center text-sm font-medium">
           <p className="text-gray-800">Đã có tài khoản?</p>
-          <Link href="/login" className="text-blue-500 hover:underline text-xs block mt-1">
+          <Link href={ROUTES.LOGIN} className="text-blue-500 hover:underline text-xs block mt-1">
             Đăng nhập ngay!
           </Link>
         </div>

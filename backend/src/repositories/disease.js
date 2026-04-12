@@ -1,6 +1,10 @@
 import { prisma, Prisma } from "../configs/prisma-config.js"
 
 export const diseaseRepository = {
+    countAll: async () => {
+        return await prisma.disease.count()
+    },
+
     create: async (data) => {
         const { name, categoryId, specialtyId, symptoms, description, imageUrl, homeTreatment } = data
         
@@ -38,13 +42,29 @@ export const diseaseRepository = {
         `
     },
 
-    findWithFilter: async ({ categoryId, specialtyId, name, lastId, limit = 30 }) => {
+    findWithFilter: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
         const searchPattern = name ? `%${name.toLowerCase()}%` : null
         const nameLower = name ? name.toLowerCase() : null
+        const offset = (page - 1) * limit
 
-        const cursorCondition = lastId 
-            ? Prisma.sql`AND id > ${lastId}::uuid` 
-            : Prisma.empty
+        const filterConditions = Prisma.sql`
+            1=1
+            ${categoryId ? Prisma.sql`AND category_id = ${categoryId}::uuid` : Prisma.empty}
+            ${specialtyId ? Prisma.sql`AND specialty_id = ${specialtyId}::uuid` : Prisma.empty}
+            ${name ? Prisma.sql`
+                AND (
+                    name_clean LIKE ${searchPattern} 
+                    OR name_clean % ${nameLower}
+                )` : Prisma.empty}
+        `
+
+        // Query total count
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM diseases
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
 
         const diseases = await prisma.$queryRaw`
             SELECT 
@@ -53,18 +73,58 @@ export const diseaseRepository = {
                 image_url AS "imageUrl", 
                 description
             FROM diseases
-            WHERE 1=1
-                ${categoryId ? Prisma.sql`AND category_id = ${categoryId}::uuid` : Prisma.empty}
-                ${specialtyId ? Prisma.sql`AND specialty_id = ${specialtyId}::uuid` : Prisma.empty}
-                ${cursorCondition}
-                ${name ? Prisma.sql`
-                    AND (
-                        name_clean LIKE ${searchPattern} 
-                        OR name_clean % ${nameLower}
-                    )` : Prisma.empty}
+            WHERE ${filterConditions}
             ORDER BY 
                 ${name ? Prisma.sql`similarity(name_clean, ${nameLower}) DESC,` : Prisma.empty} 
                 id ASC
+            LIMIT ${limit}
+            OFFSET ${offset}
+        `
+
+        return {
+            items: diseases.map(disease => ({
+                id: disease.id,
+                name: disease.name,
+                imageUrl: disease.imageUrl,
+                description: disease.description
+            })),
+            total
+        }
+    },
+
+    findAllForAdmin: async ({ categoryId, specialtyId, name, lastId, limit = 30 }) => {
+        const searchPattern = name ? `%${name.toLowerCase()}%` : null
+        const nameLower = name ? name.toLowerCase() : null
+
+        const cursorCondition = lastId 
+            ? Prisma.sql`AND d.id > ${lastId}::uuid` 
+            : Prisma.empty
+
+        const diseases = await prisma.$queryRaw`
+            SELECT 
+                d.id, 
+                d.name, 
+                d.image_url AS "imageUrl", 
+                d.description,
+                d.symptoms,
+                d.home_treatment AS "homeTreatment",
+                s.name AS "specialtyName",
+                dc.name AS "categoryName"
+            FROM diseases d
+            LEFT JOIN specialties s ON d.specialty_id = s.id
+            LEFT JOIN disease_categories dc ON d.category_id = dc.id
+            WHERE 1=1
+                ${categoryId ? Prisma.sql`AND d.category_id = ${categoryId}::uuid` : Prisma.empty}
+                ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
+                ${cursorCondition}
+                ${name ? Prisma.sql`
+                    AND (
+                        d.name_clean LIKE ${searchPattern} 
+                        OR d.name_clean % ${nameLower}
+                    )` : Prisma.empty}
+            ORDER BY 
+                ${name ? Prisma.sql`similarity(d.name_clean, ${nameLower}) DESC,` : Prisma.empty} 
+                d.id ASC
             LIMIT ${limit}
         `
 
@@ -72,36 +132,49 @@ export const diseaseRepository = {
             id: disease.id,
             name: disease.name,
             imageUrl: disease.imageUrl,
-            description: disease.description
+            description: disease.description,
+            symptoms: disease.symptoms,
+            homeTreatment: disease.homeTreatment,
+            specialtyName: disease.specialtyName,
+            categoryName: disease.categoryName
         }))
     },
 
     findById: async (id) => {
         const disease = await prisma.disease.findUnique({
             where: { id },
-            select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                description: true,
-                symptoms: true,
-                homeTreatment: true,
-                specialtyId: true,
+            include: {
                 category: {
                     select: {
                         id: true,
-                        name: true
+                        name: true,
+                        description: true
                     }
                 },
                 specialty: {
-                    select: {
-                        id: true,
-                        name: true
+                    include: {
+                        doctors: {
+                            include: {
+                                profile: {
+                                    select: {
+                                        id: true,
+                                        fullName: true,
+                                        avatarUrl: true,
+                                        isActive: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                medicines: {
+                    include: {
+                        medicine: true
                     }
                 }
             }
         })
-
+        
         return disease
     },
 

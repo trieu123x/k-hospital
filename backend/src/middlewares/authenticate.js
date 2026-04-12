@@ -38,7 +38,7 @@ export const authenticate = async (req, res, next) => {
 /**
  * Middleware kiểm tra phân quyền (Role-based Authorization)
  * Yêu cầu phải chạy sau middleware authenticate
- * @param {string[]} allowedRoles - Danh sách các role được phép truy cập ('admin', 'doctor', 'patient')
+ * @param {string[]} allowedRoles - Danh sách các role được phép truy cập ('ADMIN', 'DOCTOR', 'PATIENT')
  */
 export const authorizeRoles = (...allowedRoles) => {
     return async (req, res, next) => {
@@ -85,6 +85,6 @@ export const authorizeRoles = (...allowedRoles) => {
 }
 
 // Các middleware tiện ích cho từng role cụ thể
-export const authorizeAdmin = authorizeRoles('admin')
-export const authorizeDoctor = authorizeRoles('doctor')
-export const authorizePatient = authorizeRoles('patient')
+export const authorizeAdmin = authorizeRoles('ADMIN')
+export const authorizeDoctor = authorizeRoles('DOCTOR')
+export const authorizePatient = authorizeRoles('PATIENT')

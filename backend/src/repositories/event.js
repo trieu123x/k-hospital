@@ -1,12 +1,11 @@
 import { prisma } from "../configs/prisma-config.js"
 
 export const eventRepository = {
-    track: async ({ userId, eventType, entityId, metadata }) => {
+    track: async ({ userId, eventType, metadata }) => {
         return await prisma.userEvent.create({
             data: {
                 userId: userId || null,
                 eventType,
-                entityId: entityId || null,
                 metadata: metadata || {},
             },
             select: { id: true, eventType: true, createdAt: true }

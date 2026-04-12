@@ -13,6 +13,17 @@ export const authSchema = {
       ),
   }),
 
+  registerDoctor: z.object({
+    email: z.string().email({ message: "Email không hợp lệ" }).or(z.literal('')),
+    fullName: z.string().min(2, "Họ tên quá ngắn"),
+    phone: z
+      .string()
+      .regex(
+        /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/,
+        "Số điện thoại không hợp lệ (Việt Nam)",
+      ),
+  }),
+
   verifyRegister: z.object({
     email: z.string().email({ message: "Email không hợp lệ" }),
     otp: z.string().length(6, "OTP phải có 6 chữ số"),

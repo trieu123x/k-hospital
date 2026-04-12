@@ -11,7 +11,7 @@ export const chatService = {
             const aiResponse = await axios.post(`${AI_SERVICE_URL}/ai/predict/title`, {
                 first_message: content
             })
-            if (aiResponse.data?.title) {
+            if (aiResponse.data && aiResponse.data.title) {
                 title = aiResponse.data.title
             }
         } catch (error) {
@@ -20,7 +20,6 @@ export const chatService = {
 
         const session = await chatRepository.createSession(userId, title)
         const message = await chatRepository.createMessage(session.id, 'USER', content)
-        
         return { session, message }
     },
 
@@ -60,5 +59,13 @@ export const chatService = {
             console.error("Lỗi khi cập nhật topic từ AI:", error.message)
             return null
         }
+    },
+
+    deleteSession: async (sessionId, userId) => {
+        const session = await chatRepository.getSessionById(sessionId)
+        if (!session || (userId && session.userId !== userId)) {
+            throw Object.assign(new Error("Không tìm thấy phiên chat!"), { statusCode: 404 })
+        }
+        return await chatRepository.deleteSession(sessionId)
     }
 }

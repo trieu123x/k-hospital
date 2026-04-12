@@ -37,6 +37,19 @@ export const userSchema = {
         .nullable(),
       address: z.string().optional().nullable(),
       avatarUrl: z.string().url("Link ảnh không hợp lệ").optional().nullable(),
+      avatarCropData: z.string().optional().nullable().transform((val) => {
+        if (!val) return null;
+        try {
+          return JSON.parse(val);
+        } catch {
+          return null;
+        }
+      }),
+      specialtyId: z.string().optional().nullable(),
+      degreeId: z.string().optional().nullable(),
+      experience: z.string().optional().nullable(),
+      education: z.string().optional().nullable(),
+      achievements: z.string().optional().nullable(),
     }),
   },
 

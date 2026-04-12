@@ -20,7 +20,12 @@ export const chatRepository = {
     getSessionsByUserId: async (userId) => {
         return await prisma.chatSession.findMany({
             where: { userId },
-            orderBy: { startedAt: 'desc' }
+            orderBy: { endedAt: 'desc' },
+            select: {
+                id: true,
+                title: true,
+                endedAt: true
+            }
         })
     },
 
@@ -45,7 +50,7 @@ export const chatRepository = {
     getMessagesBySessionId: async (sessionId, lastId = null, limit = 50) => {
         const query = {
             where: { sessionId },
-            take: limit,
+            take: Number(limit),
             orderBy: { createdAt: 'desc' }
         }
 
@@ -56,5 +61,11 @@ export const chatRepository = {
 
         const messages = await prisma.chatMessage.findMany(query)
         return messages
+    },
+
+    deleteSession: async (id) => {
+        return await prisma.chatSession.delete({
+            where: { id }
+        })
     }
 }

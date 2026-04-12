@@ -6,7 +6,10 @@ import { authenticate, authorizeRoles } from '../middlewares/authenticate.js'
 
 const router = express.Router()
 
-router.get('/by-time', authenticate, authorizeRoles('admin'), validate({ query: reportSchema.byTimeQuery }), getReportByTime)
-router.get('/:id', authenticate, authorizeRoles('admin'), validate({ params: reportSchema.params }), getReportById)
+// router.get('/by-time', authenticate, authorizeRoles('ADMIN'), validate({ query: reportSchema.byTimeQuery }), getReportByTime)
+// router.get('/:id', authenticate, authorizeRoles('ADMIN'), validate({ params: reportSchema.params }), getReportById)
+
+router.get('/by-time', validate({ query: reportSchema.byTimeQuery }), getReportByTime)
+router.get('/:id', validate({ params: reportSchema.params }), getReportById)
 
 export default router

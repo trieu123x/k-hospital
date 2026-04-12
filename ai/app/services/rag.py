@@ -1,5 +1,6 @@
 from app.config.ai_model import ai_provider
 from app.config.database import db
+from google.genai import errors
 from app.services.embedding_vector_service import embedding_service
 import json
 
@@ -67,25 +68,33 @@ class RAGService:
             doctor_context = "\nThông tin bác sĩ/lịch khám gợi ý (ETL):\n" + json.dumps(top_doctors, ensure_ascii=False)
 
         system_prompt = f"""
-Bạn là trợ lý y tế MediCare. Hãy trả lời câu hỏi của bệnh nhân dựa trên ngữ cảnh sau:
+        Bạn là trợ lý y tế MediCare. Hãy trả lời câu hỏi của bệnh nhân dựa trên ngữ cảnh sau:
 
-{diseases_context}
-{doctor_context}
+        {diseases_context}
+        {doctor_context}
 
-Lịch sử chat:
-{history_text}
+        Lịch sử chat:
+        {history_text}
 
-Câu hỏi hiện tại: {user_input}
+        Câu hỏi hiện tại: {user_input}
 
-Hướng dẫn:
-- Trả lời thân thiện, chuyên nghiệp.
-- Nếu có thông tin bệnh liên quan, hãy tham khảo để trả lời chính xác hơn.
-- Nếu có thông tin bác sĩ, hãy gợi ý cho bệnh nhân nếu phù hợp.
-- Tuyệt đối không tự ý kê đơn thuốc mạnh, hãy khuyên bệnh nhân đi khám nếu tình trạng nặng.
-"""
+        Hướng dẫn:
+        - Trả lời thân thiện, chuyên nghiệp.
+        - Nếu có thông tin bệnh liên quan, hãy tham khảo để trả lời chính xác hơn.
+        - Nếu có thông tin bác sĩ, hãy gợi ý cho bệnh nhân nếu phù hợp.
+        - Tuyệt đối không tự ý kê đơn thuốc mạnh, hãy khuyên bệnh nhân đi khám nếu tình trạng nặng.
+        """
         
-        # 6. Gọi Gemini và stream kết quả
-        async for chunk in ai_provider.generate_chat(system_prompt):
-            yield chunk
+        try:
+            async for text in ai_provider.generate_chat(system_prompt):
+                yield f"data: {text}\n\n" 
+                
+        except errors.APIError as e:
+            print(f"Lỗi hệ thống: {e}")
+            yield f"data: Xin lỗi, hệ thống AI đang quá tải...\n\n"
+            
+        except Exception as e:
+            print(f"Lỗi hệ thống: {e}")
+            yield f"data: Đã xảy ra lỗi kết nối. Vui lòng thử lại sau.\n\n"
 
 rag_service = RAGService()

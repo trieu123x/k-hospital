@@ -42,12 +42,12 @@ export function SelectBox({
       {isOpen && (
         <div
           className={`
-            absolute top-full left-0 z-20 mt-1 w-full
+            absolute top-full left-0 z-20 mt-1 w-max
             bg-white border border-gray-200 rounded-[4px] shadow-lg
             max-h-60 overflow-y-auto hide-scrollbar
           `}
         >
-          <ul className="flex flex-col py-1">
+          <ul className="flex flex-col">
             {options.map((option) => (
               <li
                 key={option}

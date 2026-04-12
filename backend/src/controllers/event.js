@@ -2,9 +2,9 @@ import { catchError } from "../helpers/catch-error.js"
 import { eventService } from "../services/event.js"
 
 export const createEvent = catchError(async (req, res) => {
-    const { userId, eventType, entityId, metadata } = req.body
+    const { userId, eventType, metadata } = req.body
 
-    const event = await eventService.createEvent({ userId, eventType, entityId, metadata })
+    const event = await eventService.createEvent({ userId, eventType, metadata })
 
     res.status(201).json({
         success: true,

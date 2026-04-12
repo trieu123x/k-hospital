@@ -99,12 +99,12 @@ export function EditField({
               }}
               onFocus={() => setIsOpen(true)}
               placeholder={placeholder}
-              className={`w-full border border-black/10 px-3 py-1.5 pr-10 
+              className={`w-full border border-black/10 px-3 py-1.5 my-1
                text-[20px] bg-white focus:outline-none
                transition-colors min-h-[44px] rounded-[4px]
               `}
             />
-            <ChevronDown className={`absolute right-3 top-[13px] w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200
+            <ChevronDown className={`absolute right-3 top-4.5 w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200
               ${isOpen && dropdownPos === "top" ? "rotate-180" : ""} 
             `} />
 

@@ -9,7 +9,8 @@ export const doctorRepository = {
                 take,
                 include: {
                     profile: true,
-                    specialty: true
+                    specialty: true,
+                    degree: true
                 }
             }),
             prisma.doctor.count({ where: filters })
@@ -22,7 +23,8 @@ export const doctorRepository = {
             where: { id },
             include: {
                 profile: true,
-                specialty: true
+                specialty: true,
+                degree: true
             }
         })
     },
@@ -33,7 +35,8 @@ export const doctorRepository = {
             data: doctorData,
             include: {
                 profile: true,
-                specialty: true
+                specialty: true,
+                degree: true
             }
         })
     },
@@ -43,7 +46,8 @@ export const doctorRepository = {
             data,
             include: {
                 profile: true,
-                specialty: true
+                specialty: true,
+                degree: true
             }
         })
     }

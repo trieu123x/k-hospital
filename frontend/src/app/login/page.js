@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/routers";
 
 export default function Login() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function Login() {
       console.log("Thông tin user sau khi đăng nhập:", res.data || res);
       
       // Redirect based on role or to home
-      router.push("/");
+      router.push(ROUTES.HOME);
     } catch (err) {
       setError(err.response?.data?.message || "Email or password failed!");
     } finally {
@@ -70,7 +71,7 @@ export default function Login() {
             </div>
             
             <div className="flex justify-end mt-2">
-              <Link href="/forget-password" className="text-xs text-blue-500 hover:underline">
+              <Link href={ROUTES.FORGET_PASSWORD} className="text-xs text-blue-500 hover:underline">
                 Quên mật khẩu?
               </Link>
             </div>
@@ -87,7 +88,7 @@ export default function Login() {
 
         <div className="mt-8 text-center text-sm font-medium">
           <p className="text-gray-800">Do not have account?</p>
-          <Link href="/register" className="text-blue-500 hover:underline tracking-tight text-xs block mt-1">
+          <Link href={ROUTES.REGISTER} className="text-blue-500 hover:underline tracking-tight text-xs block mt-1">
             Click here to signup now!
           </Link>
         </div>

@@ -1,6 +1,46 @@
 import { prisma, Prisma } from "../configs/prisma-config.js";
 
 export const newsRespository = {
+    countAll: async () => {
+        return await prisma.news.count()
+    },
+
+    findAllForAdmin: async ({ title, date, lastId, limit = 30 }) => {
+        const searchFilter = title ? `%${title.toLowerCase()}%` : null
+
+        const cursorCondition = lastId 
+            ? Prisma.sql`AND id > ${lastId}::uuid` 
+            : Prisma.empty
+
+        const dateCondition = date
+            ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
+            : Prisma.empty
+
+        const newsList = await prisma.$queryRaw`
+            SELECT 
+                id, 
+                title, 
+                content,
+                new_url AS "newUrl", 
+                created_at AS "createdAt"
+            FROM news
+            WHERE 1=1
+                ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
+                ${dateCondition}
+                ${cursorCondition}
+            ORDER BY id ASC
+            LIMIT ${limit}
+        `
+
+        return newsList.map(news => ({
+            id: news.id,
+            title: news.title,
+            content: news.content,
+            newUrl: news.newUrl,
+            createdAt: news.createdAt
+        }))
+    },
+
     create: async (data) => {
         const {title, content, newUrl} = data
         return await prisma.news.create({
@@ -43,11 +83,15 @@ export const newsRespository = {
         })
     },
 
-    findWithFilter: async ({ title, lastId, limit = 30 }) => {
+    findWithFilter: async ({ title, date, lastId, limit = 30 }) => {
         const searchFilter = title ? `%${title.toLowerCase()}%` : null
 
         const cursorCondition = lastId 
             ? Prisma.sql`AND id > ${lastId}::uuid` 
+            : Prisma.empty
+
+        const dateCondition = date
+            ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
             : Prisma.empty
 
         const newsList = await prisma.$queryRaw`
@@ -59,6 +103,7 @@ export const newsRespository = {
             FROM news
             WHERE 1=1
                 ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
+                ${dateCondition}
                 ${cursorCondition}
             ORDER BY id ASC
             LIMIT ${limit}

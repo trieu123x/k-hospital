@@ -1,6 +1,14 @@
 import { medicineRepository } from "../repositories/medicine.js"
 
 export const medicineService = {
+    getTotalCount: async () => {
+        return await medicineRepository.countAll()
+    },
+
+    getMedicinesForAdmin: async (filters) => {
+        return await medicineRepository.findAllForAdmin(filters)
+    },
+
     getAllMedicines: async (filters = {}, page = 1, limit = 10) => {
         const skip = (page - 1) * limit
         const { medicines, total } = await medicineRepository.findAll(filters, skip, limit)

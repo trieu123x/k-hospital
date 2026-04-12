@@ -7,8 +7,13 @@ import { Button } from "../ui/Button";
 import { Bell } from "lucide-react";
 import Image from "next/image";
 import { NotificationForm } from "../notification/form";
+import { ROUTES } from "@/routers";
+import { useAuthStore } from "@/stores/auth";
+import { useNotificationStore } from "@/stores/notification";
 
-export default function Navbar({ isLogin = false, isAdmin = false, setSidebarOpen = () => { } }) {
+export default function Navbar({ setSidebarOpen = () => { } }) {
+  const isLogin = useAuthStore(state => state.isLogin)
+  const isAdmin = useAuthStore(state => state.isAdmin)
   const [isLookUpOpen, setLookUpOpen] = useState(false)
   const [isNotiOpen, setNotiOpen] = useState(false)
   const lookUpRef = useRef(null)
@@ -141,11 +146,14 @@ function UnLoginOption2({ setSidebarOpen }) {
 }
 
 function LoginOption1({ isNotiOpen, setNotiOpen }) {
+  const notifications = useNotificationStore(state => state.notifications)
+  const hasUnread = notifications?.some(noti => !noti.isRead)
+
   return <div className="hidden xl:flex w-1/5 justify-end items-center gap-2">
-    <div onClick={() => setNotiOpen(prev => !prev)}
-      className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-2 rounded-full">
-      <Bell className="size-6" />
-      {isNotiOpen && <NotificationForm />}
+    <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
+      {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
+      <Bell className="size-6" onClick={() => setNotiOpen(prev => !prev)} />
+      <NotificationForm isOpen={isNotiOpen} />
     </div>
 
     <div className="size-9 rounded-full overflow-hidden cursor-pointer mr-6">
@@ -155,11 +163,15 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
 }
 
 function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
+  const notifications = useNotificationStore(state => state.notifications)
+  const hasUnread = notifications?.some(noti => !noti.isRead)
+
   return <div className="flex xl:hidden items-center gap-3.5 mr-5">
     <div onClick={() => setNotiOpen(prev => !prev)}
       className="relative cursor-pointer hover:bg-[#bdbddf] transition-all duration-300 p-2 ml-2 rounded-full">
+      {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
       <Bell className="size-6" />
-      {isNotiOpen && <NotificationForm />}
+      <NotificationForm isOpen={isNotiOpen} />
     </div>
 
     <div className="size-9 rounded-full overflow-hidden cursor-pointer">

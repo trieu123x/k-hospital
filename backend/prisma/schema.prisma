@@ -30,27 +30,54 @@ model DiseaseCategory {
   @@map("disease_categories")
 }
 
+model Degree {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique // VD: Giáo sư, Tiến sĩ, CKI...
+  description String?
+  rankWeight  Int?     @map("rank_weight") // Dùng để sắp xếp thứ bậc (VD: GS = 100, TS = 90)
+  doctors     Doctor[]
+
+  @@map("degrees")
+}
+
+// Bảng mới: Lưu trữ danh mục loại thuốc
+model MedicineType {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String     @unique // VD: Thuốc uống, Thuốc bôi...
+  description String?
+  medicines   Medicine[]
+
+  @@map("medicine_types")
+}
+
 // ================================
 // USERS
 // ================================
 
+enum UserRole {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
 model Profile {
-  id        String    @id @default(uuid()) @db.Uuid
-  fullName  String    @map("full_name")
-  email     String?   @unique
-  phone     String    @unique
-  avatarUrl String?   @map("avatar_url")
-  role      String? // 'admin', 'doctor', 'patient'
-  dob       DateTime? @db.Date
-  address   String?
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  isActive  Boolean   @default(true) @map("is_active")
+  id             String    @id @default(uuid()) @db.Uuid
+  fullName       String    @map("full_name")
+  email          String?   @unique
+  phone          String    @unique
+  avatarUrl      String?   @map("avatar_url")
+  avatarCropData Json?     @map("avatar_crop_data") // Lưu metadata cắt ảnh (x, y, width, height)
+  role           UserRole? // Ràng buộc bằng Enum
+  dob            DateTime? @db.Date
+  address        String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  isActive       Boolean   @default(true) @map("is_active")
 
   // Relations
-  doctor               Doctor?
+  doctor                Doctor?
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
-  doctorLeaves          DoctorLeave[]  @relation("DoctorLeaves") // <-- ĐÃ THAY THẾ QUAN HỆ SCHEDULE THÀNH DOCTOR LEAVE
+  doctorLeaves          DoctorLeave[]  @relation("DoctorLeaves")
   notifications         Notification[]
   chatSessions          ChatSession[]
 
@@ -64,15 +91,17 @@ model Profile {
 model Doctor {
   id           String  @id @db.Uuid
   specialtyId  String? @map("specialty_id") @db.Uuid
-  degree       String?
+  degreeId     String? @map("degree_id") @db.Uuid // Khóa ngoại trỏ sang bảng Degree
   experience   String?
   education    String?
   achievements String?
 
   profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
   specialty Specialty? @relation(fields: [specialtyId], references: [id])
+  degree    Degree?    @relation(fields: [degreeId], references: [id])
 
   @@index([specialtyId], name: "idx_doctor_specialty")
+  @@index([degreeId], name: "idx_doctor_degree")
   @@map("doctors")
 }
 
@@ -106,16 +135,19 @@ model Disease {
 }
 
 model Medicine {
-  id               String            @id @default(uuid()) @db.Uuid
+  id               String  @id @default(uuid()) @db.Uuid
   name             String
-  imageUrl         String?           @map("image_url")
-  medicineType     String?           @map("medicine_type") // 'uống','ngậm','bôi','tiêm'
+  imageUrl         String? @map("image_url")
+  typeId           String? @map("type_id") @db.Uuid // Khóa ngoại trỏ sang bảng MedicineType
   ingredients      String?
   dosage           String?
-  usageInstruction String?           @map("usage_instruction")
-  sideEffects      String?           @map("side_effects")
-  diseases         DiseaseMedicine[]
+  usageInstruction String? @map("usage_instruction")
+  sideEffects      String? @map("side_effects")
 
+  medicineType MedicineType?     @relation(fields: [typeId], references: [id])
+  diseases     DiseaseMedicine[]
+
+  @@index([typeId], name: "idx_medicine_type")
   @@map("medicines")
 }
 
@@ -138,19 +170,16 @@ model DoctorLeave {
   id       String   @id @default(uuid()) @db.Uuid
   doctorId String   @map("doctor_id") @db.Uuid
   date     DateTime @db.Date
-  
-  // NẾU shift = null -> Bác sĩ nghỉ CẢ NGÀY hôm đó
-  // NẾU shift = 1, 2... -> Bác sĩ chỉ báo bận đúng ca đó
-  shift    Int?     
-  
-  reason   String?  @db.Text 
+
+  shift Int?
+
+  reason String? @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  doctor   Profile  @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
+  doctor Profile @relation("DoctorLeaves", fields: [doctorId], references: [id], onDelete: Cascade)
 
-  // CHUẨN: Không tạo trùng 2 cái lịch nghỉ cho cùng 1 ca
-  @@unique([doctorId, date, shift], name: "idx_unique_leave") 
+  @@unique([doctorId, date, shift], name: "idx_unique_leave")
   @@index([doctorId, date])
   @@map("doctor_leaves")
 }
@@ -159,27 +188,33 @@ model DoctorLeave {
 // APPOINTMENTS & MEDICAL RECORDS
 // ================================
 
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 model Appointment {
-  id        String   @id @default(uuid()) @db.Uuid
-  patientId String   @map("patient_id") @db.Uuid
-  doctorId  String   @map("doctor_id") @db.Uuid
+  id        String @id @default(uuid()) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+  doctorId  String @map("doctor_id") @db.Uuid
 
-  date      DateTime @db.Date
-  shift     Int      // Ca khám: 1, 2, 3, 4
+  date  DateTime @db.Date
+  shift Int
 
-  status    String   @default("pending") // 'pending', 'confirmed', 'completed', 'cancelled'
-  reason    String?  @db.Text
+  status AppointmentStatus @default(PENDING) // Ràng buộc bằng Enum
+  reason String?           @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient   Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
-  doctor    Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient Profile? @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor  Profile? @relation("DoctorAppointments", fields: [doctorId], references: [id])
 
   notifications Notification[]
   medicalRecord MedicalRecord?
 
-  // THÊM CÁI NÀY: Để truy vấn nhanh
   @@index([doctorId, date, status])
   @@index([patientId])
   @@map("appointments")
@@ -275,7 +310,7 @@ model ChatMessage {
 
 // ================================
 // USER EVENTS
-// ================================
+// ================================ 
 
 enum EventType {
   VIEW_DOCTOR
@@ -289,13 +324,12 @@ model UserEvent {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String?   @map("user_id") @db.Uuid
   eventType EventType @map("event_type")
-  entityId  String?   @map("entity_id") @db.Uuid
-  metadata  Json?     @default("{}")
+  metadata  Json?     @default("{}") // Tất cả context (doctorId, diseaseId, shift, date, sessionId...) nằm ở đây
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([eventType])
   @@index([createdAt])
-  @@index([entityId])
+  @@index([metadata(ops: raw("jsonb_path_ops"))], type: Gin)
   @@map("user_events")
 }
 
@@ -307,7 +341,7 @@ enum ReportName {
   raw_events
   top_doctors
   top_diseases
-  peak_hours
+  peak_shifts
   daily_summary
   chat_topics
 }

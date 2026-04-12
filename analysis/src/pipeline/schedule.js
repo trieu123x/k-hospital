@@ -9,7 +9,7 @@ import { extractEvents } from '../extract/pull_events.js';
 import { transformRawEvents } from '../transform/raw_events.js';
 import { transformTopDoctors } from '../transform/top_doctors.js';
 import { transformTopDiseases } from '../transform/top_diseases.js';
-import { transformPeakHours } from '../transform/peak_hours.js';
+import { transformPeakShifts } from '../transform/peak_shifts.js';
 import { transformDailySummary } from '../transform/daily_summary.js';
 import { transformChatTopics } from '../transform/chat_topics.js';
 import { exportToParquet, cleanupParquetFiles } from '../load/to_parquet.js';
@@ -21,7 +21,7 @@ const TRANSFORMS = {
   raw_events: transformRawEvents,
   top_doctors: transformTopDoctors,
   top_diseases: transformTopDiseases,
-  peak_hours: transformPeakHours,
+  peak_shifts: transformPeakShifts,
   daily_summary: transformDailySummary,
   chat_topics: transformChatTopics,
 };

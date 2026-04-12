@@ -1,17 +1,18 @@
-import { LinkButton } from "../ui/LinkButton"
+"use client";
 
-export function OptionBar({ optionState = "profile", isDoctor = true }) {
+import { LinkButton } from "../ui/LinkButton"
+import { ROUTES } from "@/routers"
+import { useAuthStore } from "@/stores/auth"
+
+export function OptionBar({ optionState = "profile" }) {
   let optionBody
 
   switch (optionState) {
     case "admin":
       optionBody = <AdminOption />
       break;
-    case "patient":
-       optionBody = <PatientOption/>
-       break;
     default:
-      optionBody = <ProfileOption isDoctor={isDoctor} />
+      optionBody = <ProfileOption />
       break
   }
 
@@ -30,55 +31,52 @@ export function OptionBar({ optionState = "profile", isDoctor = true }) {
 
 function AdminOption() {
   return <>
-    <LinkButton href="/admin/users"
+    <LinkButton href={ROUTES.ADMIN_USERS}
       className="hover:bg-[#050355] justify-start rounded-none">
       Quản lý tài khoản
     </LinkButton>
 
-    <LinkButton href="/admin/medicines"
+    <LinkButton href={ROUTES.ADMIN_MEDICINES}
       className="hover:bg-[#050355] justify-start rounded-none">
       Quản lý thông tin thuốc
     </LinkButton>
 
-    <LinkButton href="/admin/diseases"
+    <LinkButton href={ROUTES.ADMIN_DISEASES}
       className="hover:bg-[#050355] justify-start rounded-none">
       Quản lý thông tin bệnh
     </LinkButton>
 
-    <LinkButton href="/admin/news"
+    <LinkButton href={ROUTES.ADMIN_NEWS}
       className="hover:bg-[#050355] justify-start rounded-none">
       Quản lý tin tức
     </LinkButton>
 
-    <LinkButton href="/admin/aggregate"
+    <LinkButton href={ROUTES.ADMIN_AGGREGATE}
       className="hover:bg-[#050355] justify-start rounded-none">
       Tổng kết
     </LinkButton>
   </>
 }
 
-function ProfileOption({ isDoctor = true }) {
+function ProfileOption() {
+  const isDoctor = useAuthStore(state => state.isDoctor);
   return <>
-    <LinkButton href="/profile/doctor/detail"
+    <LinkButton href={ROUTES.PROFILE}
       className="hover:bg-[#050355] justify-start rounded-none">
       Thông tin cá nhân
     </LinkButton>
 
-    <LinkButton href="/profile/doctor/medical_record"
+    <LinkButton href={ROUTES.PROFILE}
       className="hover:bg-[#050355] justify-start rounded-none">
       {isDoctor ? "Lịch sử khám bệnh" : "Lịch sử thăm khám"}
     </LinkButton>
 
-    <LinkButton href="/profile/doctor/medical_record/not_done"
+    <LinkButton href={ROUTES.PROFILE}
       className="hover:bg-[#050355] justify-start rounded-none">
       Yêu cầu chưa hoàn tất
     </LinkButton>
 
-    {isDoctor && <LinkButton href="/profile/doctor/schedules"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Lịch làm việc
-    </LinkButton>}
-    {isDoctor && <LinkButton href="/profile/doctor/appointment"
+    {isDoctor && <LinkButton href={ROUTES.PROFILE}
       className="hover:bg-[#050355] justify-start rounded-none">
       Xác nhận ca khám
     </LinkButton>}

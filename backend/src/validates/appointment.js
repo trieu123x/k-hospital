@@ -109,7 +109,7 @@ export const appointmentSchema = {
       status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"], {
         errorMap: () => ({
           message:
-            "Trạng thái không hợp lệ (chỉ nhận: pending, accepted, completed, cancelled)",
+            "Trạng thái không hợp lệ (chỉ nhận: PENDING, CONFIRMED, COMPLETED, CANCELLED)",
         }),
       }),
     }),
@@ -144,7 +144,7 @@ export const appointmentSchema = {
         .number()
         .int({ message: "Ca nghỉ phải là số nguyên" })
         .min(1, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
-        .max(12, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 4)" })
+        .max(12, { message: "Ca nghỉ không hợp lệ (chỉ từ 1 đến 12)" })
         .nullable()
         .optional(),
 

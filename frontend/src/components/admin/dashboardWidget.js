@@ -13,9 +13,9 @@ export function VerticalBarChart({ data = [] }) {
   const maxValue = Math.max(...data.map(d => d.value))
 
   const getBarColor = (percent) => {
-    if (percent >= 75) return "#3B3BC5"
-    if (percent >= 50) return "#4F4FF0"
-    if (percent >= 25) return "#8080F8"
+    if (percent >= 90) return "#3B3BC5"
+    if (percent >= 60) return "#4F4FF0"
+    if (percent >= 30) return "#8080F8"
     if (percent >= 10) return "#B5B5FF"
     return "#C3C3D4"
   }
@@ -31,9 +31,10 @@ export function VerticalBarChart({ data = [] }) {
             <div key={index} className="flex flex-col items-center justify-end h-full flex-1 max-w-[50px] group">
               <span className="text-[13px] font-medium">{item.value}</span>
               <div
-                className="w-full rounded-full transition-all duration-300 cursor-pointer hover:opacity-80"
+                className={`w-full rounded-full transition-all
+                  duration-300 cursor-pointer hover:opacity-80`}
                 style={{
-                  height: `${heightPercent}%`,
+                  height: `${heightPercent * 0.9}%`,
                   backgroundColor: barColor
                 }}
               ></div>
@@ -51,9 +52,9 @@ export function HorizontalBarChart({ data = [] }) {
   const maxValue = Math.max(...data.map(d => d.value))
 
   const getBarColor = (percent) => {
-    if (percent >= 75) return "#3B3BC5"
-    if (percent >= 50) return "#4F4FF0"
-    if (percent >= 25) return "#8080F8"
+    if (percent >= 90) return "#3B3BC5"
+    if (percent >= 60) return "#4F4FF0"
+    if (percent >= 30) return "#8080F8"
     if (percent >= 10) return "#B5B5FF"
     return "#C3C3D4"
   }
@@ -68,11 +69,12 @@ export function HorizontalBarChart({ data = [] }) {
 
           return (
             <div key={index} className="flex items-center w-full flex-1 max-h-[35px]">
-              <div className="flex-1 h-full flex items-center">
+              <div className="w-120 h-full flex items-center">
                 <div
-                  className="h-full rounded-r-full flex items-center px-3 transition-all duration-500 cursor-pointer hover:opacity-80"
+                  className={`h-full rounded-r-full flex items-center
+                    px-3 transition-all duration-500 cursor-pointer hover:opacity-80`}
                   style={{
-                    width: `${widthPercent}%`,
+                    width: `${widthPercent * 0.7}%`,
                     backgroundColor: barColor,
                     minWidth: 'fit-content'
                   }}
