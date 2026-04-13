@@ -10,7 +10,7 @@ export default function AdminLayout({ children }) {
   return <div className="w-full flex">
     {
       isOptionbarOpen &&
-      <OptionBar isDoctor={isDoctor} optionState="doctor" />
+      <OptionBar />
     }
 
     <div className="hidden xl:block w-55 flex-none"></div>
