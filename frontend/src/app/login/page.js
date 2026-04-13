@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; 
 import { ROUTES } from "@/routers";
 
 import { useAuthStore } from "@/stores/auth"; 
@@ -32,8 +32,8 @@ export default function Login() {
       
       setUser(userData);
       
-      // Redirect based on role or to home
-      router.push(ROUTES.HOME);
+      window.location.href = ROUTES.HOME;
+      
     } catch (err) {
       setError(err.response?.data?.message || "Email or password failed!");
     } finally {
