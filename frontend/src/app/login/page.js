@@ -7,6 +7,8 @@ import axiosInstance from "@/utils/axios";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/routers";
 
+import { useAuthStore } from "@/stores/auth"; 
+
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -15,6 +17,8 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { setUser } = useAuthStore();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -22,7 +26,11 @@ export default function Login() {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
       
-      console.log("Thông tin user sau khi đăng nhập:", res.data || res);
+      const userData = res.data?.data; 
+      
+      console.log("Thông tin user sau khi đăng nhập:", userData);
+      
+      setUser(userData);
       
       // Redirect based on role or to home
       router.push(ROUTES.HOME);

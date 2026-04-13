@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
 import { Filter } from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
+import { useAuthStore } from "@/stores/auth"; 
 
 const TABLE_COLUMNS = [
   { key: "name", label: "Tên", width: "20%" },
@@ -16,8 +16,8 @@ const TABLE_COLUMNS = [
 ];
 
 export default function Appointments() {
-  const params = useParams();
-  const doctorId = params?.uuid; 
+  const { user, isDoctor } = useAuthStore();
+  const doctorId = user?.id; 
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,11 @@ export default function Appointments() {
   const [shiftFilter, setShiftFilter] = useState("");
 
   const fetchPendingAppointments = async () => {
-    if (!doctorId) return;
+    if (!doctorId || !isDoctor) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await appointmentApi.getDoctorSchedule(doctorId);
@@ -43,7 +47,7 @@ export default function Appointments() {
 
   useEffect(() => {
     fetchPendingAppointments();
-  }, [doctorId]);
+  }, [doctorId, isDoctor]); 
 
   const uniqueDates = [...new Set(records.map(r => r.date))];
   const uniqueShifts = [...new Set(records.map(r => r.shift))].sort((a, b) => a - b);
@@ -114,6 +118,23 @@ export default function Appointments() {
       }
     }
   };
+
+  if (!doctorId && !loading) {
+     return (
+       <div className="flex items-center justify-center min-h-screen bg-gray-50 text-gray-500">
+         Vui lòng đăng nhập với tài khoản bác sĩ để xem lịch trình.
+       </div>
+     );
+  }
+
+  if (!isDoctor && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-red-500 font-bold text-xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-500">Trang này chỉ dành cho Bác sĩ quản lý lịch khám.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grow flex flex-col rasa-font bg-white min-h-screen">

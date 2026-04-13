@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
 import { ShiftItem } from "../../../../../components/appointment/doctor/shiftItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { CalendarSidebar } from "../../../../../components/appointment/doctor/calendarItem";
 import { ConfirmModal } from "@/components/ui/Modal"; 
+import { useAuthStore } from "@/stores/auth";
 
 const formatLocalDate = (dateObj) => {
   const year = dateObj.getFullYear();
@@ -15,8 +15,8 @@ const formatLocalDate = (dateObj) => {
 };
 
 export default function DoctorScheduleConfigPage() {
-  const params = useParams();
-  const doctorId = params?.uuid; 
+  const { user, isDoctor } = useAuthStore();
+  const doctorId = user?.id; 
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
@@ -30,7 +30,8 @@ export default function DoctorScheduleConfigPage() {
   });
 
   const fetchDailySchedule = async () => {
-    if (!doctorId || !selectedDate) return;
+    if (!doctorId || !isDoctor || !selectedDate) return;
+    
     setLoading(true);
     
     try {
@@ -78,7 +79,7 @@ export default function DoctorScheduleConfigPage() {
 
   useEffect(() => {
     fetchDailySchedule();
-  }, [doctorId, selectedDate]);
+  }, [doctorId, isDoctor, selectedDate]); 
 
   const shiftsData = useMemo(() => {
     const shifts = [];
@@ -182,6 +183,23 @@ export default function DoctorScheduleConfigPage() {
     setModalConfig({ isOpen: false, type: "", shiftData: null });
   };
 
+  if (!doctorId && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FAFAFA] text-gray-500 rasa-font">
+        <p className="text-lg italic">Vui lòng đăng nhập với tài khoản bác sĩ để xem và cấu hình lịch trình.</p>
+      </div>
+    );
+  }
+
+  if (!isDoctor && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FAFAFA] rasa-font">
+        <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-600 text-lg">Trang cấu hình ca làm việc này chỉ dành riêng cho Bác sĩ.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-[#FAFAFA] min-h-screen flex justify-start py-10 px-4 md:px-10 lg:px-16">
       <div className="w-full max-w-[1500px] flex flex-col lg:flex-row gap-12 lg:gap-20">
@@ -231,7 +249,7 @@ export default function DoctorScheduleConfigPage() {
         title="Cảnh báo"
         mainMessage={
           modalConfig.type === "cancel" 
-            ? `Bạn có chắc chắn muốn hủy lịch khám bệnh của ${modalConfig.shiftData?.name.toLowerCase()}?` 
+            ? `Bạn có chắc chắn muốn hủy lịch khám bệnh của ${modalConfig.shiftData?.name?.toLowerCase() || 'bệnh nhân'}?` 
             : "Bạn có chắc chắn muốn nghỉ ca làm việc?"
         }
         subMessage="Nếu bạn xác nhận, lịch khám bệnh hiện có cũng sẽ bị hủy theo gây ảnh hưởng đến kế hoạch khám bệnh của người dùng"

@@ -202,7 +202,6 @@ export const appointmentService = {
         const targetTime = new Date(startOfLeaveDate);
         targetTime.setHours(shiftStartHours[shift] || 7, 0, 0, 0);
 
-        const now = new Date();
         const diffInHours = (targetTime - now) / (1000 * 60 * 60);
 
         if (diffInHours < 24) {

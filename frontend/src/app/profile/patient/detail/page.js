@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation" 
 import { Pencil } from "lucide-react"
 import { EditField } from "@/components/ui/EditField"
 import { AvatarPicker } from "@/components/ui/ImagePicker"
 import { Button } from "@/components/ui/Button"
 import { userApi } from "@/routers/profile/profileRouter" 
+import { useAuthStore } from "@/stores/auth"
 
 export default function Detail() {
-  const params = useParams()
-  const userId = params?.uuid 
+  const { user, isDoctor, isAdmin } = useAuthStore()
+  const userId = user?.id 
 
   const [fullName, setFullName] = useState("")
   const [hometown, setHometown] = useState("")
@@ -24,7 +24,10 @@ export default function Detail() {
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      if (!userId) return
+      if (!userId) {
+        setLoading(false)
+        return
+      }
       
       try {
         const res = await userApi.getUserById(userId)
@@ -93,8 +96,25 @@ export default function Detail() {
     </div>
   }
 
+  if (!userId) {
+    return (
+      <div className="grow flex items-center justify-center bg-white min-h-[500px]">
+        <p className="text-gray-500 font-medium">Vui lòng đăng nhập để xem và chỉnh sửa thông tin cá nhân.</p>
+      </div>
+    )
+  }
+
+  if (isDoctor || isAdmin) {
+    return (
+      <div className="grow flex flex-col items-center justify-center bg-white min-h-[500px] rasa-font">
+        <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-600 text-lg">Trang hồ sơ này chỉ dành riêng cho Bệnh nhân.</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="grow flex flex-col rasa-font bg-white">
+    <div className="grow flex flex-col rasa-font bg-gray-50">
       <div className="relative grow flex px-10 py-8 justify-between gap-35">
         <div className="w-200 flex flex-col flex-none">
           <InputForm label={"Họ và tên"} placeholder={"Nhập tên của bạn"}

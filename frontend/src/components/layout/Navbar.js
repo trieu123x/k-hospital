@@ -6,6 +6,7 @@ import { LinkButton } from "../ui/LinkButton";
 import { Button } from "../ui/Button";
 import { Bell } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link"; 
 import { NotificationForm } from "../notification/form";
 import { ROUTES } from "@/routers";
 import { useAuthStore } from "@/stores/auth";
@@ -145,9 +146,17 @@ function UnLoginOption2({ setSidebarOpen }) {
   </div>
 }
 
+
 function LoginOption1({ isNotiOpen, setNotiOpen }) {
   const notifications = useNotificationStore(state => state.notifications)
   const hasUnread = notifications?.some(noti => !noti.isRead)
+
+  const user = useAuthStore(state => state.user)
+  const isDoctor = useAuthStore(state => state.isDoctor) 
+  
+  const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  
+  const profileLink = isDoctor ? "/profile/doctor/detail" : "/profile/patient/detail"
 
   return <div className="hidden xl:flex w-1/5 justify-end items-center gap-2">
     <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
@@ -156,15 +165,23 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
       <NotificationForm isOpen={isNotiOpen} />
     </div>
 
-    <div className="size-9 rounded-full overflow-hidden cursor-pointer mr-6">
-      <Image width={40} height={40} src={"/images/Avartar.jpg"} alt="" />
-    </div>
+    <Link href={profileLink} className="size-9 rounded-full overflow-hidden cursor-pointer mr-6 block">
+      <Image width={40} height={40} src={avatarUrl} alt="Avatar" className="object-cover w-full h-full" />
+    </Link>
   </div>
 }
+
 
 function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   const notifications = useNotificationStore(state => state.notifications)
   const hasUnread = notifications?.some(noti => !noti.isRead)
+
+  const user = useAuthStore(state => state.user)
+  const isDoctor = useAuthStore(state => state.isDoctor) 
+
+  const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  
+  const profileLink = isDoctor ? "/profile/doctor" : "/profile/patient"
 
   return <div className="flex xl:hidden items-center gap-3.5 mr-5">
     <div onClick={() => setNotiOpen(prev => !prev)}
@@ -174,9 +191,9 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
       <NotificationForm isOpen={isNotiOpen} />
     </div>
 
-    <div className="size-9 rounded-full overflow-hidden cursor-pointer">
-      <Image width={40} height={40} src={"/images/Avartar.jpg"} alt="" />
-    </div>
+    <Link href={profileLink} className="size-9 rounded-full overflow-hidden cursor-pointer block">
+      <Image width={40} height={40} src={avatarUrl} alt="Avatar" className="object-cover w-full h-full" />
+    </Link>
 
     <button id="sidebar-menu-btn" onClick={setSidebarOpen}>
       <Menu className="w-6.5 h-6.5 text-white cursor-pointer" />

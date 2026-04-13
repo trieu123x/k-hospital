@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation" 
 import { Pencil } from "lucide-react"
 import { EditField } from "@/components/ui/EditField"
 import { AvatarPicker } from "@/components/ui/ImagePicker"
 import { Button } from "@/components/ui/Button"
 import { userApi } from "@/routers/profile/profileRouter" 
+import { useAuthStore } from "@/stores/auth" 
 
 export default function Detail() {
-  const params = useParams()
-  const userId = params?.uuid 
+  const { user, isDoctor } = useAuthStore()
+  const userId = user?.id 
 
   const [fullName, setFullName] = useState("")
   const [hometown, setHometown] = useState("")
@@ -24,7 +24,10 @@ export default function Detail() {
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      if (!userId) return
+      if (!userId) {
+        setLoading(false)
+        return
+      }
       
       try {
         const res = await userApi.getUserById(userId)
@@ -49,7 +52,7 @@ export default function Detail() {
     }
 
     fetchUserInfo()
-  }, [userId])
+  }, [userId]) 
 
   const handleSave = async () => {
     if (!userId) return
@@ -88,13 +91,30 @@ export default function Detail() {
   }
 
   if (loading) {
-    return <div className="grow flex items-center justify-center bg-white min-h-[500px]">
+    return <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
       <p className="text-gray-500 italic">Đang tải thông tin...</p>
     </div>
   }
 
+  if (!userId) {
+    return (
+      <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
+        <p className="text-gray-500 font-medium">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
+      </div>
+    )
+  }
+
+  if (!isDoctor) {
+    return (
+      <div className="grow flex flex-col items-center justify-center bg-gray-50 min-h-[500px]">
+        <p className="text-red-500 font-bold text-xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-500">Trang hồ sơ này chỉ dành cho Bác sĩ.</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="grow flex flex-col rasa-font bg-white">
+    <div className="grow flex flex-col rasa-font bg-gray-50">
       <div className="relative grow flex px-10 py-8 justify-between gap-35">
         <div className="w-200 flex flex-col flex-none">
           <InputForm label={"Họ và tên"} placeholder={"Nhập tên của bạn"}

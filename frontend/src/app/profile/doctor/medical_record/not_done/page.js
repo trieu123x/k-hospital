@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation"; 
 import Image from "next/image";
 import FilterImage from "../../../../../../../public/images/Filter.svg"; 
 import { DoctorAppointmentItem } from "../../../../../../components/medicalRecord/doctor/doctorAppointmentItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
 import { ConfirmModal } from "@/components/ui/Modal"; 
+import { useAuthStore } from "@/stores/auth"; 
 
 export default function DoctorRecordNotDonePage() {
-  const params = useParams();
-  const doctorId = params?.uuid; 
+  const { user, isDoctor } = useAuthStore();
+  const doctorId = user?.id; 
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,11 @@ export default function DoctorRecordNotDonePage() {
   });
 
   const fetchAppointments = async () => {
-    if (!doctorId) return;
+    if (!doctorId || !isDoctor) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -45,7 +49,7 @@ export default function DoctorRecordNotDonePage() {
 
   useEffect(() => {
     fetchAppointments();
-  }, [doctorId]);
+  }, [doctorId, isDoctor]); 
 
   const requestCompleteAppointment = (appointmentId, medicalRecordData, patientName) => {
     setModalConfig({
@@ -112,6 +116,22 @@ export default function DoctorRecordNotDonePage() {
     return result;
   }, [appointments, filterOption]);
 
+  if (!doctorId && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FBFBFB] text-gray-500 rasa-font">
+        <p className="text-lg italic">Vui lòng đăng nhập với tài khoản bác sĩ để xem danh sách lịch khám.</p>
+      </div>
+    );
+  }
+
+  if (!isDoctor && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FBFBFB] rasa-font">
+        <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-600 text-lg">Trang quản lý ca khám này chỉ dành riêng cho Bác sĩ.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 min-h-screen flex justify-center">

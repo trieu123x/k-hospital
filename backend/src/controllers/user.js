@@ -44,30 +44,12 @@ export const userController = {
         }
     },
 
-    // getUserById: async (req, res, next) => { 
-    //     try {
-    //         const { id } = req.params
-    //         const requesterRole = req.user.profile.role
-    //         const requesterId = req.user.id
+    getUserById: async (req, res, next) => { 
+         try {
+             const { id } = req.params
+            const requesterRole = req.user.profile.role
+            const requesterId = req.user.id
 
-    //         const user = await userService.getUserById(id, requesterRole, requesterId)
-
-    //         res.status(200).json({
-    //             success: true,
-    //             data: user
-    //         })
-    //     } catch (error) {
-    //         next(error)
-    //     }
-    // },
-
-    getUserById: async (req, res, next) => {
-        try {
-            const { id } = req.params
-            const requesterRole = "ADMIN"
-            const requesterId = null
-
-            console.log(requesterRole)
             const user = await userService.getUserById(id, requesterRole, requesterId)
 
             res.status(200).json({

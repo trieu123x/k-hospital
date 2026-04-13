@@ -1,53 +1,37 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
 import Image from "next/image";
-import FilterImage from "../../../../../../public/images/Filter.svg";
-import { MedicalRecordItem } from "../../../../../components/medicalRecord/medicalRecordItem";
+import FilterImage from "../../../../../public/images/Filter.svg";
+import { MedicalRecordItem } from "../../../../components/medicalRecord/medicalRecordItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
+import { useAuthStore } from "@/stores/auth";
 
-export default function DoctorMedicalHistoryPage() {
-  const params = useParams();
-  const doctorId = params?.uuid; 
+export default function MedicalHistoryPage() {
+  const { user, isDoctor, isAdmin } = useAuthStore();
+  const userId = user?.id; 
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterOption, setFilterOption] = useState("newest");
 
   const fetchMedicalHistory = async () => {
-    if (!doctorId) return;
+    if (!userId || isDoctor || isAdmin) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
+    
     try {
-      const res = await appointmentApi.getDoctorSchedule(doctorId);
+      const res = await appointmentApi.getPatientHistory(userId);
       
       if (res && res.success) {
         const completedApps = res.data.filter(
           (app) => app.status === "COMPLETED"
         );
 
-        const recordsWithDetails = await Promise.all(
-          completedApps.map(async (app) => {
-            try {
-              const recordRes = await appointmentApi.getMedicalRecordDetail(app.appointmentId);
-              
-              if (recordRes && recordRes.success) {
-                return {
-                  ...app,
-                  diagnosis: recordRes.data?.diagnosis || "",
-                  prescription: recordRes.data?.prescription || "",
-                  note: recordRes.data?.note || ""
-                };
-              }
-              return app;
-            } catch (err) {
-              console.error(`Lỗi lấy bệnh án cho lịch khám ${app.appointmentId}:`, err);
-              return app; 
-            }
-          })
-        );
-
-        setRecords(recordsWithDetails);
+        setRecords(completedApps);
       }
     } catch (error) {
       console.error("Lỗi khi lấy lịch sử khám:", error);
@@ -58,7 +42,7 @@ export default function DoctorMedicalHistoryPage() {
 
   useEffect(() => {
     fetchMedicalHistory();
-  }, [doctorId]);
+  }, [userId, isDoctor, isAdmin]); 
 
   const displayedRecords = useMemo(() => {
     let result = records.map((item) => {
@@ -67,20 +51,22 @@ export default function DoctorMedicalHistoryPage() {
       const shiftStartHour = 6 + item.shift;
       const shiftEndHour = shiftStartHour + 1;
 
+      const medicalRecordInfo = item.medicalRecord || {};
+
       return {
         id: item.appointmentId,
-        patientName: item.patient?.name || "Bệnh nhân ẩn danh",
+        patientName: item.patient?.fullName || "Bệnh nhân", 
         phone: item.patient?.phone || "---",
-        doctor: item.doctor?.name || "Bác sĩ hệ thống", 
+        doctor: item.doctor?.name || "Bác sĩ", 
         department: item.doctor?.specialityName || "Đa khoa",
         date: appDate.toLocaleDateString("vi-VN"),
         timestamp: appDate.getTime(),
         shift: `Ca ${item.shift} (${shiftStartHour}h - ${shiftEndHour}h)`,
         location: "Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội",
         
-        diagnosis: item.diagnosis || "Chưa có kết luận",
-        prescription: item.prescription || "Không có", 
-        note: item.note || "Không có",                 
+        diagnosis: item.diagnosis || medicalRecordInfo.diagnosis || "Chưa có kết luận",
+        prescription: medicalRecordInfo.prescription || "Không có", 
+        note: medicalRecordInfo.note || "Không có",                
         symptoms: item.symptoms || item.reason || "Không có triệu chứng", 
       };
     });
@@ -89,10 +75,29 @@ export default function DoctorMedicalHistoryPage() {
       result.sort((a, b) => b.timestamp - a.timestamp);
     } else if (filterOption === "oldest") {
       result.sort((a, b) => a.timestamp - b.timestamp);
+    } else if (filterOption === "tai_mui_hong") {
+      result = result.filter(record => record.department === "Tai mũi họng");
     }
 
     return result;
   }, [records, filterOption]);
+
+  if (!userId && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FBFBFB] text-gray-500 rasa-font">
+        <p className="text-lg italic">Vui lòng đăng nhập để xem lịch sử khám bệnh của bạn.</p>
+      </div>
+    );
+  }
+
+  if ((isDoctor || isAdmin) && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FBFBFB] rasa-font">
+        <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-600 text-lg">Trang lịch sử khám bệnh này chỉ dành cho Bệnh nhân.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 min-h-screen flex justify-center">
@@ -109,6 +114,7 @@ export default function DoctorMedicalHistoryPage() {
           >
             <option value="newest">Ngày khám: Gần đây nhất</option>
             <option value="oldest">Ngày khám: Cũ nhất</option>
+            <option value="tai_mui_hong">Chỉ khoa: Tai mũi họng</option>
           </select>
         </div>
 

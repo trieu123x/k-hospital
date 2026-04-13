@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import { BookingForm } from "@/components/appointment/bookingForm";
 import { BookingDetails } from "@/components/appointment/bookingDetail";
+import { useAuthStore } from "@/stores/auth"; 
 
 export default function BookingPage() {
-  const params = useParams();
-  const patientId = params?.uuid; 
+  const { user } = useAuthStore(); 
+  const patientId = user?.id; 
 
   const [previewData, setPreviewData] = useState(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -17,11 +17,17 @@ export default function BookingPage() {
       <div className="w-full h-full flex flex-col lg:flex-row">
         
         <div className="w-full lg:w-[450px] border-b lg:border-b-0 lg:border-r border-gray-300 mt-5 mb-5">
-          <BookingForm 
-            patientId={patientId} 
-            onChangeData={(data) => setPreviewData(data)} 
-            onConfirm={() => setIsConfirmed(true)} 
-          />
+          {patientId ? (
+            <BookingForm 
+              patientId={patientId} 
+              onChangeData={(data) => setPreviewData(data)} 
+              onConfirm={() => setIsConfirmed(true)} 
+            />
+          ) : (
+            <div className="p-8 mt-10 text-center">
+              <p className="text-gray-500 font-medium">Vui lòng đăng nhập để tiến hành đặt lịch.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 mt-5 ml-20">
