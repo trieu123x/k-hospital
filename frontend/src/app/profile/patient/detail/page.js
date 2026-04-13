@@ -91,14 +91,14 @@ export default function Detail() {
   }
 
   if (loading) {
-    return <div className="grow flex items-center justify-center bg-white min-h-[500px]">
+    return <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
       <p className="text-gray-500 italic">Đang tải thông tin...</p>
     </div>
   }
 
   if (!userId) {
     return (
-      <div className="grow flex items-center justify-center bg-white min-h-[500px]">
+      <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
         <p className="text-gray-500 font-medium">Vui lòng đăng nhập để xem và chỉnh sửa thông tin cá nhân.</p>
       </div>
     )
@@ -106,7 +106,7 @@ export default function Detail() {
 
   if (isDoctor || isAdmin) {
     return (
-      <div className="grow flex flex-col items-center justify-center bg-white min-h-[500px] rasa-font">
+      <div className="grow flex flex-col items-center justify-center bg-gray-50 min-h-[500px] rasa-font">
         <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
         <p className="text-gray-600 text-lg">Trang hồ sơ này chỉ dành riêng cho Bệnh nhân.</p>
       </div>
