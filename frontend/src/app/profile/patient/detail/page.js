@@ -122,7 +122,7 @@ export default function Detail() {
           <InputForm label={"Quê quán"} placeholder={"Nhập quê quán của bạn"}
             value={hometown} setValue={setHometown} />
           <InputForm label={"Email"} placeholder={"Nhập email của bạn"}
-            value={email} setValue={setEmail} />
+            value={email} setValue={setEmail} isReadOnly={true} />
           <InputForm label={"Số điện thoại"} placeholder={"Nhập số điện thoại"}
             value={phone} setValue={setPhone} />
         </div>
@@ -149,7 +149,7 @@ export default function Detail() {
   )
 }
 
-function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [] }) {
+function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [], isReadOnly = false }) {
   return (
     <div className="w-full flex justify-between gap-3">
       <EditField
@@ -160,8 +160,13 @@ function InputForm({ label, placeholder, value, setValue = (value) => { }, mode 
         className="w-full"
         mode={mode}
         options={options} 
+        readOnly={isReadOnly}
       />
-      <Pencil className="mt-11 size-6 opacity-60" />
+      {isReadOnly ? (
+        <div className="mt-11 size-6" />
+      ) : (
+        <Pencil className="mt-11 size-6 opacity-60" />
+      )}
     </div>
   )
 }

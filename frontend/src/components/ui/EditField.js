@@ -12,6 +12,7 @@ export function EditField({
   options = [], // Danh sách gợi ý cho mode "select"
   placeholder = "",
   className = "",
+  readOnly = false,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState(value)
@@ -67,75 +68,81 @@ export function EditField({
         {label}
       </label>
 
-      <div className="relative w-full" ref={dropdownRef}>
-        {/* MODE 1: NORMAL */}
-        {mode === "normal" ? (
-          <textarea
-            ref={inputRef}
-            value={value}
-            onChange={(e) => {
-              e.target.style.height = "auto"
-              e.target.style.height = e.target.scrollHeight + "px"
-              if (onChange) onChange(e.target.value)
-            }}
-            placeholder={placeholder}
-            rows={1}
-            className={`w-full border border-black/10 px-3 py-1.5
-              text-[20px] bg-white focus:outline-none rounded-[4px]
-              transition-colors resize-none overflow-hidden min-h-[44px]
-            `}
-          />
-        ) : (
-          /* MODE 2: SELECT */
-          <>
-            <input
+      {readOnly ? (
+        <div className="w-full px-3 py-1.5 text-[20px] bg-gray-100 min-h-[44px] rounded-[4px] border border-black/10 flex items-center">
+          {value}
+        </div>
+      ) : (
+        <div className="relative w-full" ref={dropdownRef}>
+          {/* MODE 1: NORMAL */}
+          {mode === "normal" ? (
+            <textarea
               ref={inputRef}
-              type="text"
-              value={searchTerm}
+              value={value}
               onChange={(e) => {
-                setSearchTerm(e.target.value)
-                setIsOpen(true)
+                e.target.style.height = "auto"
+                e.target.style.height = inputRef.current.scrollHeight + "px"
                 if (onChange) onChange(e.target.value)
               }}
-              onFocus={() => setIsOpen(true)}
               placeholder={placeholder}
-              className={`w-full border border-black/10 px-3 py-1.5 my-1
-               text-[20px] bg-white focus:outline-none
-               transition-colors min-h-[44px] rounded-[4px]
+              rows={1}
+              className={`w-full border border-black/10 px-3 py-1.5
+                text-[20px] bg-white focus:outline-none rounded-[4px]
+                transition-colors resize-none overflow-hidden min-h-[44px]
               `}
             />
-            <ChevronDown className={`absolute right-3 top-4.5 w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200
-              ${isOpen && dropdownPos === "top" ? "rotate-180" : ""} 
-            `} />
-
-            {/* MENU GỢI Ý MỚI - Thay đổi class linh hoạt */}
-            {isOpen && filteredOptions.length > 0 && (
-              <div
-                className={`absolute left-0 z-20 w-full bg-white border border-gray-400 rounded-[4px] max-h-50 overflow-y-auto hide-scrollbar shadow-lg
-                  ${dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"}
+          ) : (
+            /* MODE 2: SELECT */
+            <>
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setIsOpen(true)
+                  if (onChange) onChange(e.target.value)
+                }}
+                onFocus={() => setIsOpen(true)}
+                placeholder={placeholder}
+                className={`w-full border border-black/10 px-3 py-1.5 my-1
+                 text-[20px] bg-white focus:outline-none
+                 transition-colors min-h-[44px] rounded-[4px]
                 `}
-              >
-                <ul className="flex flex-col">
-                  {filteredOptions.map((option) => (
-                    <li
-                      key={option}
-                      onClick={() => {
-                        setSearchTerm(option)
-                        if (onChange) onChange(option)
-                        setIsOpen(false)
-                      }}
-                      className={`px-3 py-1.5 cursor-pointer text-[20px] 
-                        text-black hover:bg-gray-100 transition-colors`}
-                    >
-                      {option}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              />
+              <ChevronDown className={`absolute right-3 top-4.5 w-4 h-4 text-gray-500 pointer-events-none transition-transform duration-200
+                ${isOpen && dropdownPos === "top" ? "rotate-180" : ""} 
+              `} />
+
+              {/* MENU GỢI Ý MỚI - Thay đổi class linh hoạt */}
+              {isOpen && filteredOptions.length > 0 && (
+                <div
+                  className={`absolute left-0 z-20 w-full bg-white border border-gray-400 rounded-[4px] max-h-50 overflow-y-auto hide-scrollbar shadow-lg
+                    ${dropdownPos === "top" ? "bottom-full mb-1" : "top-full mt-1"}
+                  `}
+                >
+                  <ul className="flex flex-col">
+                    {filteredOptions.map((option) => (
+                      <li
+                        key={option}
+                        onClick={() => {
+                          setSearchTerm(option)
+                          if (onChange) onChange(option)
+                          setIsOpen(false)
+                        }}
+                        className={`px-3 py-1.5 cursor-pointer text-[20px] 
+                          text-black hover:bg-gray-100 transition-colors`}
+                      >
+                        {option}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
