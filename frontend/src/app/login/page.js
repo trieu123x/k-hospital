@@ -25,15 +25,11 @@ export default function Login() {
       const res = await axiosInstance.post("/auth/login", { email, password });
 
       console.log("Thông tin user sau khi đăng nhập:", res.data || res);
-<<<<<<< HEAD
       
       if (res.data) {
         setUser(res.data);
       }
       
-=======
-
->>>>>>> addd2cae92fa15251f6254224b6065a37863543f
       // Redirect based on role or to home
       router.push(ROUTES.HOME);
     } catch (err) {
