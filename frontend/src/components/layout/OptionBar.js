@@ -1,105 +1,123 @@
-import { LinkButton } from "../ui/LinkButton"
+"use client";
 
-export function OptionBar({ optionState = "profile", isDoctor = true }) {
-  let optionBody
+import { LinkButton } from "../ui/LinkButton";
+import { useAuthStore } from "@/stores/auth";
+import { logout } from "@/routers/user-api"; 
 
-  switch (optionState) {
-    case "admin":
-      optionBody = <AdminOption />
-      break;
-    case "patient":
-       optionBody = <PatientOption/>
-       break;
-    default:
-      optionBody = <ProfileOption isDoctor={isDoctor} />
-      break
+export function OptionBar() {
+  const { isDoctor, isAdmin, setUser } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await logout(); 
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất ở server:", error);
+    } finally {
+      setUser(null); 
+      window.location.href = "/login"; 
+    }
+  };
+
+  let optionBody;
+
+  if (isAdmin) {
+    optionBody = <AdminOption />;
+  } else if (isDoctor) {
+    optionBody = <DoctorOption />;
+  } else {
+    optionBody = <PatientOption />;
   }
 
-  return <div
-    className=
-    {`
-      fixed top-15 bottom-0 w-55 bg-[#070575] 
-    text-white rasa-font text-[20px]
-      hidden xl:flex flex-col
-      transition-all duration-300 ease-in-out
-    `}
-  >
-    {optionBody}
-  </div>
+  return (
+    <div
+      className={`
+        fixed top-15 bottom-0 w-55 bg-[#070575] 
+        text-white rasa-font text-[20px]
+        hidden xl:flex flex-col 
+        transition-all duration-300 ease-in-out
+        overflow-y-auto
+      `}
+    >
+      {optionBody}
+
+      <div className="border-t border-[#0b089e] mt-2 pt-2">
+        <button 
+          onClick={handleLogout}
+          className="w-full text-center cursor-pointer xl:text-left px-6 py-3 text-white hover:text-red-200 font-bold transition-colors"
+        >
+          Đăng xuất
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function AdminOption() {
-  return <>
-    <LinkButton href="/admin/users"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Quản lý tài khoản
-    </LinkButton>
+  return (
+    <>
+      <LinkButton href="/admin/users" className="hover:bg-[#050355] justify-start rounded-none">
+        Quản lý tài khoản
+      </LinkButton>
 
-    <LinkButton href="/admin/medicines"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Quản lý thông tin thuốc
-    </LinkButton>
+      <LinkButton href="/admin/medicines" className="hover:bg-[#050355] justify-start rounded-none">
+        Quản lý thông tin thuốc
+      </LinkButton>
 
-    <LinkButton href="/admin/diseases"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Quản lý thông tin bệnh
-    </LinkButton>
+      <LinkButton href="/admin/diseases" className="hover:bg-[#050355] justify-start rounded-none">
+        Quản lý thông tin bệnh
+      </LinkButton>
 
-    <LinkButton href="/admin/news"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Quản lý tin tức
-    </LinkButton>
+      <LinkButton href="/admin/news" className="hover:bg-[#050355] justify-start rounded-none">
+        Quản lý tin tức
+      </LinkButton>
 
-    <LinkButton href="/admin/aggregate"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Tổng kết
-    </LinkButton>
-  </>
+      <LinkButton href="/admin/aggregate" className="hover:bg-[#050355] justify-start rounded-none">
+        Tổng kết
+      </LinkButton>
+    </>
+  );
 }
 
-function ProfileOption({ isDoctor = true }) {
-  return <>
-    <LinkButton href="/profile/doctor/detail"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Thông tin cá nhân
-    </LinkButton>
+function DoctorOption() {
+  return (
+    <>
+      <LinkButton href="/profile/doctor/detail" className="hover:bg-[#050355] justify-start rounded-none">
+        Thông tin cá nhân
+      </LinkButton>
 
-    <LinkButton href="/profile/doctor/medical_record"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      {isDoctor ? "Lịch sử khám bệnh" : "Lịch sử thăm khám"}
-    </LinkButton>
+      <LinkButton href="/profile/doctor/medical_record" className="hover:bg-[#050355] justify-start rounded-none">
+        Lịch sử khám bệnh
+      </LinkButton>
 
-    <LinkButton href="/profile/doctor/medical_record/not_done"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Yêu cầu chưa hoàn tất
-    </LinkButton>
+      <LinkButton href="/profile/doctor/medical_record/not_done" className="hover:bg-[#050355] justify-start rounded-none">
+        Yêu cầu chưa hoàn tất
+      </LinkButton>
 
-    {isDoctor && <LinkButton href="/profile/doctor/schedules"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Lịch làm việc
-    </LinkButton>}
-    {isDoctor && <LinkButton href="/profile/doctor/appointment"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Xác nhận ca khám
-    </LinkButton>}
-  </>
+      <LinkButton href="/profile/doctor/schedules" className="hover:bg-[#050355] justify-start rounded-none">
+        Lịch làm việc
+      </LinkButton>
+      
+      <LinkButton href="/profile/doctor/appointment" className="hover:bg-[#050355] justify-start rounded-none">
+        Xác nhận ca khám
+      </LinkButton>
+    </>
+  );
 }
 
 function PatientOption() {
-  return <>
-    <LinkButton href="/profile/patient/detail"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Thông tin cá nhân
-    </LinkButton>
+  return (
+    <>
+      <LinkButton href="/profile/patient/detail" className="hover:bg-[#050355] justify-start rounded-none">
+        Thông tin cá nhân
+      </LinkButton>
 
-    <LinkButton href="/profile/patient/medical_record"
-      className="hover:bg-[#050355] justify-start rounded-none">
+      <LinkButton href="/profile/patient/medical_record" className="hover:bg-[#050355] justify-start rounded-none">
         Lịch sử thăm khám
-    </LinkButton>
+      </LinkButton>
 
-    <LinkButton href="/profile/patient/medical_record/upcoming"
-      className="hover:bg-[#050355] justify-start rounded-none">
-      Lịch thăm khám sắp tới
-    </LinkButton>
-  </>
+      <LinkButton href="/profile/patient/medical_record/upcoming" className="hover:bg-[#050355] justify-start rounded-none">
+        Lịch thăm khám sắp tới
+      </LinkButton>
+    </>
+  );
 }

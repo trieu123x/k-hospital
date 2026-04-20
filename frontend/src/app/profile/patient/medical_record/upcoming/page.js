@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
 import Image from "next/image";
-import FilterImage from "../../../../../../../public/images/Filter.svg";
-import { UpcomingAppointmentItem } from "../../../../../../components/medicalRecord/upcomingItem"; 
+import FilterImage from "../../../../../../public/images/Filter.svg";
+import { UpcomingAppointmentItem } from "../../../../../components/medicalRecord/upcomingItem"; 
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { ConfirmModal } from "@/components/ui/Modal"; 
+import { useAuthStore } from "@/stores/auth";
 
 export default function UpcomingAppointmentsPage() {
-  const params = useParams();
-  const userId = params?.uuid; 
+  const { user, isDoctor, isAdmin } = useAuthStore();
+  const userId = user?.id; 
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,11 @@ export default function UpcomingAppointmentsPage() {
   });
 
   const fetchUpcomingAppointments = async () => {
-    if (!userId) return;
+    if (!userId || isDoctor || isAdmin) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -55,7 +59,7 @@ export default function UpcomingAppointmentsPage() {
 
   useEffect(() => {
     fetchUpcomingAppointments();
-  }, [userId]);
+  }, [userId, isDoctor, isAdmin]); 
 
   const requestCancelAppointment = (appointmentId, shiftNum) => {
     setModalConfig({
@@ -132,6 +136,23 @@ export default function UpcomingAppointmentsPage() {
 
     return result;
   }, [appointments, filterOption]);
+
+  if (!userId && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FBFBFB] text-gray-500 rasa-font">
+        <p className="text-lg italic">Vui lòng đăng nhập để xem danh sách lịch khám sắp tới.</p>
+      </div>
+    );
+  }
+
+  if ((isDoctor || isAdmin) && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FBFBFB] rasa-font">
+        <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
+        <p className="text-gray-600 text-lg">Trang quản lý lịch hẹn cá nhân này chỉ dành cho Bệnh nhân.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 min-h-screen flex justify-center">

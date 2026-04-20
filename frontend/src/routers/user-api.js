@@ -43,3 +43,7 @@ export const updateUser = async (id, data) => {
     }
   })
 }
+
+export const logout = async () => {
+  return await axiosInstance.post('/auth/logout')
+}

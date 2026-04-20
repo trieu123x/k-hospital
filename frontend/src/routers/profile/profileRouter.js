@@ -1,8 +1,9 @@
 import axiosInstance from "@/utils/axios";
 
 export const userApi = {
+  // lười sửa ở các file khác nên đổi link thôi hihi
   getUserById: async (userId) => {
-    const response = await axiosInstance.get(`/users/${userId}`);
+    const response = await axiosInstance.get(`auth/me`);
     return response;
   },
 

@@ -4,18 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; 
 import { ROUTES } from "@/routers";
-import { useAuthStore } from "@/stores/auth";
+
+import { useAuthStore } from "@/stores/auth"; 
 
 export default function Login() {
   const router = useRouter();
-  const setUser = useAuthStore((state) => state.setUser);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { setUser } = useAuthStore();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,15 +25,15 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
-
-      console.log("Thông tin user sau khi đăng nhập:", res.data || res);
       
-      if (res.data) {
-        setUser(res.data);
-      }
+      const userData = res.data?.data; 
       
-      // Redirect based on role or to home
-      router.push(ROUTES.HOME);
+      console.log("Thông tin user sau khi đăng nhập:", userData);
+      
+      setUser(userData);
+      
+      window.location.href = ROUTES.HOME;
+      
     } catch (err) {
       setError(err.response?.data?.message || "Email or password failed!");
     } finally {
@@ -43,7 +45,7 @@ export default function Login() {
     <div className="flex items-center justify-center min-h-[85vh] px-4">
       <div className="bg-white p-10 md:p-12 rounded-lg shadow-[0_4px_30px_rgb(0,0,0,0.06)] w-full max-w-md border border-gray-100">
         <h1 className="text-3xl font-serif font-bold text-center mb-10">Đăng nhập</h1>
-
+        
         {error && <p className="text-red-500 text-xs font-semibold mb-2">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
@@ -56,7 +58,7 @@ export default function Login() {
               required
             />
           </div>
-
+          
           <div>
             <div className="relative">
               <input
@@ -75,7 +77,7 @@ export default function Login() {
                 {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
-
+            
             <div className="flex justify-end mt-2">
               <Link href={ROUTES.FORGET_PASSWORD} className="text-xs text-blue-500 hover:underline">
                 Quên mật khẩu?
