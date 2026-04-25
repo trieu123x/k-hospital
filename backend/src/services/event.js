@@ -2,8 +2,8 @@ import { eventRepository } from "../repositories/event.js"
 
 export const eventService = {
     // Gọi hàm này ở service layer, không cần await
-    track(userId, eventType, metadata = {}) {
-        eventRepository.track({ userId, eventType, metadata })
+    track(userId, eventType, entityId = null, metadata = {}) {
+        eventRepository.track({ userId, eventType, entityId, metadata })
             .catch(err => console.error('[EventTracker]', err.message))
     },
 

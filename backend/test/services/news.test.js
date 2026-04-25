@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { newsService } from '@/services/news.js'
 import { newsRespository } from '@/repositories/news.js'
+import { uploadHelper } from '@/helpers/storage-helper.js'
 
 vi.mock('@/repositories/news.js', () => ({
   newsRespository: {
@@ -12,11 +13,17 @@ vi.mock('@/repositories/news.js', () => ({
   }
 }))
 
-// Mocking the global uploadHelper that the news.js file expects
-global.uploadHelper = {
-  uploadFile: vi.fn(),
-  deleteFile: vi.fn()
-}
+vi.mock('@/configs/supabase-config.js', () => ({
+  supabase: {},
+  supabaseAdmin: {}
+}))
+
+vi.mock('@/helpers/storage-helper.js', () => ({
+  uploadHelper: {
+    uploadFile: vi.fn(),
+    deleteFile: vi.fn()
+  }
+}))
 
 describe('newsService', () => {
   beforeEach(() => {
@@ -28,14 +35,14 @@ describe('newsService', () => {
       newsRespository.create.mockResolvedValue({ id: 1, title: 'News' })
       const res = await newsService.createNews({ title: 'News' }, null)
       expect(res.id).toBe(1)
-      expect(global.uploadHelper.uploadFile).not.toHaveBeenCalled()
+      expect(uploadHelper.uploadFile).not.toHaveBeenCalled()
     })
 
     it('should upload file and create news if file exists', async () => {
-      global.uploadHelper.uploadFile.mockResolvedValue('url-img')
+      uploadHelper.uploadFile.mockResolvedValue('url-img')
       newsRespository.create.mockResolvedValue({ id: 1, newUrl: 'url-img' })
       const res = await newsService.createNews({ title: 'News' }, { name: 'file.png' })
-      expect(global.uploadHelper.uploadFile).toHaveBeenCalled()
+      expect(uploadHelper.uploadFile).toHaveBeenCalled()
       expect(res.newUrl).toBe('url-img')
     })
   })
@@ -48,12 +55,12 @@ describe('newsService', () => {
 
     it('should delete old file and upload new if file is provided', async () => {
       newsRespository.findById.mockResolvedValue({ id: 1, newUrl: 'old-url' })
-      global.uploadHelper.uploadFile.mockResolvedValue('new-url')
+      uploadHelper.uploadFile.mockResolvedValue('new-url')
       newsRespository.update.mockResolvedValue({ id: 1, newUrl: 'new-url' })
       
       await newsService.updateNews(1, { title: 'Updated' }, { name: 'new.png' })
-      expect(global.uploadHelper.deleteFile).toHaveBeenCalledWith('old-url', 'medicare')
-      expect(global.uploadHelper.uploadFile).toHaveBeenCalled()
+      expect(uploadHelper.deleteFile).toHaveBeenCalledWith('old-url', 'medicare')
+      expect(uploadHelper.uploadFile).toHaveBeenCalled()
     })
   })
 
@@ -89,7 +96,7 @@ describe('newsService', () => {
       newsRespository.delete.mockResolvedValue(true)
       
       await newsService.deleteNews(1)
-      expect(global.uploadHelper.deleteFile).toHaveBeenCalledWith('del-url', 'medicare')
+      expect(uploadHelper.deleteFile).toHaveBeenCalledWith('del-url', 'medicare')
       expect(newsRespository.delete).toHaveBeenCalledWith(1)
     })
   })

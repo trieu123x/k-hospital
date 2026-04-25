@@ -33,14 +33,14 @@ describe('userService', () => {
 
     it('should return filtered list for doctor', async () => {
       userRepository.findAll.mockResolvedValue({ users: [{ id: 1 }], total: 2 })
-      const res = await userService.getAllUsers('doctor', 1, 10)
+      const res = await userService.getAllUsers('DOCTOR', 1, 10)
       expect(res.users).toHaveLength(1)
-      expect(userRepository.findAll).toHaveBeenCalledWith({ role: 'patient' }, 0, 10)
+      expect(userRepository.findAll).toHaveBeenCalledWith({ role: 'PATIENT' }, 0, 10)
     })
 
     it('should return all for admin', async () => {
       userRepository.findAll.mockResolvedValue({ users: [{ id: 1 }], total: 2 })
-      await userService.getAllUsers('admin', 1, 10)
+      await userService.getAllUsers('ADMIN', 1, 10)
       expect(userRepository.findAll).toHaveBeenCalledWith({}, 0, 10)
     })
   })
@@ -52,19 +52,19 @@ describe('userService', () => {
     })
 
     it('should throw if patient viewing another patient', async () => {
-      userRepository.findById.mockResolvedValue({ id: 2, role: 'patient' })
-      await expect(userService.getUserById(2, 'patient', 1)).rejects.toThrow('Không có quyền xem')
+      userRepository.findById.mockResolvedValue({ id: 2, role: 'PATIENT' })
+      await expect(userService.getUserById(2, 'PATIENT', 1)).rejects.toThrow('Không có quyền xem')
     })
 
     it('should return doctor if patient views doctor', async () => {
-      userRepository.findById.mockResolvedValue({ id: 2, role: 'doctor' })
-      const res = await userService.getUserById(2, 'patient', 1)
+      userRepository.findById.mockResolvedValue({ id: 2, role: 'DOCTOR' })
+      const res = await userService.getUserById(2, 'PATIENT', 1)
       expect(res.id).toBe(2)
     })
 
     it('should return self if patient views self', async () => {
-      userRepository.findById.mockResolvedValue({ id: 1, role: 'patient' })
-      const res = await userService.getUserById(1, 'patient', 1)
+      userRepository.findById.mockResolvedValue({ id: 1, role: 'PATIENT' })
+      const res = await userService.getUserById(1, 'PATIENT', 1)
       expect(res.id).toBe(1)
     })
   })
@@ -79,7 +79,7 @@ describe('userService', () => {
       const res = await userService.updateUser(1, 1, { id: 2, role: 'admin', name: 'A', dob: '2020-01-01' })
       
       expect(res.name).toBe('A')
-      expect(userRepository.update).toHaveBeenCalledWith(1, { name: 'A', dob: new Date('2020-01-01') })
+      expect(userRepository.update).toHaveBeenCalledWith(1, { name: 'A', dob: new Date('2020-01-01') }, null)
     })
   })
 

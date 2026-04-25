@@ -101,7 +101,7 @@ describe('appointmentService', () => {
 
     it('should throw error if shift is invalid', async () => {
       vi.setSystemTime(new Date('2023-12-01'))
-      await expect(appointmentService.bookAppointment({ date: '2023-12-02', shift: 5 })).rejects.toThrow('Ca khám không hợp lệ (chỉ từ 1 đến 4)!')
+      await expect(appointmentService.bookAppointment({ date: '2023-12-02', shift: 13 })).rejects.toThrow('Ca khám không hợp lệ (chỉ từ 1 đến 12)!')
     })
 
     it('should create new appointment successfully', async () => {

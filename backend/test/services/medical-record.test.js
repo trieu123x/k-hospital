@@ -40,7 +40,7 @@ describe('medicalRecordService', () => {
     })
 
     it('should throw if appointment is already completed', async () => {
-      appointmentRepository.findById.mockResolvedValue({ status: 'completed' })
+      appointmentRepository.findById.mockResolvedValue({ status: 'COMPLETED' })
       await expect(medicalRecordService.createRecord(1, {})).rejects.toThrow('Lịch khám này đã được hoàn thành trước đó!')
     })
 
