@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ShiftItem } from "../../../../../components/appointment/doctor/shiftItem";
+import { ShiftItem } from "@/components/appointment/doctor/shiftItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
-import { CalendarSidebar } from "../../../../../components/appointment/doctor/calendarItem";
+import { CalendarSidebar } from "@/components/appointment/doctor/calendarItem";
 import { ConfirmModal } from "@/components/ui/Modal"; 
 import { useAuthStore } from "@/stores/auth";
 

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import FilterImage from "../../../../../../public/images/Filter.svg";
-import { MedicalRecordItem } from "../../../../../components/medicalRecord/medicalRecordItem";
+import FilterImage from "../../../../../public/images/Filter.svg";
+import { MedicalRecordItem } from "@/components/medicalRecord/medicalRecordItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { useAuthStore } from "@/stores/auth";
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Pencil } from "lucide-react"
 import { EditField } from "@/components/ui/EditField"
 import { AvatarPicker } from "@/components/ui/ImagePicker"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button"
 import { useSearchParams, useRouter } from "next/navigation"
 import { getNewsById, createNews, updateNews } from "@/routers/news-api"
 
-export default function Detail() {
+function DetailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -145,6 +145,14 @@ export default function Detail() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function Detail() {
+  return (
+    <Suspense fallback={<div className="p-10 italic text-gray-500">Đang tải...</div>}>
+      <DetailContent />
+    </Suspense>
   )
 }
 

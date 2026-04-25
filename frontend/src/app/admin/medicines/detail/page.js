@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Pencil } from "lucide-react"
 import { EditField } from "@/components/ui/EditField"
 import { AvatarPicker } from "@/components/ui/ImagePicker"
@@ -9,7 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { getMedicineById, createMedicine, updateMedicine } from "@/routers/medicine-api"
 import { getAllMedicineTypes } from "@/routers/medicine-type-api"
 
-export default function Detail() {
+function DetailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -187,6 +187,14 @@ export default function Detail() {
       )}
     </div>
   </div>
+}
+
+export default function Detail() {
+  return (
+    <Suspense fallback={<div className="p-10 italic text-gray-500">Đang tải...</div>}>
+      <DetailContent />
+    </Suspense>
+  )
 }
 
 function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [] }) {
