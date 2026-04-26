@@ -23,6 +23,9 @@ import { setupSwagger } from "./configs/swagger-config.js";
 dotenv.config();
 const app = express();
 
+// Tin tưởng Proxy (Railway dùng Proxy để xử lý HTTPS)
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: function (origin, callback) {
