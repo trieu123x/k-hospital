@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Định cấu hình URL gốc của API.
 // Có thể tùy chỉnh qua biến môi trường .env.local trên Next.js (chỉ định NEXT_PUBLIC_API_URL)
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Đổi port 5000 hoặc 8080 tùy vào backend của bạn
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://k-hospital-production.up.railway.app'; // URL máy chủ Railway
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

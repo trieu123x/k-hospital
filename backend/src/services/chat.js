@@ -2,7 +2,7 @@ import { chatRepository } from '../repositories/chat.js'
 import { eventService } from './event.js'
 import axios from 'axios'
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000'
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
 
 export const chatService = {
     createSession: async (userId, content) => {
