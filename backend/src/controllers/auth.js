@@ -76,7 +76,9 @@ export const login = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Đăng nhập thành công",
-        data: data.user // Ẩn token trong JSON response nếu muốn, hoặc trả về tuỳ ý. Tốt nhất là chỉ trả về user info.
+        data: data.user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
     })
 })
 

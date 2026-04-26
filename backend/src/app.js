@@ -32,8 +32,6 @@ app.use(
       const allowedOrigins = [
         process.env.FRONTEND_URL,
         "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
         "https://k-hospital-git-dev-trieu123xs-projects.vercel.app",
         "https://k-hospital-production.up.railway.app"
       ];
