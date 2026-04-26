@@ -1,16 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock nodemailer
-vi.mock('nodemailer', () => ({
-  default: {
-    createTransport: vi.fn().mockReturnValue({
-      sendMail: vi.fn().mockResolvedValue({ messageId: 'test-id' }),
-      verify: vi.fn().mockImplementation((cb) => cb(null, true))
-    })
+const { mockSend } = vi.hoisted(() => {
+  return {
+    mockSend: vi.fn().mockResolvedValue({ data: { id: 'test-id' }, error: null })
   }
-}))
+})
 
-import nodemailer from 'nodemailer'
+// Mock resend
+vi.mock('resend', () => {
+  return {
+    Resend: class {
+      constructor() {
+        this.emails = {
+          send: mockSend
+        }
+      }
+    }
+  }
+})
+
 import { sendOtpEmail } from '@/services/mail.js'
 
 describe('Email Service', () => {
@@ -19,8 +27,8 @@ describe('Email Service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env = { ...originalEnv }
-    process.env.EMAIL_USER = 'test@gmail.com'
-    process.env.EMAIL_PASS = 'password123'
+    process.env.RESEND_API_KEY = 're_test123'
+    process.env.RESEND_DOMAIN = 'testdomain.com'
   })
 
   it('should send OTP email with correct parameters', async () => {
@@ -29,8 +37,7 @@ describe('Email Service', () => {
 
     await sendOtpEmail(toEmail, otp)
 
-    const transporter = nodemailer.createTransport()
-    expect(transporter.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
       to: toEmail,
       subject: 'Mã OTP đặt lại mật khẩu',
       from: expect.stringContaining('MediAssist'),
@@ -44,16 +51,17 @@ describe('Email Service', () => {
 
     await sendOtpEmail(toEmail, otp)
 
-    const transporter = nodemailer.createTransport()
-    const callArgs = transporter.sendMail.mock.calls[0][0]
+    const callArgs = mockSend.mock.calls[0][0]
     expect(callArgs.html).toContain(otp)
   })
 
-  it('should throw error if sendMail fails', async () => {
-    const transporter = nodemailer.createTransport()
-    transporter.sendMail.mockRejectedValueOnce(new Error('SMTP Error'))
+  it('should log error if send fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockSend.mockResolvedValueOnce({ data: null, error: new Error('API Error') })
 
-    await expect(sendOtpEmail('test@test.com', '123456'))
-      .rejects.toThrow('SMTP Error')
+    await sendOtpEmail('test@test.com', '123456')
+    
+    expect(consoleSpy).toHaveBeenCalledWith("Lỗi gửi email bằng Resend:", expect.any(Error))
+    consoleSpy.mockRestore()
   })
 })

@@ -1,30 +1,19 @@
-import nodemailer from "nodemailer";
-import dns from "dns";
+import { Resend } from "resend";
 
-dns.setDefaultResultOrder("ipv4first");
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_testing");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  connectionTimeout: 10000,
-});
+if (!process.env.RESEND_API_KEY) {
+  console.error("Email configuration warning: Thiếu biến môi trường RESEND_API_KEY");
+} else {
+  console.log("Email server (Resend) is ready");
+}
 
-transporter.verify((error) => {
-    if (error) {
-        console.error("Email configuration warning:", error.message);
-    } else {
-        console.log("Email server is ready");
-    }
-});
 export const sendOtpEmail = async (toEmail, otp) => {
-    await transporter.sendMail({
-        from: `"MediAssist" <${process.env.EMAIL_USER}>`,
+    // Nếu chưa cấu hình domain tuỳ chỉnh trên Resend, hệ thống sẽ mặc định dùng địa chỉ này:
+    const sender = process.env.RESEND_DOMAIN ? `MediAssist <${process.env.RESEND_DOMAIN}>` : "MediAssist <onboarding@resend.dev>";
+    
+    const { data, error } = await resend.emails.send({
+        from: sender,
         to: toEmail,
         subject: "Mã OTP đặt lại mật khẩu",
         html: `
@@ -39,5 +28,9 @@ export const sendOtpEmail = async (toEmail, otp) => {
                 <p style="color: #999; font-size: 12px;">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
             </div>
         `
-    })
-}
+    });
+
+    if (error) {
+        console.error("Lỗi gửi email bằng Resend:", error);
+    }
+};
