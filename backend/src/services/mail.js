@@ -1,27 +1,28 @@
-import nodemailer from "nodemailer"
-import dns from "dns"
+import nodemailer from "nodemailer";
+import dns from "dns";
 
-dns.setDefaultResultOrder("ipv4first")
+dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
-})
-
-// Kiểm tra kết nối SMTP khi khởi động
-transporter.verify((error) => {
-  if (error) {
-    console.error("Email configuration warning:", error.message);
-  } else {
-    console.log("Email server is ready");
-  }
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000
 });
 
+transporter.verify((error) => {
+    if (error) {
+        console.error("Email configuration warning:", error.message);
+    } else {
+        console.log("Email server is ready");
+    }
+});
 export const sendOtpEmail = async (toEmail, otp) => {
     await transporter.sendMail({
         from: `"MediAssist" <${process.env.EMAIL_USER}>`,
