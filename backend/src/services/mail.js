@@ -14,13 +14,13 @@ const transporter = nodemailer.createTransport({
 })
 
 // Kiểm tra kết nối SMTP khi khởi động
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("Lỗi cấu hình Email:", error.message)
-    } else {
-        console.log("Email server is ready to take our messages")
-    }
-})
+transporter.verify((error) => {
+  if (error) {
+    console.error("Email configuration warning:", error.message);
+  } else {
+    console.log("Email server is ready");
+  }
+});
 
 export const sendOtpEmail = async (toEmail, otp) => {
     await transporter.sendMail({
