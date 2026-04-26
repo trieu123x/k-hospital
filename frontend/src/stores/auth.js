@@ -30,6 +30,10 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    }
     set({
       user: null,
       isLogin: false,

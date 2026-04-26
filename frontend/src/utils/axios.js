@@ -16,8 +16,15 @@ const axiosInstance = axios.create({
 // Interceptor cho Request
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Với cookie authentication, trình duyệt tự động gửi cookie.
-    // Nếu có fallback thì để lại, còn không thì không cần làm gì ở đây.
+    // 1. Với cookie authentication, trình duyệt tự động gửi cookie (nếu được phép)
+    
+    // 2. Dự phòng: Lấy token từ localStorage và gắn vào Header (cho môi trường Cross-site như Vercel)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error) => {

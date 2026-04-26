@@ -26,7 +26,17 @@ export default function Login() {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
       
-      const userData = res.data?.data; 
+      // Axios Instance đã trả về trực tiếp response.data, nên res lúc này là object { success, message, data, accessToken }
+      const userData = res?.data;
+      const accessToken = res?.accessToken;
+      const refreshToken = res?.refreshToken;
+
+      if (accessToken) {
+        localStorage.setItem('access_token', accessToken);
+      }
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+      }
       
       console.log("Thông tin user sau khi đăng nhập:", userData);
       
