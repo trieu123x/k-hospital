@@ -61,15 +61,15 @@ export const login = catchError(async (req, res) => {
 
     res.cookie('access_token', data.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
     })
     
     res.cookie('refresh_token', data.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ngày
     })
 
