@@ -44,6 +44,21 @@ export const useAuthStore = create((set) => ({
 
   fetchUser: async () => {
     try {
+      // Kiểm tra có token không trước khi fetch để tránh spam 401 ở server log
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          set({
+            user: null,
+            isLogin: false,
+            isAdmin: false,
+            isDoctor: false,
+            isLoading: false
+          });
+          return;
+        }
+      }
+
       const res = await axiosInstance.get("/auth/me");
       if (res.data) {
         const role = res.data.role?.toLowerCase() || '';
