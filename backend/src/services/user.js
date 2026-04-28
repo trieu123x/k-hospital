@@ -81,6 +81,15 @@ export const userService = {
             }
             const imageUrl = await uploadHelper.uploadFile(file, 'medicare', 'users');
             allowedData.avatarUrl = imageUrl;
+        } else if (allowedData.avatarUrl) {
+            const existingUser = await userRepository.findById(id);
+            if (existingUser && existingUser.avatarUrl && existingUser.avatarUrl !== allowedData.avatarUrl) {
+                try {
+                    await uploadHelper.deleteFile(existingUser.avatarUrl, 'medicare');
+                } catch (e) {
+                    console.error("Lỗi xóa ảnh cũ:", e);
+                }
+            }
         }
 
         const doctorData = {}

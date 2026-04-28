@@ -7,6 +7,7 @@ import { AvatarPicker } from "@/components/ui/ImagePicker"
 import { Button } from "@/components/ui/Button"
 import { userApi } from "@/routers/profile/profileRouter" 
 import { useAuthStore } from "@/stores/auth"
+import { supabase } from "@/utils/supabase"
 
 export default function Detail() {
   const { user, isDoctor, isAdmin } = useAuthStore()
@@ -59,18 +60,33 @@ export default function Detail() {
     setSaving(true)
 
     try {
-      const formData = new FormData()
-      
-      if (fullName) formData.append("fullName", fullName)
-      if (hometown) formData.append("address", hometown) 
-      if (email) formData.append("email", email)
-      if (phone) formData.append("phone", phone)
+      const jsonPayload = {}
+      if (fullName) jsonPayload.fullName = fullName
+      if (hometown) jsonPayload.address = hometown
+      if (email) jsonPayload.email = email
+      if (phone) jsonPayload.phone = phone
 
       if (avatarFile) {
-        formData.append("avatar", avatarFile) 
+        const fileExt = avatarFile.name?.split('.').pop() || 'jpg';
+        const fileName = `users/${userId}_${Date.now()}.${fileExt}`;
+        const { data, error: uploadError } = await supabase.storage
+          .from('medicare')
+          .upload(fileName, avatarFile, {
+            contentType: avatarFile.type || 'image/jpeg',
+            upsert: true
+          });
+
+        if (uploadError) {
+          alert("Lỗi upload ảnh: " + uploadError.message);
+          setSaving(false);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('medicare').getPublicUrl(fileName);
+        jsonPayload.avatarUrl = publicUrlData.publicUrl;
       }
 
-      const res = await userApi.updateUser(userId, formData)
+      const res = await userApi.updateUser(userId, jsonPayload)
       
       if (res && res.success) {
         alert("Cập nhật thông tin thành công!")
