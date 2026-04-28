@@ -80,14 +80,17 @@ export function AvatarPicker({
     const x = (width - size) / 2
     const y = (height - size) / 2
 
-    setCrop({
+    const initialCrop = {
       unit: 'px',
       width: size,
       height: size,
       x,
       y,
       aspect: 1
-    })
+    }
+
+    setCrop(initialCrop)
+    setCompletedCrop(initialCrop)
   }
 
   const handleSaveCrop = async () => {
