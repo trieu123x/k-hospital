@@ -217,6 +217,13 @@ export const authService = {
       });
     }
 
+    // Kiểm tra trạng thái hoạt động
+    if (profile.isActive === false) {
+      throw Object.assign(new Error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản lý."), {
+        statusCode: 403,
+      });
+    }
+
     return {
       accessToken: authData.session.access_token,
       refreshToken: authData.session.refresh_token,
@@ -227,6 +234,7 @@ export const authService = {
         role: profile.role,
         avatarUrl: profile.avatarUrl,
         email: authData.user.email,
+        isActive: profile.isActive
       },
     };
   },
@@ -253,7 +261,10 @@ export const authService = {
         statusCode: 404,
       });
     }
-    return profile;
+    return {
+      ...profile,
+      isActive: profile.isActive
+    };
   },
 
   /**

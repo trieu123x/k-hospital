@@ -184,6 +184,7 @@ export function AvatarPicker({
                     src={imgSrc}
                     alt="Crop me"
                     onLoad={handleImageLoad}
+                    crossOrigin="anonymous"
                     className="max-w-full object-contain"
                     style={{ maxHeight: '70vh' }}
                   />

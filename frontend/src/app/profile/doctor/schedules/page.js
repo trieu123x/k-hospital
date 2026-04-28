@@ -130,8 +130,7 @@ export default function DoctorScheduleConfigPage() {
     try {
       if (shiftObj.status === "empty") {
         const payload = {
-          doctorId,
-          date: formatLocalDate(selectedDate) + "T24:00:00.000Z", 
+          date: formatLocalDate(selectedDate), // Đúng format YYYY-MM-DD
           shift: shiftObj.shiftNum,
           reason: "Bác sĩ bận việc đột xuất"
         };

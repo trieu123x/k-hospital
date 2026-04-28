@@ -44,15 +44,6 @@ export const doctorService = {
         // Filter out fields that shouldn't be updated here directly
         const { id, profile, specialty, ...allowedData } = updateData;
 
-        // Ensure doctor record exists
-        const existingDoctor = await doctorRepository.findDoctorById(doctorId)
-        if (!existingDoctor) {
-            // First time updating extra info? We create it if it doesn't exist.
-            // But Prisma schema indicates `doctor` is implicitly created if role is doctor?
-            // Wait, register auth doesn't create doctor record currently, it only creates Profile.
-            throw Object.assign(new Error("Không tìm thấy hồ sơ bác sĩ (Cần được admin cấp phép trước)"), { statusCode: 404 })
-        }
-
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
         return updatedDoctor
     },

@@ -14,6 +14,7 @@ export const profileRepository = {
                 dob: true,
                 address: true,
                 createdAt: true,
+                isActive: true,
             }
         })
     },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function DoctorAppointmentItem({ data, onCompleteAppointment }) {
+export function DoctorAppointmentItem({ data, onCompleteAppointment, onCancelAppointment }) {
   const [diagnosis, setDiagnosis] = useState("");
   const [prescription, setPrescription] = useState("");
   const [note, setNote] = useState("");
@@ -42,16 +42,28 @@ export function DoctorAppointmentItem({ data, onCompleteAppointment }) {
         <div>Ca khám: <strong>{data.shift}</strong></div>
         <div>Lý do khám: <strong className="text-gray-600">{data.diagnosisMsg}</strong></div>
 
-        {data.status === "ongoing" && (
-          <div className="flex justify-end mt-4">
+        <div className="flex justify-between items-center mt-4">
+          {/* Nút Hủy lịch — chỉ hiện khi còn hơn 24h */}
+          {data.canCancel && onCancelAppointment ? (
+            <button
+              onClick={() => onCancelAppointment(data.id, data.patientName)}
+              className="border border-red-300 text-red-500 text-[13px] px-5 py-1 rounded-full hover:bg-red-50 transition-colors font-medium"
+            >
+              Hủy lịch
+            </button>
+          ) : (
+            <span />
+          )}
+
+          {data.status === "ongoing" && (
             <button 
               onClick={handleConfirm}
               className="border border-[#7DA7FF] text-[#5A95FF] text-[13px] px-6 py-1 rounded-full hover:bg-blue-50 transition-colors font-bold"
             >
               Xác nhận hoàn tất
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="w-full lg:w-1/2 flex flex-col pl-6 relative mt-4 lg:mt-0">

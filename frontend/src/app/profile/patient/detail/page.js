@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Pencil } from "lucide-react"
 import { EditField } from "@/components/ui/EditField"
-// Không dùng AvatarPicker vội
+import { AvatarPicker } from "@/components/ui/ImagePicker"
 import { Button } from "@/components/ui/Button"
 import { userApi } from "@/routers/profile/profileRouter" 
 import { useAuthStore } from "@/stores/auth"
@@ -86,8 +86,7 @@ export default function Detail() {
     }
   }
 
-  const handleAvatarChange = async (event) => {
-    const file = event.target.files[0]
+  const handleAvatarChange = async (file) => {
     if (!file) return
     
     try {
@@ -96,9 +95,8 @@ export default function Detail() {
       // 1. Upload ảnh lên Cloudinary
       const formData = new FormData()
       formData.append('file', file)
-      // BẠN CẦN THAY 2 GIÁ TRỊ NÀY BẰNG CỦA BẠN:
-      formData.append('upload_preset', 'medicare_avatar') // Upload preset từ Cloudinary Settings > Upload
-      const cloudName = 'dfnlbrk4w' // Cloud name của bạn
+      formData.append('upload_preset', 'medicare_avatar') 
+      const cloudName = 'dfnlbrk4w' 
       
       console.log("Đang upload lên Cloudinary...")
       const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
@@ -115,17 +113,16 @@ export default function Detail() {
       const publicUrl = uploadData.secure_url
       console.log("Cloudinary URL:", publicUrl)
       
-      // 2. Lưu URL đó vào cột TEXT trong Supabase
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId)
-        
-      if (dbError) throw dbError
+      // 2. Gửi URL này lên Backend của bạn để lưu thông qua API
+      const res = await userApi.updateUser(userId, { avatarUrl: publicUrl })
+      
+      if (!res || !res.success) {
+        throw new Error(res?.message || "Lỗi khi lưu ảnh vào database")
+      }
       
       // 3. Hiển thị lại ảnh
       setCurrentAvatarUrl(publicUrl)
-      alert("Đã upload lên Cloudinary và lưu URL vào Database thành công!")
+      alert("Đã cập nhật ảnh đại diện mới thành công!")
       
     } catch (error) {
       console.error(error)
@@ -172,24 +169,12 @@ export default function Detail() {
             value={phone} setValue={setPhone} />
         </div>
 
-        <div className="w-full flex flex-col items-center gap-4 border p-4 rounded-lg bg-white">
-          <p className="font-bold">Ảnh đại diện (Cloudinary)</p>
-          {currentAvatarUrl ? (
-            <img src={currentAvatarUrl} alt="Avatar" className="w-40 h-40 object-cover rounded-full border-2 border-gray-200" />
-          ) : (
-            <div className="w-40 h-40 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">Chưa có ảnh</div>
-          )}
-          <input 
-            type="file" 
-            accept="image/*"
-            onChange={handleAvatarChange} 
-            disabled={saving}
-            className="mt-2 text-sm text-slate-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-[#070575] file:text-white
-              hover:file:bg-[#08069b] cursor-pointer"
+        <div className="w-full">
+          <AvatarPicker
+            label="Họ và tên"
+            onChange={handleAvatarChange}
+            defaultImage={currentAvatarUrl} 
+            cropMode={true}
           />
         </div>
 

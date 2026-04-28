@@ -86,7 +86,7 @@ export function Table({
                           </button>
 
                         ) : col.mode === "tick" ? (
-                          <div className="flex items-center">
+                          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={!!row[col.key]}

@@ -24,9 +24,13 @@ router.patch("/update/status/:appointmentId", authenticate, authorizeRoles('ADMI
 router.post("/medical-record/create/:appointmentId", authenticate, authorizeRoles('DOCTOR'), validate(medicalRecordSchema.create), createMedicalRecord)
 router.get("/medical-record/:appointmentId", authenticate, authorizeRoles('DOCTOR', 'PATIENT'), validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
 router.patch("/medical-record/update/:appointmentId", authenticate, authorizeRoles('DOCTOR'), validate(medicalRecordSchema.update), updateMedicalRecord)
-router.get("/:appointmentId", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), validate(appointmentSchema.checkParamId), getAppointmentDetail)
-// Đăng kí nghỉ lịch và hủy nghỉ
+
+// Đăng ký nghỉ và hủy nghỉ — đặt TRƯỚC /:appointmentId để không bị bắt nhầm
 router.post("/leave", authenticate, authorizeRoles('DOCTOR'), validate(appointmentSchema.registerLeave), registerDoctorLeave)
 router.delete("/leave/:leaveId", authenticate, authorizeRoles('DOCTOR'), validate(appointmentSchema.cancelLeave), cancelDoctorLeave)
+router.get("/leaves/:doctorId", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), validate(appointmentSchema.getLeaves), getDoctorLeaves)
+
+// Route động 
+router.get("/:appointmentId", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), validate(appointmentSchema.checkParamId), getAppointmentDetail)
 
 export default router

@@ -27,6 +27,7 @@ function DetailContent() {
   const [education, setEducation] = useState("")
   const [experience, setExperience] = useState("")
   const [achievements, setAchievements] = useState("")
+  const [userRole, setUserRole] = useState(null)
 
   // State hỗ trợ logic nghiệp vụ
   const [initialData, setInitialData] = useState(null)
@@ -74,6 +75,7 @@ function DetailContent() {
             setAchievements(dataToUse.doctor?.achievements || "")
 
             setPreviewImage(dataToUse.avatarUrl || null)
+            setUserRole(dataToUse.role || null)
 
             setInitialData({
               fullName: dataToUse.fullName || "",
@@ -204,16 +206,20 @@ function DetailContent() {
           <>
             <InputForm label={"Quê quán"} placeholder={"Nhập quên quán của bạn"}
               value={hometown} setValue={(value) => setHometown(value)} />
-            <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
-              value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
-            <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
-              value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
-            <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
-              value={education} setValue={(value) => setEducation(value)} />
-            <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}
-              value={experience} setValue={(value) => setExperience(value)} />
-            <InputForm label={"Thành tựu"} placeholder={"Nhập thông tin"}
-              value={achievements} setValue={(value) => setAchievements(value)} />
+            {userRole !== 'PATIENT' && (
+              <>
+                <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
+                  value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
+                <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
+                  value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
+                <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
+                  value={education} setValue={(value) => setEducation(value)} />
+                <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}
+                  value={experience} setValue={(value) => setExperience(value)} />
+                <InputForm label={"Thành tựu"} placeholder={"Nhập thông tin"}
+                  value={achievements} setValue={(value) => setAchievements(value)} />
+              </>
+            )}
           </>
         )}
       </div>

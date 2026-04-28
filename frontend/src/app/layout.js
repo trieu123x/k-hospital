@@ -23,46 +23,68 @@ import { OptionBar } from "@/components/layout/OptionBar";
 import { ChatForm } from "@/components/chat/form";
 import { MessageCircle } from "lucide-react";
 import { useChatStore } from "@/stores/chat";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function RootLayout({ children }) {
-  // //Mấy cái này state để tạm để thử giao diện, chưa chắc là logic chính thức
+ 
+  const router = useRouter()
+  const pathname = usePathname()
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [isOptionbarOpen, setOptionbarOpen] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   const fetchUser = useAuthStore(state => state.fetchUser)
-  const isLogin = useAuthStore(state => state.isLogin)
-  const isAdmin = useAuthStore(state => state.isAdmin)
-  const isDoctor = useAuthStore(state => state.isDoctor)
-  const toggleChat = useChatStore(state => state.toggleChat)
   const user = useAuthStore(state => state.user)
+
   useEffect(() => {
+    setIsHydrated(true)
     fetchUser();
   }, [fetchUser]);
-console.log(user)
+
+  // Chuyển hướng nếu tài khoản bị khóa
+  useEffect(() => {
+    if (isHydrated && user) {
+      console.log("Full User Object:", user);
+      console.log("isActive property:", user.isActive);
+      
+      if (user.isActive === false && pathname !== "/account-locked") {
+        router.push("/account-locked")
+      }
+    }
+  }, [isHydrated, user, pathname, router])
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} relative antialiased flex flex-col min-h-screen bg-gray-50`}
       >
-        <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
-        <main className="mt-15 grow w-full flex flex-col">
-          <div className="w-full grow flex flex-col">
-            {children}
+        {!isHydrated ? (
+          <div className="flex items-center justify-center min-h-screen">
+            {/* Màn hình chờ nhẹ nhàng khi đang nạp dữ liệu */}
           </div>
-        </main>
-        <Footer />
+        ) : (
+          <>
+            <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
+            <main className="mt-15 grow w-full flex flex-col">
+              <div className="w-full grow flex flex-col">
+                {children}
+              </div>
+            </main>
+            <Footer />
 
-        {
-          isSidebarOpen &&
-          <SideBar setSidebarClose={() => setSidebarOpen(false)} />
-        }
+            {
+              isSidebarOpen &&
+              <SideBar setSidebarClose={() => setSidebarOpen(false)} />
+            }
 
-        {
-          isOptionbarOpen &&
-          <OptionBar />
-        }
-        
-        <ChatForm />
+            {
+              isOptionbarOpen &&
+              <OptionBar />
+            }
+            
+            <ChatForm />
+          </>
+        )}
       </body>
     </html>
   );

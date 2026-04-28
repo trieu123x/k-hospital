@@ -148,11 +148,14 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   const hasUnread = notifications?.some(noti => !noti.isRead)
 
   const user = useAuthStore(state => state.user)
+  const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor) 
   
   const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   
-  const profileLink = isDoctor ? "/profile/doctor/detail" : "/profile/patient/detail"
+  let profileLink = "/profile/patient/detail"
+  if (isAdmin) profileLink = "/admin/aggregate"
+  else if (isDoctor) profileLink = "/profile/doctor/detail"
 
   return <div className="hidden xl:flex w-1/5 justify-end items-center gap-2">
     <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
@@ -173,11 +176,14 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   const hasUnread = notifications?.some(noti => !noti.isRead)
 
   const user = useAuthStore(state => state.user)
+  const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor) 
 
   const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   
-  const profileLink = isDoctor ? "/profile/doctor" : "/profile/patient"
+  let profileLink = "/profile/patient"
+  if (isAdmin) profileLink = "/admin/aggregate"
+  else if (isDoctor) profileLink = "/profile/doctor"
 
   return <div className="flex xl:hidden items-center gap-3.5 mr-5">
     <div onClick={() => setNotiOpen(prev => !prev)}

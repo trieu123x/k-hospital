@@ -1,152 +1,175 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Pencil } from "lucide-react"
-import { EditField } from "@/components/ui/EditField"
-// Không dùng AvatarPicker vội
-import { Button } from "@/components/ui/Button"
-import { userApi } from "@/routers/profile/profileRouter" 
-import { useAuthStore } from "@/stores/auth" 
-import { supabase } from "@/utils/supabase"
+import { useState, useEffect } from "react";
+import { Pencil } from "lucide-react";
+import { EditField } from "@/components/ui/EditField";
+import { AvatarPicker } from "@/components/ui/ImagePicker";
+import { Button } from "@/components/ui/Button";
+import { userApi } from "@/routers/profile/profileRouter";
+import { doctorApi } from "@/routers/doctor/doctorRouter";
+import { getSpecialties } from "@/routers/specialty-api";
+import { useAuthStore } from "@/stores/auth";
+import { supabase } from "@/utils/supabase";
 
 export default function Detail() {
-  const { user, isDoctor } = useAuthStore()
-  const userId = user?.id 
+  const { user, isDoctor } = useAuthStore();
+  const userId = user?.id;
 
-  const [fullName, setFullName] = useState("")
-  const [hometown, setHometown] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  // Thông tin cá nhân
+  const [fullName, setFullName] = useState("");
+  const [hometown, setHometown] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
+
+  // Thông tin chuyên môn (chỉ cho bác sĩ)
+  const [specialtyId, setSpecialtyId] = useState("");
+  const [experience, setExperience] = useState("");
+  const [education, setEducation] = useState("");
+  const [achievements, setAchievements] = useState("");
+  const [specialties, setSpecialties] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const fetchData = async () => {
       if (!userId) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
-      
-      try {
-        const res = await userApi.getUserById(userId)
-        
-        if (res && res.success) {
-          const profile = res.data?.profile || res.data || {}
-          
-          setFullName(profile.fullName || "") 
-          setEmail(profile.email || "")
-          setPhone(profile.phone || "")
-          setHometown(profile.address || "") 
-          let avatarToSet = profile.avatarUrl || "";
-          if (avatarToSet && !avatarToSet.startsWith('http')) {
-            avatarToSet = supabase.storage.from('avatars').getPublicUrl(avatarToSet).data.publicUrl;
-          }
-          setCurrentAvatarUrl(avatarToSet)
-        } else {
-          console.error("Lỗi từ server:", res?.message)
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải thông tin người dùng:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
 
-    fetchUserInfo()
-  }, [userId]) 
+      setLoading(true);
+
+      try {
+        // 1. Tải danh sách chuyên khoa (không phụ thuộc userId)
+        try {
+          const specialtiesRes = await getSpecialties({ limit: 100 });
+          if (specialtiesRes?.success) {
+            setSpecialties(specialtiesRes.data || []);
+          }
+        } catch (err) {
+          console.error("Lỗi tải danh sách chuyên khoa:", err);
+        }
+
+        // 2. Tải thông tin Profile (bắt buộc)
+        try {
+          const userRes = await userApi.getUserById(userId);
+          if (userRes && userRes.success) {
+            const profile = userRes.data?.profile || userRes.data || {};
+            setFullName(profile.fullName || "");
+            setEmail(profile.email || "");
+            setPhone(profile.phone || "");
+            setHometown(profile.address || "");
+            let avatarToSet = profile.avatarUrl || "";
+            if (avatarToSet && !avatarToSet.startsWith("http")) {
+              avatarToSet = supabase.storage
+                .from("avatars")
+                .getPublicUrl(avatarToSet).data.publicUrl;
+            }
+            setCurrentAvatarUrl(avatarToSet);
+          }
+        } catch (err) {
+          console.error("Lỗi tải Profile:", err);
+        }
+
+        // 3. Tải thông tin Doctor (có thể 404 nếu là bác sĩ mới)
+        try {
+          const doctorRes = await doctorApi.getDoctorById(userId);
+          if (doctorRes?.success) {
+            const doc = doctorRes.data;
+            setSpecialtyId(doc.specialtyId || "");
+            setExperience(doc.experience || "");
+            setEducation(doc.education || "");
+            setAchievements(doc.achievements || "");
+          }
+        } catch (err) {
+          if (err.response?.status === 404) {
+            console.log("Bác sĩ chưa có hồ sơ chuyên môn, sẽ được tạo khi lưu lần đầu.");
+          } else {
+            console.error("Lỗi tải hồ sơ bác sĩ:", err);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
 
   const handleSave = async () => {
-    if (!userId) return
-    setSaving(true)
+    if (!userId) return;
+    setSaving(true);
 
     try {
-      const jsonPayload = {}
-      if (fullName) jsonPayload.fullName = fullName
-      if (hometown) jsonPayload.address = hometown
-      if (email) jsonPayload.email = email
-      if (phone) jsonPayload.phone = phone
+      const profilePayload = {
+        fullName,
+        address: hometown,
+        email,
+        phone,
+      };
 
-      // Các trường thông tin khác
-      const res = await userApi.updateUser(userId, jsonPayload)
-      
-      if (res && res.success) {
-        alert("Cập nhật thông tin thành công!")
+      const doctorPayload = {
+        specialtyId: specialtyId || null,
+        experience: experience || "",
+        education: education || "",
+        achievements: achievements || "",
+      };
+
+      // Gọi đồng thời cả 2 API update
+      const [resProfile, resDoctor] = await Promise.all([
+        userApi.updateUser(userId, profilePayload),
+        doctorApi.updateDoctorInfo(userId, doctorPayload)
+      ]);
+
+      if (resProfile.success && resDoctor.success) {
+        alert("Cập nhật thông tin thành công!");
       } else {
-        alert("Lỗi: " + (res?.message || "Không thể cập nhật"))
+        alert("Có lỗi xảy ra khi cập nhật một số thông tin.");
       }
     } catch (error) {
-      console.error("Lỗi khi lưu thông tin:", error)
-      const msg = error.response?.data?.message || error.message || "Đã xảy ra lỗi hệ thống"
-      alert(`Đã xảy ra lỗi: ${msg}`)
+      console.error("Lỗi khi lưu thông tin:", error);
+      alert(`Đã xảy ra lỗi: ${error.response?.data?.message || error.message}`);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  const handleAvatarChange = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-    
+  const handleAvatarChange = async (file) => {
+    if (!file) return;
     try {
-      setSaving(true)
-      
-      // 1. Upload ảnh lên Cloudinary
-      const formData = new FormData()
-      formData.append('file', file)
-      // BẠN CẦN THAY 2 GIÁ TRỊ NÀY BẰNG CỦA BẠN:
-      formData.append('upload_preset', 'medicare_avatar') // Upload preset từ Cloudinary Settings > Upload
-      const cloudName = 'dfnlbrk4w' // Cloud name của bạn
-      
-      console.log("Đang upload lên Cloudinary...")
-      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      const uploadData = await uploadRes.json()
-      
-      if (uploadData.error) {
-        throw new Error(uploadData.error.message)
-      }
+      setSaving(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "medicare_avatar");
+      const cloudName = "dfnlbrk4w";
 
-      const publicUrl = uploadData.secure_url
-      console.log("Cloudinary URL:", publicUrl)
-      
-      // 2. Lưu URL đó vào cột TEXT trong Supabase
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId)
-        
-      if (dbError) throw dbError
-      
-      // 3. Hiển thị lại ảnh
-      setCurrentAvatarUrl(publicUrl)
-      alert("Đã upload lên Cloudinary và lưu URL vào Database thành công!")
-      
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: formData }
+      );
+      const uploadData = await uploadRes.json();
+      if (uploadData.error) throw new Error(uploadData.error.message);
+
+      const res = await userApi.updateUser(userId, { avatarUrl: uploadData.secure_url });
+      if (res?.success) {
+        setCurrentAvatarUrl(uploadData.secure_url);
+        alert("Đã cập nhật ảnh đại diện thành công!");
+      }
     } catch (error) {
-      console.error(error)
-      alert("Lỗi upload: " + error.message)
+      alert("Lỗi upload: " + error.message);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
-    return <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
-      <p className="text-gray-500 italic">Đang tải thông tin...</p>
-    </div>
-  }
-
-  if (!userId) {
     return (
       <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
-        <p className="text-gray-500 font-medium">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
+        <p className="text-gray-500 italic">Đang tải thông tin...</p>
       </div>
-    )
+    );
   }
 
   if (!isDoctor) {
@@ -155,59 +178,74 @@ export default function Detail() {
         <p className="text-red-500 font-bold text-xl mb-2">Truy cập bị từ chối!</p>
         <p className="text-gray-500">Trang hồ sơ này chỉ dành cho Bác sĩ.</p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="grow flex flex-col rasa-font bg-gray-50">
       <div className="relative grow flex px-10 py-8 justify-between gap-35">
-        <div className="w-200 flex flex-col flex-none">
-          <InputForm label={"Họ và tên"} placeholder={"Nhập tên của bạn"}
-            value={fullName} setValue={setFullName} />
-          <InputForm label={"Quê quán"} placeholder={"Nhập quê quán của bạn"}
-            value={hometown} setValue={setHometown} />
-          <InputForm label={"Email"} placeholder={"Nhập email của bạn"}
-            value={email} setValue={setEmail} />
-          <InputForm label={"Số điện thoại"} placeholder={"Nhập số điện thoại"}
-            value={phone} setValue={setPhone} />
+        
+        {/* Cột trái: Thông tin cá nhân & Chuyên môn */}
+        <div className="w-200 flex flex-col flex-none space-y-4">
+          <div className="space-y-1">
+            <p className="text-[14px] font-bold text-gray-400 uppercase mb-2">Thông tin cá nhân</p>
+            <InputForm label="Họ và tên" placeholder="Nhập tên" value={fullName} setValue={setFullName} />
+            <InputForm label="Quê quán" placeholder="Nhập quê quán" value={hometown} setValue={setHometown} />
+            <InputForm label="Email" placeholder="Nhập email" value={email} setValue={setEmail} />
+            <InputForm label="Số điện thoại" placeholder="Nhập số điện thoại" value={phone} setValue={setPhone} />
+          </div>
+
+          <div className="pt-6 space-y-1">
+            <p className="text-[14px] font-bold text-gray-400 uppercase mb-2">Thông tin chuyên môn</p>
+            
+            {/* Chuyên khoa */}
+            <div className="w-full flex justify-between gap-3">
+              <div className="w-full">
+                <label className="block text-[14px] font-medium text-gray-700 mb-1">Chuyên khoa</label>
+                <select
+                  value={specialtyId}
+                  onChange={(e) => setSpecialtyId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-[14px] bg-white outline-none focus:border-blue-500"
+                >
+                  <option value="">-- Chọn chuyên khoa --</option>
+                  {specialties.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <Pencil className="mt-8 size-6 opacity-60 flex-none" />
+            </div>
+
+            <InputForm label="Kinh nghiệm" placeholder="Số năm kinh nghiệm..." value={experience} setValue={setExperience} mode="textarea" />
+            <InputForm label="Học vấn / Bằng cấp" placeholder="Bằng cấp của bạn..." value={education} setValue={setEducation} mode="textarea" />
+            <InputForm label="Thành tựu" placeholder="Các giải thưởng, thành tựu..." value={achievements} setValue={setAchievements} mode="textarea" />
+          </div>
         </div>
 
-        <div className="w-full flex flex-col items-center gap-4 border p-4 rounded-lg bg-white">
-          <p className="font-bold">Ảnh đại diện (Cloudinary)</p>
-          {currentAvatarUrl ? (
-            <img src={currentAvatarUrl} alt="Avatar" className="w-40 h-40 object-cover rounded-full border-2 border-gray-200" />
-          ) : (
-            <div className="w-40 h-40 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">Chưa có ảnh</div>
-          )}
-          <input 
-            type="file" 
-            accept="image/*"
-            onChange={handleAvatarChange} 
-            disabled={saving}
-            className="mt-2 text-sm text-slate-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-[#070575] file:text-white
-              hover:file:bg-[#08069b] cursor-pointer"
+        {/* Cột phải: Avatar */}
+        <div className="w-full flex justify-center">
+          <AvatarPicker
+            label="Ảnh đại diện"
+            onChange={handleAvatarChange}
+            defaultImage={currentAvatarUrl}
+            cropMode={true}
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleSave}
           disabled={saving}
           className={`absolute bottom-5 right-10 
           bg-[#070575] hover:bg-[#08069b] py-2 text-white transition-opacity
           ${saving ? "opacity-70 cursor-not-allowed" : ""}
-        `}>
+        `}
+        >
           {saving ? "Đang lưu..." : "Lưu lại thay đổi"}
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
-function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [] }) {
+function InputForm({ label, placeholder, value, setValue = () => {}, mode = "normal" }) {
   return (
     <div className="w-full flex justify-between gap-3">
       <EditField
@@ -217,9 +255,8 @@ function InputForm({ label, placeholder, value, setValue = (value) => { }, mode 
         onChange={(newValue) => setValue(newValue)}
         className="w-full"
         mode={mode}
-        options={options} 
       />
-      <Pencil className="mt-11 size-6 opacity-60" />
+      <Pencil className="mt-11 size-6 opacity-60 flex-none" />
     </div>
-  )
+  );
 }

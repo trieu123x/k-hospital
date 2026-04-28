@@ -11,18 +11,24 @@ const upload = multer({ storage: multer.memoryStorage() })
 const router = express.Router()
 
 // GET /users: Fetch all users based on roles
-router.get("/", authenticate, authorizeRoles('admin'), validate(userSchema.getAll), userController.getAllUsers)
+router.get("/", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getAll), userController.getAllUsers)
+
+// GET /users/admin: Fetch all users for admin (using same logic as getAllUsers)
+router.get("/admin", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getAll), userController.getAllUsers)
+
+// GET /users/count: Count total users
+router.get("/count", authenticate, authorizeRoles('ADMIN'), userController.getTotalUsers)
 
 // GET /users/:id: Fetch specific user
-router.get("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), validate(userSchema.getById), userController.getUserById)
+router.get("/:id", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), validate(userSchema.getById), userController.getUserById)
 
 // PATCH /users/:id: Update specific user profile
-router.patch("/:id", authenticate, authorizeRoles('admin', 'doctor', 'patient'), upload.single("avatar"), validate(userSchema.update), userController.updateUser)
+router.patch("/:id", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), upload.single("avatar"), validate(userSchema.update), userController.updateUser)
 
 // PATCH /users/:id/block: Block or unblock a user
-router.patch("/:id/block", authenticate, authorizeRoles('admin'), validate(userSchema.toggleBlock), userController.toggleBlockUser)
+router.patch("/:id/block", authenticate, authorizeRoles('ADMIN'), validate(userSchema.toggleBlock), userController.toggleBlockUser)
 
 // DELETE /users/:id: Delete a user
-router.delete("/:id", authenticate, authorizeRoles('admin'), validate(userSchema.getById), userController.deleteUser)
+router.delete("/:id", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getById), userController.deleteUser)
 
 export default router

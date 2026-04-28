@@ -36,7 +36,7 @@ export default function DoctorRecordNotDonePage() {
       
       if (res && res.success) {
         const upcomingApps = res.data.filter(app => 
-          app.status === "PENDING" || app.status === "CONFIRMED"
+          app.status === "CONFIRMED"
         );
         setAppointments(upcomingApps);
       }
@@ -79,6 +79,21 @@ export default function DoctorRecordNotDonePage() {
     }
   };
 
+  const handleCancelAppointment = async (appointmentId, patientName) => {
+    const confirmMsg = `Bạn có chắc chắn muốn HỦY lịch khám của bệnh nhân ${patientName}?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await appointmentApi.updateAppointmentStatus(appointmentId, { status: "CANCELLED" });
+      setAppointments(prev => prev.filter(app => app.appointmentId !== appointmentId));
+      alert("Đã hủy lịch khám thành công!");
+    } catch (error) {
+      console.error("Lỗi khi hủy lịch:", error);
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi hủy lịch khám!";
+      alert(`Hủy thất bại: ${errorMessage}`);
+    }
+  };
+
   const displayedRecords = useMemo(() => {
     const now = new Date();
 
@@ -87,6 +102,10 @@ export default function DoctorRecordNotDonePage() {
       
       const shiftStartHour = 6 + app.shift; 
       appDate.setHours(shiftStartHour, 0, 0, 0);
+
+      const diffInHours = (appDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      // canCancel: còn hơn 24h mới đến ca khám
+      const canCancel = diffInHours > 24;
 
       let timeStatus = "normal";
       
@@ -104,6 +123,7 @@ export default function DoctorRecordNotDonePage() {
         shift: `Ca ${app.shift} (${shiftStartHour}h - ${shiftStartHour + 1}h)`,
         status: timeStatus, 
         diagnosisMsg: app.reason || "Bệnh nhân chưa nhập lý do khám",
+        canCancel,
       };
     });
 
@@ -160,6 +180,7 @@ export default function DoctorRecordNotDonePage() {
                 key={record.id} 
                 data={record} 
                 onCompleteAppointment={(appId, medData) => requestCompleteAppointment(appId, medData, record.patientName)} 
+                onCancelAppointment={handleCancelAppointment}
               />
             ))
           ) : (

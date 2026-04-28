@@ -1,83 +1,83 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import axiosInstance from '@/utils/axios'
 
-export const useAuthStore = create((set) => ({
-  user: null,
-  isLogin: false,
-  isAdmin: false,
-  isDoctor: false,
-  isLoading: true, // initial state before check
-
-  setUser: (userData) => {
-    if (userData) {
-      const role = userData.role?.toLowerCase() || '';
-      set({
-        user: userData,
-        isLogin: true,
-        isAdmin: role === 'admin',
-        isDoctor: role === 'doctor',
-        isLoading: false
-      })
-    } else {
-      set({
-        user: null,
-        isLogin: false,
-        isAdmin: false,
-        isDoctor: false,
-        isLoading: false
-      })
-    }
-  },
-
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-    }
-    set({
+export const useAuthStore = create(
+  persist(
+    (set, get) => ({
       user: null,
       isLogin: false,
       isAdmin: false,
-      isDoctor: false
-    })
-  },
+      isDoctor: false,
+      isLoading: true, 
 
-  fetchUser: async () => {
-    try {
-      // Kiểm tra có token không trước khi fetch để tránh spam 401 ở server log
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
+      setUser: (userData) => {
+        if (userData) {
+          const role = userData.role?.toLowerCase() || '';
+          set({
+            user: userData,
+            isLogin: true,
+            isAdmin: role === 'admin',
+            isDoctor: role === 'doctor',
+            isLoading: false
+          })
+        } else {
           set({
             user: null,
             isLogin: false,
             isAdmin: false,
             isDoctor: false,
             isLoading: false
-          });
-          return;
+          })
+        }
+      },
+
+      logout: () => {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        }
+        set({
+          user: null,
+          isLogin: false,
+          isAdmin: false,
+          isDoctor: false,
+          isLoading: false
+        })
+      },
+
+      fetchUser: async () => {
+        try {
+          const res = await axiosInstance.get("/auth/me");
+          if (res.data) {
+            const role = res.data.role?.toLowerCase() || '';
+            set({
+              user: res.data,
+              isLogin: true,
+              isAdmin: role === 'admin',
+              isDoctor: role === 'doctor',
+              isLoading: false
+            });
+          }
+        } catch (error) {
+          // Chỉ logout nếu lỗi là do token hết hạn (401)
+          if (error.response?.status === 401) {
+             get().logout();
+          }
+          set({ isLoading: false });
         }
       }
-
-      const res = await axiosInstance.get("/auth/me");
-      if (res.data) {
-        const role = res.data.role?.toLowerCase() || '';
-        set({
-          user: res.data,
-          isLogin: true,
-          isAdmin: role === 'admin',
-          isDoctor: role === 'doctor',
-          isLoading: false
-        });
-      }
-    } catch (error) {
-      set({
-        user: null,
-        isLogin: false,
-        isAdmin: false,
-        isDoctor: false,
-        isLoading: false
-      })
+    }),
+    {
+      name: 'auth-storage', // tên khóa trong localStorage
+      storage: createJSONStorage(() => localStorage),
+      // Chỉ lưu các trường cần thiết, không lưu trạng thái loading
+      partialize: (state) => ({ 
+        user: state.user, 
+        isLogin: state.isLogin, 
+        isAdmin: state.isAdmin, 
+        isDoctor: state.isDoctor 
+      }),
     }
-  }
-}))
+  )
+)

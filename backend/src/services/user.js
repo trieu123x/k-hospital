@@ -1,5 +1,6 @@
 import { userRepository } from "../repositories/user.js"
 import { uploadHelper } from "../helpers/storage-helper.js"
+import { prisma } from "../configs/prisma-config.js"
 
 export const userService = {
     getTotalCount: async () => {
@@ -118,8 +119,34 @@ export const userService = {
             throw Object.assign(new Error("Không tìm thấy người dùng"), { statusCode: 404 })
         }
 
-        // Try deleting from Supabase if configured (optional advanced feature)
-        // Dynamically resolving to avoid changing file structure unnecessarily
+        // Xóa cascade thủ công các bảng không có onDelete: Cascade trong schema
+        // 1. Xóa notifications liên quan đến appointments của user
+        await prisma.notification.deleteMany({
+            where: {
+                OR: [
+                    { userId: id },
+                    { appointment: { OR: [{ patientId: id }, { doctorId: id }] } }
+                ]
+            }
+        })
+
+        // 2. Xóa medical records liên quan đến appointments của user
+        await prisma.medicalRecord.deleteMany({
+            where: {
+                appointment: {
+                    OR: [{ patientId: id }, { doctorId: id }]
+                }
+            }
+        })
+
+        // 3. Xóa appointments của user (với tư cách bệnh nhân hoặc bác sĩ)
+        await prisma.appointment.deleteMany({
+            where: {
+                OR: [{ patientId: id }, { doctorId: id }]
+            }
+        })
+
+        // 4. Thử xóa tài khoản khỏi Supabase Auth
         try {
             const { supabaseAdmin } = await import("../configs/supabase-config.js")
             if (supabaseAdmin) {
@@ -127,10 +154,9 @@ export const userService = {
             }
         } catch (err) {
             console.error("Supabase Admin user deletion failed or not configured:", err.message)
-            // Proceed with prisma deletion anyway
         }
 
-        // Cascade will delete related DB entities (doctor, appointments, etc.)
+        // 5. Xóa profile (Doctor, DoctorLeave, Notification cá nhân sẽ cascade tự động)
         return await userRepository.delete(id)
     }
 }

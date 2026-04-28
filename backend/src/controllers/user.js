@@ -19,6 +19,18 @@ export const userController = {
         }
     },
 
+    getTotalUsers: async (req, res, next) => {
+        try {
+            const count = await userService.getTotalCount()
+            res.status(200).json({
+                success: true,
+                data: count
+            })
+        } catch (error) {
+            next(error)
+        }
+    },
+
     getUserById: async (req, res, next) => {
         try {
             const { id } = req.params

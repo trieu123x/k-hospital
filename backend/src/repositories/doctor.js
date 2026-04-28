@@ -30,9 +30,13 @@ export const doctorRepository = {
     },
 
     updateDoctorInfo: async (id, doctorData) => {
-        return await prisma.doctor.update({
+        return await prisma.doctor.upsert({
             where: { id },
-            data: doctorData,
+            update: doctorData,
+            create: {
+                id,
+                ...doctorData
+            },
             include: {
                 profile: true,
                 specialty: true,
