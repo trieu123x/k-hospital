@@ -61,10 +61,10 @@ export default function Detail() {
     try {
       const formData = new FormData()
       
-      formData.append("fullName", fullName)
-      formData.append("address", hometown) 
-      formData.append("email", email)
-      formData.append("phone", phone)
+      if (fullName) formData.append("fullName", fullName)
+      if (hometown) formData.append("address", hometown) 
+      if (email) formData.append("email", email)
+      if (phone) formData.append("phone", phone)
 
       if (avatarFile) {
         formData.append("avatar", avatarFile) 
