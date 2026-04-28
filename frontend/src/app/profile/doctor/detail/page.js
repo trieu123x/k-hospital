@@ -66,7 +66,7 @@ export default function Detail() {
       if (email) jsonPayload.email = email
       if (phone) jsonPayload.phone = phone
 
-      if (avatarFile) {
+      if (avatarFile && typeof avatarFile === 'string') {
         jsonPayload.avatarUrl = avatarFile;
       }
 
