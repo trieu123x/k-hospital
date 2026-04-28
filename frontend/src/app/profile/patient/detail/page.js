@@ -79,7 +79,8 @@ export default function Detail() {
       }
     } catch (error) {
       console.error("Lỗi khi lưu thông tin:", error)
-      alert("Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.")
+      const msg = error.response?.data?.message || error.message || "Đã xảy ra lỗi hệ thống"
+      alert(`Đã xảy ra lỗi: ${msg}`)
     } finally {
       setSaving(false)
     }

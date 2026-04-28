@@ -8,9 +8,6 @@ const axiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 30000,
   withCredentials: true, // Gửi cookie đính kèm request
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Interceptor cho Request
@@ -24,10 +21,6 @@ axiosInstance.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-    }
-
-    if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
     }
 
     return config;
