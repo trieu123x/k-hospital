@@ -87,7 +87,11 @@ function DetailContent() {
       payload.append("content", content)
 
       if (imageFile) {
-        payload.append("image", imageFile)
+        if (typeof imageFile === 'string') {
+          payload.append("imageUrl", imageFile)
+        } else {
+          payload.append("image", imageFile)
+        }
       }
 
       if (isEditMode) {

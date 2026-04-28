@@ -7,6 +7,7 @@ import Image from "next/image"
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import { Button } from "./Button"
+import { supabase } from "@/utils/supabase"
 
 export function AvatarPicker({
   label = "Tiêu đề",
@@ -39,22 +40,43 @@ export function AvatarPicker({
     setImgSrc(defaultImage)
   }, [defaultImage])
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0]
     if (file) {
       setCurrentFile(file)
 
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImgSrc(reader.result)
-        if (cropMode) {
+      if (cropMode) {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImgSrc(reader.result)
           setIsCropModalOpen(true)
-        } else {
+        }
+        reader.readAsDataURL(file)
+      } else {
+        const reader = new FileReader()
+        reader.onloadend = () => {
           setPreviewUrl(reader.result)
-          onChange(file, null)
+        }
+        reader.readAsDataURL(file)
+
+        const fileName = `${Date.now()}-${file.name}`
+        const { data, error } = await supabase.storage
+          .from('images')
+          .upload(`uploads/${fileName}`, file)
+
+        if (error) {
+          console.error(error)
+          alert("Lỗi upload ảnh: " + error.message)
+        } else {
+          const { data: publicUrlData } = supabase.storage
+            .from('images')
+            .getPublicUrl(`uploads/${fileName}`)
+
+          console.log(publicUrlData.publicUrl)
+          setPreviewUrl(publicUrlData.publicUrl)
+          onChange(publicUrlData.publicUrl, null)
         }
       }
-      reader.readAsDataURL(file)
     }
     event.target.value = ''
   }
@@ -96,7 +118,23 @@ export function AvatarPicker({
       setPreviewUrl(fullPreviewUrl)
       setLogoUrl(logoUrl)
 
-      onChange(resizedFile, backendCropData)
+      const fileName = `${Date.now()}-${resizedFile.name}`
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(`uploads/${fileName}`, resizedFile)
+
+      if (error) {
+        console.error(error)
+        alert("Lỗi upload ảnh: " + error.message)
+      } else {
+        const { data: publicUrlData } = supabase.storage
+          .from('images')
+          .getPublicUrl(`uploads/${fileName}`)
+
+        console.log(publicUrlData.publicUrl)
+        setPreviewUrl(publicUrlData.publicUrl)
+        onChange(publicUrlData.publicUrl, backendCropData)
+      }
     }
     setIsCropModalOpen(false)
   }

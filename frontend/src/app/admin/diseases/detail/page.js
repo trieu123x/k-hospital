@@ -123,7 +123,11 @@ function DetailContent() {
       payload.append("homeTreatment", homeRemedies)
 
       if (imageFile) {
-        payload.append("image", imageFile)
+        if (typeof imageFile === 'string') {
+          payload.append("imageUrl", imageFile)
+        } else {
+          payload.append("image", imageFile)
+        }
       }
 
       if (isEditMode) {

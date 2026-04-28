@@ -67,23 +67,7 @@ export default function Detail() {
       if (phone) jsonPayload.phone = phone
 
       if (avatarFile) {
-        const fileExt = avatarFile.name?.split('.').pop() || 'jpg';
-        const fileName = `doctors/${userId}_${Date.now()}.${fileExt}`;
-        const { data, error: uploadError } = await supabase.storage
-          .from('medicare')
-          .upload(fileName, avatarFile, {
-            contentType: avatarFile.type || 'image/jpeg',
-            upsert: true
-          });
-
-        if (uploadError) {
-          alert("Lỗi upload ảnh: " + uploadError.message);
-          setSaving(false);
-          return;
-        }
-
-        const { data: publicUrlData } = supabase.storage.from('medicare').getPublicUrl(fileName);
-        jsonPayload.avatarUrl = publicUrlData.publicUrl;
+        jsonPayload.avatarUrl = avatarFile;
       }
 
       const res = await userApi.updateUser(userId, jsonPayload)

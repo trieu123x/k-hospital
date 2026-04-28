@@ -143,7 +143,11 @@ function DetailContent() {
       payload.append("phone", phone)
 
       if (imageFile) {
-        payload.append("avatar", imageFile)
+        if (typeof imageFile === 'string') {
+          payload.append("avatarUrl", imageFile)
+        } else {
+          payload.append("avatar", imageFile)
+        }
       }
       if (cropData) {
         payload.append("avatarCropData", JSON.stringify(cropData))

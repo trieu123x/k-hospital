@@ -131,7 +131,11 @@ function DetailContent() {
       payload.append("usageInstruction", usageInstruction)
 
       if (imageFile) {
-        payload.append("image", imageFile)
+        if (typeof imageFile === 'string') {
+          payload.append("imageUrl", imageFile)
+        } else {
+          payload.append("image", imageFile)
+        }
       }
 
       if (isEditMode) {
