@@ -40,8 +40,11 @@ export default function Detail() {
           setEmail(profile.email || "")
           setPhone(profile.phone || "")
           setHometown(profile.address || "") 
-          setCurrentAvatarUrl(profile.avatarUrl || "")
-          
+          let avatarToSet = profile.avatarUrl || "";
+          if (avatarToSet && !avatarToSet.startsWith('http')) {
+            avatarToSet = supabase.storage.from('avatars').getPublicUrl(avatarToSet).data.publicUrl;
+          }
+          setCurrentAvatarUrl(avatarToSet)
         } else {
           console.error("Lỗi từ server:", res?.message)
         }
@@ -66,10 +69,29 @@ export default function Detail() {
       if (email) jsonPayload.email = email
       if (phone) jsonPayload.phone = phone
 
-      if (avatarFile && typeof avatarFile === 'string') {
-        jsonPayload.avatarUrl = avatarFile;
-      }
+      if (avatarFile && typeof avatarFile !== 'string') {
+        const fileExt = avatarFile.name?.split('.').pop() || 'jpg';
+        const filePath = `${userId}/${Date.now()}.${fileExt}`;
 
+        // Upload lên Storage
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, {
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Lưu path vào database
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: filePath
+          })
+          .eq('id', userId);
+
+        if (dbError) throw dbError;
+      }
       const res = await userApi.updateUser(userId, jsonPayload)
       
       if (res && res.success) {

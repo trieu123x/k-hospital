@@ -43,7 +43,7 @@ export const userController = {
             const { id } = req.params
             //requesterId = req.user.id
             const updateData = req.body
-            const requesterRole = 'admin'; 
+        
             const requesterId = id
             const updatedUser = await userService.updateUser(id, requesterId, updateData, req.file)
             

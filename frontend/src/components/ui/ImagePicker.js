@@ -58,24 +58,7 @@ export function AvatarPicker({
           setPreviewUrl(reader.result)
         }
         reader.readAsDataURL(file)
-
-        const fileName = `${Date.now()}-${file.name}`
-        const { data, error } = await supabase.storage
-          .from('images')
-          .upload(`uploads/${fileName}`, file)
-
-        if (error) {
-          console.error(error)
-          alert("Lỗi upload ảnh: " + error.message)
-        } else {
-          const { data: publicUrlData } = supabase.storage
-            .from('images')
-            .getPublicUrl(`uploads/${fileName}`)
-
-          console.log(publicUrlData.publicUrl)
-          setPreviewUrl(publicUrlData.publicUrl)
-          onChange(publicUrlData.publicUrl, null)
-        }
+        onChange(file, null)
       }
     }
     event.target.value = ''
@@ -117,24 +100,7 @@ export function AvatarPicker({
 
       setPreviewUrl(fullPreviewUrl)
       setLogoUrl(logoUrl)
-
-      const fileName = `${Date.now()}-${resizedFile.name}`
-      const { data, error } = await supabase.storage
-        .from('images')
-        .upload(`uploads/${fileName}`, resizedFile)
-
-      if (error) {
-        console.error(error)
-        alert("Lỗi upload ảnh: " + error.message)
-      } else {
-        const { data: publicUrlData } = supabase.storage
-          .from('images')
-          .getPublicUrl(`uploads/${fileName}`)
-
-        console.log(publicUrlData.publicUrl)
-        setPreviewUrl(publicUrlData.publicUrl)
-        onChange(publicUrlData.publicUrl, backendCropData)
-      }
+      onChange(resizedFile, backendCropData)
     }
     setIsCropModalOpen(false)
   }
