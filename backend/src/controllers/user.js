@@ -45,7 +45,7 @@ export const userController = {
             const updateData = req.body
             const requesterRole = 'admin'; 
             const requesterId = id
-            const updatedUser = await userService.updateUser(id, requesterId, updateData)
+            const updatedUser = await userService.updateUser(id, requesterId, updateData, req.file)
             
             res.status(200).json({
                 success: true,

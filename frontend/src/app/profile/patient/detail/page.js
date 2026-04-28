@@ -67,7 +67,7 @@ export default function Detail() {
       formData.append("phone", phone)
 
       if (avatarFile) {
-        formData.append("avatarUrl", avatarFile) 
+        formData.append("avatar", avatarFile) 
       }
 
       const res = await userApi.updateUser(userId, formData)
