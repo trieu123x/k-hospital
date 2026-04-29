@@ -21,12 +21,10 @@ import { useAuthStore } from '@/stores/auth';
 import { SideBar } from "@/components/layout/SideBar";
 import { OptionBar } from "@/components/layout/OptionBar";
 import { ChatForm } from "@/components/chat/form";
-import { MessageCircle } from "lucide-react";
-import { useChatStore } from "@/stores/chat";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function RootLayout({ children }) {
- 
+
   const router = useRouter()
   const pathname = usePathname()
   const [isSidebarOpen, setSidebarOpen] = useState(false)
@@ -46,7 +44,7 @@ export default function RootLayout({ children }) {
     if (isHydrated && user) {
       console.log("Full User Object:", user);
       console.log("isActive property:", user.isActive);
-      
+
       if (user.isActive === false && pathname !== "/account-locked") {
         router.push("/account-locked")
       }
@@ -66,7 +64,7 @@ export default function RootLayout({ children }) {
           <>
             <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
             <main className="mt-15 grow w-full flex flex-col">
-              <div className="w-full grow flex flex-col">
+              <div className="w-full grow flex flex-col bg-white">
                 {children}
               </div>
             </main>
@@ -81,7 +79,7 @@ export default function RootLayout({ children }) {
               isOptionbarOpen &&
               <OptionBar />
             }
-            
+
             <ChatForm />
           </>
         )}
