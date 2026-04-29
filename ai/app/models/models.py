@@ -18,5 +18,17 @@ class DiseaseRequest(BaseModel):
     content: str
 
 class DiseaseResponse(BaseModel):
-    vector: List[float]
+    chunks: List[dict]
+
+class MedicineRequest(BaseModel):
+    name: str
+    ingredients: str
+    usage: str
+    side_effects: str
+
+class DoctorRequest(BaseModel):
+    name: str
+    specialty: str
+    experience: str
+    education: str
 

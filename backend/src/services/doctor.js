@@ -1,4 +1,5 @@
 import { doctorRepository } from "../repositories/doctor.js"
+import axios from "axios"
 
 export const doctorService = {
     getAllDoctors: async (page = 1, limit = 10, { name, specialtyId } = {}) => {
@@ -45,6 +46,24 @@ export const doctorService = {
         const { id, profile, specialty, ...allowedData } = updateData;
 
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
+        
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+                name: updatedDoctor.profile.fullName,
+                specialty: updatedDoctor.specialty?.name || "",
+                experience: updatedDoctor.experience || "",
+                education: updatedDoctor.education || ""
+            }).then(res => {
+                const chunks = res.data?.chunks
+                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                    doctorRepository.createChunks(doctorId, chunks)
+                }
+            })
+        } catch (error) {
+            console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ:", error.message)
+        }
+
         return updatedDoctor
     },
 
@@ -104,6 +123,22 @@ export const doctorService = {
             })
         })
 
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+                name: newDoctor.profile.fullName,
+                specialty: newDoctor.specialty?.name || "",
+                experience: newDoctor.experience || "",
+                education: newDoctor.education || ""
+            })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await doctorRepository.createChunks(newDoctor.id, chunks)
+            }
+        } catch (error) {
+            console.error("Lỗi tạo Embedding Chunks cho Bác sĩ:", error.message)
+        }
+
         return newDoctor;
     },
 
@@ -113,6 +148,24 @@ export const doctorService = {
 
         // Attempt to find or bypass (since Prisma throws if not found sometimes, but let repository handle it)
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
+
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+                name: updatedDoctor.profile.fullName,
+                specialty: updatedDoctor.specialty?.name || "",
+                experience: updatedDoctor.experience || "",
+                education: updatedDoctor.education || ""
+            }).then(res => {
+                const chunks = res.data?.chunks
+                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                    doctorRepository.createChunks(doctorId, chunks)
+                }
+            })
+        } catch (error) {
+            console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ (Admin):", error.message)
+        }
+
         return updatedDoctor
     }
 }

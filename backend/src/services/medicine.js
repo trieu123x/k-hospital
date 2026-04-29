@@ -1,4 +1,5 @@
 import { medicineRepository } from "../repositories/medicine.js"
+import axios from "axios"
 
 export const medicineService = {
     getTotalCount: async () => {
@@ -32,11 +33,43 @@ export const medicineService = {
     },
 
     createMedicine: async (data) => {
-        return await medicineRepository.create(data)
+        const newMedicine = await medicineRepository.create(data)
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/medicine`, {
+                name: data.name,
+                ingredients: data.ingredients || "",
+                usage: data.usageInstruction || "",
+                side_effects: data.sideEffects || ""
+            })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await medicineRepository.createChunks(newMedicine.id, chunks)
+            }
+        } catch (error) {
+            console.error("Lỗi tạo Embedding Chunks cho Thuốc:", error.message)
+        }
+        return newMedicine
     },
 
     updateMedicine: async (id, data) => {
-        return await medicineRepository.update(id, data)
+        const updatedMedicine = await medicineRepository.update(id, data)
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/medicine`, {
+                name: updatedMedicine.name,
+                ingredients: updatedMedicine.ingredients || "",
+                usage: updatedMedicine.usageInstruction || "",
+                side_effects: updatedMedicine.sideEffects || ""
+            })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await medicineRepository.createChunks(id, chunks)
+            }
+        } catch (error) {
+            console.error("Lỗi Cập nhật Embedding Chunks cho Thuốc:", error.message)
+        }
+        return updatedMedicine
     },
 
     deleteMedicine: async (id) => {
