@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Phone, Award, GraduationCap, Briefcase, ChevronLeft, Calendar } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 
 export default function DoctorDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const uuid = params.uuid;
 
   const [doctor, setDoctor] = useState(null);
@@ -59,6 +60,14 @@ export default function DoctorDetailPage() {
   }
 
   const { profile, specialty, degree, experience, education, achievements } = doctor;
+
+  const handleBookingClick = () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("doctorId", uuid);
+    if (specialty?.id) searchParams.set("specialtyId", specialty.id);
+    
+    router.push(`/appointment?${searchParams.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-white pb-12">
@@ -119,7 +128,10 @@ export default function DoctorDetailPage() {
                   </div>
                 </div>
 
-                <button className="w-full bg-[#0a008c] hover:bg-blue-900 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center">
+                <button 
+                  onClick={handleBookingClick}
+                  className="w-full bg-[#0a008c] hover:bg-blue-900 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center"
+                >
                   <Calendar className="w-5 h-5 mr-2" />
                   Đặt lịch khám ngay!
                 </button>

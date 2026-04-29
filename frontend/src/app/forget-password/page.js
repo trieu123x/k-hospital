@@ -32,9 +32,9 @@ export default function ForgetPassword() {
     try {
       await axiosInstance.post("/auth/forgot-password", { email: inputValue });
       setSuccessMsg("OTP đã được gửi! Chuyển hướng...");
-      // In a real flow, you would redirect to a Reset Password page offering OTP + new password fields.
-      // E.g. router.push(`/reset-password?email=${inputValue}`)
-      setTimeout(() => alert("Redirect to reset-password page..."), 1000);
+      setTimeout(() => {
+        router.push(`${ROUTES.RESET_PASSWORD}?email=${inputValue}`);
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Email không tồn tại trong hệ thống");
     } finally {
