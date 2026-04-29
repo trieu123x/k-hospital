@@ -42,6 +42,20 @@ export const diseaseRepository = {
         `
     },
 
+    createChunks: async (diseaseId, chunks) => {
+        // Xóa các chunk cũ nếu có (trong trường hợp update)
+        await prisma.$executeRaw`DELETE FROM disease_chunks WHERE disease_id = ${diseaseId}::uuid`
+        
+        // Thêm các chunk mới
+        for (const chunk of chunks) {
+            const vectorString = `[${chunk.vector.join(',')}]`
+            await prisma.$executeRaw`
+                INSERT INTO disease_chunks (id, disease_id, content, embedding)
+                VALUES (gen_random_uuid(), ${diseaseId}::uuid, ${chunk.content}, ${vectorString}::vector)
+            `
+        }
+    },
+
     findWithFilter: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
         const searchPattern = name ? `%${name.toLowerCase()}%` : null
         const nameLower = name ? name.toLowerCase() : null

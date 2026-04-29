@@ -99,10 +99,22 @@ model Doctor {
   profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
   specialty Specialty? @relation(fields: [specialtyId], references: [id])
   degree    Degree?    @relation(fields: [degreeId], references: [id])
+  chunks    DoctorChunk[]
 
   @@index([specialtyId], name: "idx_doctor_specialty")
   @@index([degreeId], name: "idx_doctor_degree")
   @@map("doctors")
+}
+
+model DoctorChunk {
+  id        String  @id @default(uuid()) @db.Uuid
+  doctorId  String  @map("doctor_id") @db.Uuid
+  content   String  @db.Text
+  embedding Unsupported("vector(768)")?
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_chunks")
 }
 
 // ================================
@@ -127,11 +139,23 @@ model Disease {
   category  DiseaseCategory?  @relation(fields: [categoryId], references: [id])
   specialty Specialty?        @relation(fields: [specialtyId], references: [id])
   medicines DiseaseMedicine[]
+  chunks    DiseaseChunk[]
 
   @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_disease_name_clean_trgm")
   @@index([specialtyId], name: "idx_disease_specialty")
   @@index([categoryId], name: "idx_disease_category")
   @@map("diseases")
+}
+
+model DiseaseChunk {
+  id        String  @id @default(uuid()) @db.Uuid
+  diseaseId String  @map("disease_id") @db.Uuid
+  content   String  @db.Text
+  embedding Unsupported("vector(768)")?
+
+  disease Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+
+  @@map("disease_chunks")
 }
 
 model Medicine {
@@ -146,9 +170,21 @@ model Medicine {
 
   medicineType MedicineType?     @relation(fields: [typeId], references: [id])
   diseases     DiseaseMedicine[]
+  chunks       MedicineChunk[]
 
   @@index([typeId], name: "idx_medicine_type")
   @@map("medicines")
+}
+
+model MedicineChunk {
+  id         String  @id @default(uuid()) @db.Uuid
+  medicineId String  @map("medicine_id") @db.Uuid
+  content    String  @db.Text
+  embedding  Unsupported("vector(768)")?
+
+  medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@map("medicine_chunks")
 }
 
 model DiseaseMedicine {

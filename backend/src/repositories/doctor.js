@@ -54,5 +54,16 @@ export const doctorRepository = {
                 degree: true
             }
         })
+    },
+
+    createChunks: async (doctorId, chunks) => {
+        await prisma.$executeRaw`DELETE FROM doctor_chunks WHERE doctor_id = ${doctorId}::uuid`
+        for (const chunk of chunks) {
+            const vectorString = `[${chunk.vector.join(',')}]`
+            await prisma.$executeRaw`
+                INSERT INTO doctor_chunks (id, doctor_id, content, embedding)
+                VALUES (gen_random_uuid(), ${doctorId}::uuid, ${chunk.content}, ${vectorString}::vector)
+            `
+        }
     }
 }

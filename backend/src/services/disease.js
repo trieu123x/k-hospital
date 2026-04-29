@@ -23,9 +23,11 @@ export const diseaseService = {
                     content: data.symptoms
                 })
 
-                const vector = res.data?.vector
-                if (vector && Array.isArray(vector) && vector.length > 0) {
-                    await diseaseRepository.updateEmbedding(newDisease.id, vector)
+                const chunks = res.data?.chunks
+                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                    await diseaseRepository.createChunks(newDisease.id, chunks)
+                    // Vẫn cập nhật vector tổng cho disease nếu cần (lấy chunk đầu tiên làm đại diện)
+                    await diseaseRepository.updateEmbedding(newDisease.id, chunks[0].vector)
                 }
             }
         } catch (error) {
@@ -55,9 +57,11 @@ export const diseaseService = {
                     content: data.symptoms
                 })
 
-                const vector = res.data?.vector
-                if (vector && Array.isArray(vector) && vector.length > 0) {
-                    await diseaseRepository.updateEmbedding(id, vector)
+                const chunks = res.data?.chunks
+                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                    await diseaseRepository.createChunks(id, chunks)
+                    // Vẫn cập nhật vector tổng cho disease nếu cần
+                    await diseaseRepository.updateEmbedding(id, chunks[0].vector)
                 }
             } catch (error) {
                 console.error("Lỗi Cập nhật Embedding Vector:", error.message)

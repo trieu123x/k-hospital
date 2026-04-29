@@ -28,22 +28,43 @@ class RAGService:
         # 2. Biến đổi combined_text thành Vector
         query_vector = await embedding_service.embed_user_query(combined_text)
 
-        # 3. Tra cứu DB lấy bệnh liên quan bằng pgvector
-        # Lưu ý: vector <=> $1 là tính Cosine distance (càng nhỏ càng giống)
+        # 3. Tra cứu DB lấy chunk liên quan (Bệnh, Thuốc, Bác sĩ)
         disease_query = """
-            SELECT name, description, symptoms
-            FROM diseases
-            ORDER BY embedding <=> $1::vector
+            SELECT d.name, d.description, dc.content as symptoms
+            FROM disease_chunks dc
+            JOIN diseases d ON dc.disease_id = d.id
+            ORDER BY dc.embedding <=> $1::vector
             LIMIT 3
         """
-        try:
-            # Chuyển list vector thành chuỗi [x,y,z...] để pgvector hiểu
-            diseases = await db.fetch(disease_query, str(query_vector))
-        except Exception as e:
-            print(f"[RAG] Lỗi tra cứu bệnh: {e}")
-            diseases = []
+        
+        medicine_query = """
+            SELECT m.name, mc.content
+            FROM medicine_chunks mc
+            JOIN medicines m ON mc.medicine_id = m.id
+            ORDER BY mc.embedding <=> $1::vector
+            LIMIT 3
+        """
 
-        # 4. Tra cứu ETL Bác sĩ gợi ý (Top Doctors)
+        doctor_chunks_query = """
+            SELECT p.full_name as name, s.name as specialty, doc_c.content
+            FROM doctor_chunks doc_c
+            JOIN doctors d ON doc_c.doctor_id = d.id
+            JOIN profiles p ON d.id = p.id
+            LEFT JOIN specialties s ON d.specialty_id = s.id
+            ORDER BY doc_c.embedding <=> $1::vector
+            LIMIT 2
+        """
+
+        try:
+            vector_str = str(query_vector)
+            diseases = await db.fetch(disease_query, vector_str)
+            medicines = await db.fetch(medicine_query, vector_str)
+            doctor_chunks = await db.fetch(doctor_chunks_query, vector_str)
+        except Exception as e:
+            print(f"[RAG] Lỗi tra cứu vector: {e}")
+            diseases, medicines, doctor_chunks = [], [], []
+
+        # 4. Tra cứu ETL Bác sĩ gợi ý (Dành cho thông tin tổng quát/top)
         doctor_query = """
             SELECT reports 
             FROM etl_reports 
@@ -61,16 +82,29 @@ class RAGService:
             for d in diseases:
                 diseases_context += f"- {d['name']}: {d['description']}. Triệu chứng: {d['symptoms']}\n"
 
+        medicines_context = ""
+        if medicines:
+            medicines_context = "\nThông tin thuốc liên quan:\n"
+            for m in medicines:
+                medicines_context += f"- {m['name']}: {m['content']}\n"
+
         doctor_context = ""
-        # Chiến lược: Chỉ gửi thông tin bác sĩ nếu người dùng hỏi về đặt lịch hoặc cần chuyên gia
-        trigger_words = ["bác sĩ", "đặt lịch", "khám", "tư vấn", "chuyên gia", "liên hệ"]
+        # 1. Thông tin bác sĩ từ chunks (kinh nghiệm, học vấn)
+        if doctor_chunks:
+            doctor_context = "\nThông tin chi tiết về bác sĩ phù hợp:\n"
+            for doc in doctor_chunks:
+                doctor_context += f"- Bác sĩ {doc['name']} ({doc['specialty']}): {doc['content']}\n"
+
+        # 2. Gợi ý từ Top Doctors (ETL)
+        trigger_words = ["bác sĩ", "đặt lịch", "khám", "tư vấn", "chuyên gia", "liên hệ", "ai", "ai tốt"]
         if top_doctors and any(word in user_input.lower() for word in trigger_words):
-            doctor_context = "\nThông tin bác sĩ/lịch khám gợi ý (ETL):\n" + json.dumps(top_doctors, ensure_ascii=False)
+            doctor_context += "\nDanh sách bác sĩ gợi ý nổi bật:\n" + json.dumps(top_doctors, ensure_ascii=False)
 
         system_prompt = f"""
-        Bạn là trợ lý y tế MediCare. Hãy trả lời câu hỏi của bệnh nhân dựa trên ngữ cảnh sau:
+        Bạn là trợ lý y tế MediCare. Hãy trả lời câu hỏi của bệnh nhân dựa trên ngữ cảnh y khoa sau:
 
         {diseases_context}
+        {medicines_context}
         {doctor_context}
 
         Lịch sử chat:
