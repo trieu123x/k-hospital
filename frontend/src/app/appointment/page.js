@@ -4,8 +4,17 @@ import { useState } from "react";
 import { BookingForm } from "@/components/appointment/bookingForm";
 import { BookingDetails } from "@/components/appointment/bookingDetail";
 import { useAuthStore } from "@/stores/auth"; 
+import { Suspense } from "react";
 
 export default function BookingPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Đang tải form đặt lịch...</div>}>
+      <BookingContent />
+    </Suspense>
+  );
+}
+
+function BookingContent() {
   const { user } = useAuthStore(); 
   const patientId = user?.id; 
 

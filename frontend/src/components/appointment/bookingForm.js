@@ -1,14 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
 import { specialtyApi } from "@/routers/speciality/specialityRouter"; 
 
 export function BookingForm({ patientId, onConfirm, onChangeData }) { 
+  const searchParams = useSearchParams();
+  const urlSpecialtyId = searchParams.get("specialtyId");
+  const urlDoctorId = searchParams.get("doctorId");
+
   const [formData, setFormData] = useState({
-    specialtyId: "",   
+    specialtyId: urlSpecialtyId || "",   
     specialtyName: "", 
-    doctorId: "",      
+    doctorId: urlDoctorId || "",      
     doctorName: "",    
     date: "",
     shift: "",
@@ -33,7 +38,17 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     const fetchSpecialties = async () => {
       try {
         const res = await specialtyApi.getAllSpecialties();
-        if (res && res.success) setSpecialties(res.data);
+        if (res && res.success) {
+          setSpecialties(res.data);
+          
+          // Nếu có specialtyId từ URL, tìm và cập nhật tên chuyên khoa
+          if (urlSpecialtyId) {
+            const found = res.data.find(s => s.id === urlSpecialtyId);
+            if (found) {
+              setFormData(prev => ({ ...prev, specialtyName: found.name }));
+            }
+          }
+        }
       } catch (error) {
         console.error("Lỗi tải khoa:", error);
       } finally {
@@ -41,7 +56,20 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       }
     };
     fetchSpecialties();
-  }, []);
+  }, [urlSpecialtyId]);
+
+  // Cập nhật tên bác sĩ khi danh sách bác sĩ thay đổi (nếu có doctorId từ URL)
+  useEffect(() => {
+    if (urlDoctorId && doctors.length > 0) {
+      const found = doctors.find(d => d.id === urlDoctorId);
+      if (found) {
+        setFormData(prev => ({
+          ...prev,
+          doctorName: `${found.degree ? `${found.degree} - ` : ""}${found.profile?.fullName}`
+        }));
+      }
+    }
+  }, [urlDoctorId, doctors]);
 
   useEffect(() => {
     if (!formData.specialtyId) {

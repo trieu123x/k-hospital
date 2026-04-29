@@ -12,13 +12,11 @@ export default function ForgetPassword() {
   const [inputValue, setInputValue] = useState("");
 
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccessMsg("");
     setLoading(true);
 
     // According to the backend API, we only support email reset right now.
@@ -31,11 +29,7 @@ export default function ForgetPassword() {
 
     try {
       await axiosInstance.post("/auth/forgot-password", { email: inputValue });
-      setSuccessMsg("OTP đã được gửi! Chuyển hướng...");
-      setTimeout(() => setSuccessMsg(""), 3000)
-      // In a real flow, you would redirect to a Reset Password page offering OTP + new password fields.
-      // E.g. router.push(`/reset-password?email=${inputValue}`)
-      setTimeout(() => alert("Redirect to reset-password page..."), 1000);
+      router.push(`${ROUTES.RESET_PASSWORD}?email=${inputValue}`)
     } catch (err) {
       setError(err.response?.data?.message || "Email không tồn tại trong hệ thống");
       setTimeout(() => setError(""), 3000)
@@ -51,7 +45,6 @@ export default function ForgetPassword() {
 
         <form onSubmit={handleRequestOtp} className="relative space-y-2">
           {error && <p className="absolute -top-4 text-red-500 text-xs font-semibold mb-2">{error}</p>}
-          {successMsg && <p className="absolute -top-4 text-green-500 text-xs font-semibold mb-2">{successMsg}</p>}
           <input
             type={method === "email" ? "email" : "text"}
             placeholder={`Enter your ${method}`}

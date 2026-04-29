@@ -4,6 +4,7 @@ export const ROUTES = {
   REGISTER: '/register',
   VERIFY_REGISTER: '/verify-register',
   FORGET_PASSWORD: '/forget-password',
+  RESET_PASSWORD: '/reset-password',
   PROFILE: '/profile',
   DOCTORS: '/doctors',
   DISEASES: '/diseases',
