@@ -105,7 +105,8 @@ export const appointmentService = {
     },
 
     getAvailableSlots: async (filters) => {
-        const { date, doctorId } = filters
+        const { date, doctorId, patientId } = filters
+        console.log("Patient ID nhận được:", patientId)
 
         if (!date) {
             throw Object.assign(new Error("Vui lòng cung cấp ngày cần xem lịch!"), { statusCode: 400 })
@@ -117,6 +118,23 @@ export const appointmentService = {
 
         if (targetDate < today) {
             return []
+        }
+
+        
+        if (patientId) {
+            const patientExistingAppointment = await prisma.appointment.findFirst({
+                where: {
+                    patientId: patientId,
+                    date: targetDate,
+                    status: {
+                        not:  'CANCELLED'
+                    }
+                }
+            });
+
+            if (patientExistingAppointment) {
+                return []; 
+            }
         }
 
         let targetDoctors = []

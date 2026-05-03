@@ -16,12 +16,26 @@ export const appointmentRepository = {
         const appointmentDate = new Date(date)
         
         return await prisma.$transaction(async (tx) => {
+            const existingPatientAppointment = await tx.appointment.findFirst({
+                where: {
+                    patientId: patientId,
+                    date: appointmentDate,
+                    status: {
+                        not:  'CANCELLED'
+                    }
+                }
+            })
+
+            if (existingPatientAppointment) {
+                throw Object.assign(new Error("Bạn đã đặt một lịch khám trong ngày này rồi. Mỗi ngày chỉ được phép đặt tối đa 1 ca!"), { statusCode: 409 })
+            }
+
             const doctorLeave = await tx.doctorLeave.findFirst({
                 where: {
                     doctorId,
                     date: appointmentDate,
                     OR: [
-                        { shift: null }, // Trường hợp nghỉ nguyên ngày
+                        { shift: null }, 
                         { shift: shift } 
                     ]
                 }
@@ -35,7 +49,10 @@ export const appointmentRepository = {
                 where: { 
                     doctorId,
                     date: appointmentDate,
-                    shift
+                    shift,
+                    status: {
+                        not:  'CANCELLED'
+                    }
                 }
             })
 
