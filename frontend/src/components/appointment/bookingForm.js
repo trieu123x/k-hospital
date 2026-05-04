@@ -32,7 +32,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
   useEffect(() => {
     if (onChangeData) onChangeData(formData);
-  }, [formData]);
+  }, [formData, onChangeData]);
 
   useEffect(() => {
     const fetchSpecialties = async () => {
@@ -41,7 +41,6 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         if (res && res.success) {
           setSpecialties(res.data);
           
-          // Nếu có specialtyId từ URL, tìm và cập nhật tên chuyên khoa
           if (urlSpecialtyId) {
             const found = res.data.find(s => s.id === urlSpecialtyId);
             if (found) {
@@ -58,7 +57,6 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     fetchSpecialties();
   }, [urlSpecialtyId]);
 
-  // Cập nhật tên bác sĩ khi danh sách bác sĩ thay đổi (nếu có doctorId từ URL)
   useEffect(() => {
     if (urlDoctorId && doctors.length > 0) {
       const found = doctors.find(d => d.id === urlDoctorId);
@@ -102,7 +100,8 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       try {
         const res = await appointmentApi.getAvailableSlots({
           doctorId: formData.doctorId,
-          date: formData.date
+          date: formData.date,
+          patientId: patientId 
         });
         
         if (res && res.success) {
@@ -119,7 +118,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     };
 
     fetchAvailableShifts();
-  }, [formData.doctorId, formData.date]);
+  }, [formData.doctorId, formData.date, patientId]); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -176,6 +175,8 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       if (res && res.success) {
         alert("Đặt lịch khám thành công!");
         onConfirm(); 
+        // Load lại trang sau khi confirm thành công
+        window.location.reload(); 
       } else {
         alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
       }
@@ -236,7 +237,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
                 {fetchingShifts 
                   ? "Đang tải ca trống..." 
                   : availableShifts.length === 0 
-                    ? "Bác sĩ đã kín lịch hoặc nghỉ vào ngày này" 
+                    ? "Bác sĩ đã kín lịch hoặc bạn đã đặt lịch vào ngày này" 
                     : "Lựa chọn ca khám"
                 }
               </option>
@@ -266,7 +267,19 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       </div>
 
       <div className="mt-12 flex justify-end">
-        <button onClick={handleSubmit} disabled={loading} className={`text-white rasa-font px-8 py-2 rounded-[20px] text-[15px] ${loading ? 'bg-gray-400' : 'bg-[#0B1460] hover:bg-[#152085]'}`}>
+        <button 
+          onClick={handleSubmit} 
+          disabled={loading} 
+          className={`flex items-center justify-center gap-2 text-white rasa-font px-8 py-2 rounded-[20px] text-[15px] transition-colors duration-200 ${
+            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0B1460] hover:bg-[#152085]'
+          }`}
+        >
+          {loading && (
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          )}
           {loading ? "Đang xử lý..." : "Xác nhận"}
         </button>
       </div>

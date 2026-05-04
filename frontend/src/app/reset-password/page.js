@@ -9,7 +9,7 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
-  
+
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,30 +20,31 @@ function ResetPasswordContent() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
-    
+
     if (newPassword !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp!");
+      setTimeout(() => setError(""), 3000)
       return;
     }
 
     if (newPassword.length < 6) {
       setError("Mật khẩu phải có ít nhất 6 ký tự!");
+      setTimeout(() => setError(""), 3000)
       return;
     }
 
     setLoading(true);
     try {
-      await axiosInstance.post("/auth/reset-password", { 
-        email, 
-        otp, 
-        newPassword 
+      await axiosInstance.post("/auth/reset-password", {
+        email,
+        otp,
+        newPassword
       });
-      setSuccess(true);
-      setTimeout(() => {
-        router.push(ROUTES.LOGIN);
-      }, 3000);
+      setSuccess(true)
+      router.push(ROUTES.LOGIN);
     } catch (err) {
       setError(err.response?.data?.message || "Đặt lại mật khẩu thất bại!");
+      setTimeout(() => setError(""), 3000)
     } finally {
       setLoading(false);
     }
@@ -69,49 +70,42 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[85vh] px-4">
-      <div className="bg-white p-10 md:p-12 rounded-lg shadow-[0_4px_30px_rgb(0,0,0,0.06)] w-full max-w-md border border-gray-100">
-        <h1 className="text-3xl font-serif font-bold text-center mb-6">Đặt lại mật khẩu</h1>
-        
-        {error && <p className="text-red-500 text-xs font-semibold mb-2">{error}</p>}
-        <p className="text-sm text-gray-600 mb-6 text-center">
-          Vui lòng nhập mã OTP và mật khẩu mới cho email: <br/><b className="text-[#070575]">{email}</b>
-        </p>
-        
+    <div className="flex items-center justify-center min-h-[85vh] px-4 rasa-font">
+      <div className="bg-white p-10 md:p-12 rounded-lg shadow-[0_0px_10px_rgb(0,0,0,0.2)] w-full max-w-md border border-gray-100">
+        <h1 className="text-[36px] font-extrabold text-center mb-4">Đổi mật khẩu</h1>
+
         <form onSubmit={handleResetPassword} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Mã OTP</label>
+          <div className="relative">
+            {error && <p className="absolute -top-4 text-red-500 text-xs font-semibold mb-2">{error}</p>}
             <input
               type="text"
               placeholder="Nhập mã OTP 6 số"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full px-5 py-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 transition-colors"
               maxLength={6}
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Mật khẩu mới</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-5 py-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Xác nhận mật khẩu</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Xác nhận mật khẩu"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-5 py-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               required
             />
           </div>
@@ -119,13 +113,13 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#070575] text-white py-3.5 mt-2 rounded-lg font-bold hover:bg-[#110d9e] transition-colors disabled:opacity-70"
+            className="w-full cursor-pointer bg-[#070575] text-white py-3 mt-2 rounded-lg font-bold hover:bg-[#110d9e] transition-colors disabled:opacity-70"
           >
-            {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
+            {loading ? "Đang xử lý..." : "Đổi mật khẩu"}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm font-medium">
+        <div className="mt-4 text-center text-sm font-medium">
           <Link href={ROUTES.LOGIN} className="text-blue-500 hover:underline text-xs block mt-1">
             Trở về trang đăng nhập
           </Link>
