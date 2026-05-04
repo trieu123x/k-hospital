@@ -20,10 +20,11 @@ export const chatRepository = {
     getSessionsByUserId: async (userId) => {
         return await prisma.chatSession.findMany({
             where: { userId },
-            orderBy: { endedAt: 'desc' },
+            orderBy: { startedAt: 'desc' },
             select: {
                 id: true,
                 title: true,
+                startedAt: true,
                 endedAt: true
             }
         })
