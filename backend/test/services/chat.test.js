@@ -43,7 +43,7 @@ describe('chatService', () => {
 
       const result = await chatService.createSession('user-1', 'Toi bi dau nguc')
 
-      expect(axios.post).toHaveBeenCalledWith('https://tro-li-ai-production.up.railway.app/ai/predict/title', {
+      expect(axios.post).toHaveBeenCalledWith('http://127.0.0.1:8000/ai/predict/title', {
         first_message: 'Toi bi dau nguc'
       })
       expect(chatRepository.createSession).toHaveBeenCalledWith('user-1', 'Tu van tim mach')
@@ -127,7 +127,7 @@ describe('chatService', () => {
 
       const result = await chatService.updateTopicTrigger('session-1', 'user-1')
 
-      expect(axios.post).toHaveBeenCalledWith('https://tro-li-ai-production.up.railway.app/ai/predict/topic', {
+      expect(axios.post).toHaveBeenCalledWith('http://127.0.0.1:8000/ai/predict/topic', {
         session_id: 'session-1'
       })
       expect(chatRepository.updateSessionTopic).toHaveBeenCalledWith('session-1', 'Ho hap')

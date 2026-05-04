@@ -35,7 +35,7 @@ export const medicineService = {
     createMedicine: async (data) => {
         const newMedicine = await medicineRepository.create(data)
         try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/medicine`, {
                 name: data.name,
                 ingredients: data.ingredients || "",
@@ -55,7 +55,7 @@ export const medicineService = {
     updateMedicine: async (id, data) => {
         const updatedMedicine = await medicineRepository.update(id, data)
         try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/medicine`, {
                 name: updatedMedicine.name,
                 ingredients: updatedMedicine.ingredients || "",

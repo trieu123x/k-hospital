@@ -34,7 +34,7 @@ router.post("/:id/messages", validate({
     body: chatSchema.saveMessage
 }), saveMessage)
 
-router.post("/:id/topic", authorizeRoles("admin"), validate({ params: chatSchema.params }), updateTopic)
+router.post("/:id/topic", authorizeRoles("ADMIN"), validate({ params: chatSchema.params }), updateTopic)
 
 router.delete("/:id", validate({ params: chatSchema.params }), deleteSession)
 

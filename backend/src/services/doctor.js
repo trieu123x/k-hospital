@@ -48,7 +48,7 @@ export const doctorService = {
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
         
         try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
             await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",
@@ -124,7 +124,7 @@ export const doctorService = {
         })
 
         try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: newDoctor.profile.fullName,
                 specialty: newDoctor.specialty?.name || "",
@@ -150,7 +150,7 @@ export const doctorService = {
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
 
         try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
             await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",

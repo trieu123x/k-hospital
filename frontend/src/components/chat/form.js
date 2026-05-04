@@ -172,10 +172,12 @@ export function ChatForm() {
         },
         async () => {
           try {
-            await saveChatMessage(currentSessionId, {
-              role: "AI",
-              content: fullResponseText,
-            });
+            if (fullResponseText.trim()) {
+              await saveChatMessage(currentSessionId, {
+                role: "AI",
+                content: fullResponseText,
+              });
+            }
             setIsTyping(false);
           } catch (err) {
             console.log("Lỗi lưu AI message DB:", err);
