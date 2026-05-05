@@ -47,9 +47,16 @@ export const useAuthStore = create(
       },
 
       fetchUser: async () => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        
+        if (!token) {
+          set({ isLoading: false, isLogin: false, user: null });
+          return;
+        }
+
         try {
           const res = await axiosInstance.get("/auth/me");
-          if (res.data) {
+          if (res && res.data) {
             const role = res.data.role?.toLowerCase() || '';
             set({
               user: res.data,
@@ -58,9 +65,13 @@ export const useAuthStore = create(
               isDoctor: role === 'doctor',
               isLoading: false
             });
+          } else {
+            // Nếu response thành công nhưng không có data (hiếm gặp)
+            set({ isLoading: false });
           }
         } catch (error) {
-          // Chỉ logout nếu lỗi là do token hết hạn (401)
+          console.error("Fetch user error:", error);
+          // Chỉ logout nếu lỗi là do token hết hạn hoặc không hợp lệ (401)
           if (error.response?.status === 401) {
              get().logout();
           }

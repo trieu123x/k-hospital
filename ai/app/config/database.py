@@ -9,6 +9,8 @@ class Database:
         if not self.pool:
             self.pool = await asyncpg.create_pool(
                 dsn=settings.DATABASE_URL,
+                min_size=1,
+                max_size=5,
                 statement_cache_size=0
             )
             print("[DB] Connection pool created")

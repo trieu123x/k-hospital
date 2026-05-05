@@ -5,6 +5,9 @@ import { ChatIcon } from "./icon";
 import { Plus, Menu, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useChatStore } from "@/stores/chat";
+import { useAuthStore } from "@/stores/auth";
+import Link from "next/link";
+import { ROUTES } from "@/routers";
 import {
   aiChatApi,
   createChatSession,
@@ -25,6 +28,7 @@ export function ChatForm() {
     setSession,
     updateLastAIMessage,
   } = useChatStore((state) => state);
+  const { isLogin, user } = useAuthStore((state) => state);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -171,16 +175,7 @@ export function ChatForm() {
           updateLastAIMessage(newChunk);
         },
         async () => {
-          try {
-            await saveChatMessage(currentSessionId, {
-              role: "AI",
-              content: fullResponseText,
-            });
-            setIsTyping(false);
-          } catch (err) {
-            console.log("Lỗi lưu AI message DB:", err);
-            setIsTyping(false);
-          }
+          setIsTyping(false);
         },
         (error) => {
           console.log("Lỗi khi chat: ", error);
@@ -229,12 +224,29 @@ export function ChatForm() {
               onScroll={handleScroll}
               className="flex flex-col-reverse gap-2 h-135 overflow-y-scroll hide-scrollbar"
             >
-              {!session ? (
+              {!isLogin ? (
+                <div className="w-full h-full flex items-center justify-center transition-all duration-300 px-8 text-center">
+                  <div className="flex flex-col gap-4 items-center fade-in">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                       <ChatIcon className="text-white scale-150" />
+                    </div>
+                    <h2 className="text-white font-bold text-[24px] leading-tight">
+                      Bạn cần đăng nhập để sử dụng trợ lý y tế
+                    </h2>
+                    <Link 
+                      href={ROUTES.LOGIN}
+                      className="bg-[#303EFF] text-white px-8 py-2 rounded-full font-bold hover:bg-[#1e27cc] transition-all"
+                    >
+                      Đăng nhập ngay
+                    </Link>
+                  </div>
+                </div>
+              ) : !session ? (
                 <>
                   <div className="w-full h-full flex items-center transition-all duration-300 px-8">
                     <div className="flex flex-col rasa-font fade-in">
                       <h1 className="text-[#303EFF] font-bold text-[34px] leading-none">
-                        Xin chào Hải Triều!
+                        Xin chào {user?.fullName || 'Hải Triều'}!
                       </h1>
                       <span className="text-[#5552FF] italic text-[22px]">
                         Hãy để tôi giải đáp mọi thắc mắc của bạn
@@ -280,12 +292,14 @@ export function ChatForm() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                placeholder="Hỏi Medicare"
+                disabled={!isLogin}
+                placeholder={isLogin ? "Hỏi Medicare" : "Đăng nhập để đặt câu hỏi"}
                 className={`
               absolute bottom-[30%] left-[50%] w-[90%] -translate-x-1/2
               min-h-10 max-h-30 rounded-3xl bg-[#8380FF] px-4 py-2.5
               focus:outline-none focus:ring-0
               resize-none overflow-hidden hide-scrollbar
+              ${!isLogin && 'opacity-50 cursor-not-allowed'}
             `}
               />
             </div>
@@ -305,7 +319,7 @@ export function ChatForm() {
             />
           </ChatIcon>
 
-          {isOpen && (
+          {isOpen && isLogin && (
             <>
               <ChatIcon
                 onClick={() => {

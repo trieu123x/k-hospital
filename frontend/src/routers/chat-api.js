@@ -62,13 +62,8 @@ export const aiChatApi = async (
       }
 
       const chunkText = decoder.decode(value, { stream: true })
-      const events = chunkText.split('\n\n')
-      for (const event of events) {
-        if (event.startsWith('data: ')) {
-          const cleanText = event.substring(6)
-          console.log("CLEAN TEXT: ", cleanText)
-          onChunkReceived(cleanText)
-        }
+      if (chunkText) {
+        onChunkReceived(chunkText)
       }
     }
   } catch (error) {

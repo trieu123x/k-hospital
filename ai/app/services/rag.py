@@ -2,133 +2,245 @@ from app.config.ai_model import ai_provider
 from app.config.database import db
 from google.genai import errors
 from app.services.embedding_vector_service import embedding_service
+from enum import Enum
 import json
+import uuid
+
+class Intent(str, Enum):
+    SYMPTOM_INQUIRY = "symptom_inquiry"
+    MEDICINE_INQUIRY = "medicine_inquiry"
+    DOCTOR_SEARCH = "doctor_search"
+    APPOINTMENT_BOOKING = "appointment_booking"
+    GENERAL_HEALTH = "general_health"
+    EMERGENCY = "emergency"
 
 class RAGService:
     def __init__(self):
         pass
-    
-    @staticmethod
-    async def build_and_stream(session_id: str, user_input: str):
-        # 1. Lấy 4-5 câu hỏi lịch sử từ DB
+
+    async def rewrite_query(self, history_text: str, user_input: str) -> str:
+
+        """
+        Sử dụng LLM để viết lại câu hỏi của người dùng thành một câu truy vấn độc lập
+        dựa trên lịch sử trò chuyện.
+        """
+        if not history_text:
+            return user_input
+            
+        prompt = f"""
+        Dựa trên lịch sử trò chuyện và câu hỏi mới nhất của người dùng, hãy viết lại câu hỏi đó thành một câu truy vấn độc lập, đầy đủ ý nghĩa để tìm kiếm trong cơ sở dữ liệu y khoa.
+        
+        Lịch sử:
+        {history_text}
+        
+        Câu hỏi mới: {user_input}
+        
+        Chỉ trả về câu truy vấn đã viết lại, không thêm bất kỳ giải thích nào khác.
+        """
+        try:
+            rewritten = ""
+            async for chunk in ai_provider.generate_chat(prompt):
+                rewritten += chunk
+            return rewritten.strip() if rewritten else user_input
+        except Exception:
+            return user_input
+   
+    async def classify_intent(self, history_text: str, user_input: str) -> Intent:
+        """
+        Phân loại ý định của người dùng trước khi truy xuất dữ liệu.
+        """
+        prompt = f"""
+        Bạn là bộ phân loại intent cho chatbot y tế.
+
+        Hãy phân loại câu hỏi của người dùng vào đúng một trong các nhãn sau:
+        - symptom_inquiry: hỏi về triệu chứng, nguyên nhân bệnh
+        - medicine_inquiry: hỏi về thuốc, cách dùng, tác dụng phụ
+        - doctor_search: tìm bác sĩ hoặc chuyên khoa phù hợp
+        - appointment_booking: đặt lịch khám, hẹn bác sĩ
+        - general_health: tư vấn sức khỏe chung
+        - emergency: tình huống khẩn cấp, triệu chứng nguy hiểm
+
+        Lịch sử hội thoại:
+        {history_text}
+
+        Câu hỏi người dùng:
+        {user_input}
+
+        Chỉ trả về duy nhất tên nhãn, không giải thích.
+        """
+
+        try:
+            result = ""
+            async for chunk in ai_provider.generate_chat(prompt):
+                result += chunk
+
+            intent = result.strip().lower()
+            if intent in [e.value for e in Intent]:
+                return Intent(intent)
+        except Exception:
+            pass
+
+        return Intent.GENERAL_HEALTH
+
+    async def build_and_stream(self, session_id: str, user_input: str):
+        # 1. Lấy lịch sử chat
         history_query = """
-            SELECT role, content 
-            FROM chat_messages 
-            WHERE session_id = $1 
-            ORDER BY created_at DESC 
-            LIMIT 5
+            SELECT role, content
+            FROM chat_messages
+            WHERE session_id = $1
+            ORDER BY created_at DESC
+            LIMIT 6
         """
         history_rows = await db.fetch(history_query, session_id)
-        # Sắp xếp lại cho đúng thứ tự thời gian
-        history = reversed(history_rows)
-        
-        history_text = "\n".join([f"{row['role']}: {row['content']}" for row in history])
-        combined_text = f"{history_text}\nUSER: {user_input}" if history_text else user_input
+        history = list(reversed(history_rows))
+        history_text = "\n".join(
+            f"{row['role']}: {row['content']}"
+            for row in history
+        )
 
-        # 2. Biến đổi combined_text thành Vector
-        query_vector = await embedding_service.embed_user_query(combined_text)
+        # 2. Viết lại câu hỏi và tạo embedding
+        standalone_query = await self.rewrite_query(history_text, user_input)
+        query_vector = await embedding_service.embed_user_query(standalone_query)
+        vector_str = f"[{','.join(map(str, query_vector))}]"
 
-        # 3. Tra cứu DB lấy chunk liên quan (Bệnh, Thuốc, Bác sĩ)
+        # 3. Xác định intent
+        intent = await self.classify_intent(history_text, user_input)
+        print(f"[RAG] Intent: {intent}")
+
+        # 4. Định nghĩa các truy vấn vector
         disease_query = """
-            SELECT d.name, d.description, dc.content as symptoms
+            SELECT d.name, dc.content, (1 - (dc.embedding <=> $1::vector)) as score
             FROM disease_chunks dc
             JOIN diseases d ON dc.disease_id = d.id
-            ORDER BY dc.embedding <=> $1::vector
+            WHERE (1 - (dc.embedding <=> $1::vector)) > 0.4
+               OR $2 ILIKE '%' || d.name || '%'
+            ORDER BY 
+               (CASE WHEN $2 ILIKE '%' || d.name || '%' THEN 1 ELSE 0 END) DESC,
+               dc.embedding <=> $1::vector
             LIMIT 3
         """
-        
+
         medicine_query = """
-            SELECT m.name, mc.content
+            SELECT m.name, mc.content, (1 - (mc.embedding <=> $1::vector)) as score
             FROM medicine_chunks mc
             JOIN medicines m ON mc.medicine_id = m.id
-            ORDER BY mc.embedding <=> $1::vector
+            WHERE (1 - (mc.embedding <=> $1::vector)) > 0.4
+               OR $2 ILIKE '%' || m.name || '%'
+            ORDER BY 
+               (CASE WHEN $2 ILIKE '%' || m.name || '%' THEN 1 ELSE 0 END) DESC,
+               mc.embedding <=> $1::vector
             LIMIT 3
         """
 
         doctor_chunks_query = """
-            SELECT p.full_name as name, s.name as specialty, doc_c.content
+            SELECT p.full_name as name, s.name as specialty, doc_c.content,
+                   (1 - (doc_c.embedding <=> $1::vector)) as score
             FROM doctor_chunks doc_c
             JOIN doctors d ON doc_c.doctor_id = d.id
             JOIN profiles p ON d.id = p.id
             LEFT JOIN specialties s ON d.specialty_id = s.id
-            ORDER BY doc_c.embedding <=> $1::vector
-            LIMIT 2
+            WHERE (1 - (doc_c.embedding <=> $1::vector)) > 0.4
+               OR $2 ILIKE '%' || s.name || '%'
+               OR $2 ILIKE '%' || p.full_name || '%'
+            ORDER BY 
+               (CASE WHEN $2 ILIKE '%' || s.name || '%' THEN 1 ELSE 0 END) DESC,
+               (CASE WHEN $2 ILIKE '%' || p.full_name || '%' THEN 1 ELSE 0 END) DESC,
+               doc_c.embedding <=> $1::vector
+            LIMIT 3
         """
 
+        # 5. Truy xuất dữ liệu theo intent
+        diseases, medicines, doctor_chunks = [], [], []
+
         try:
-            vector_str = str(query_vector)
-            diseases = await db.fetch(disease_query, vector_str)
-            medicines = await db.fetch(medicine_query, vector_str)
-            doctor_chunks = await db.fetch(doctor_chunks_query, vector_str)
+            if intent in [Intent.SYMPTOM_INQUIRY, Intent.GENERAL_HEALTH, Intent.EMERGENCY]:
+                diseases = await db.fetch(disease_query, vector_str, standalone_query)
+
+            if intent == Intent.MEDICINE_INQUIRY:
+                medicines = await db.fetch(medicine_query, vector_str, standalone_query)
+
+            if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING, Intent.EMERGENCY]:
+                doctor_chunks = await db.fetch(doctor_chunks_query, vector_str, standalone_query)
+
         except Exception as e:
             print(f"[RAG] Lỗi tra cứu vector: {e}")
             diseases, medicines, doctor_chunks = [], [], []
 
-        # 4. Tra cứu ETL Bác sĩ gợi ý (Dành cho thông tin tổng quát/top)
-        doctor_query = """
-            SELECT reports 
-            FROM etl_reports 
-            WHERE report_name = 'top_doctors' 
-            ORDER BY created_at DESC 
-            LIMIT 1
-        """
-        etl_row = await db.fetchrow(doctor_query)
-        top_doctors = etl_row['reports'] if etl_row else None
+        # 6. Thu thập dữ liệu từ ETL_REPORTS cho gợi ý (Chiến lược: Chỉ gửi khuyến nghị khi intent liên quan)
+        etl_reports_data = []
+        if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING]:
+            try:
+                etl_query = "SELECT report_name, reports FROM etl_reports WHERE report_name = 'top_doctors' ORDER BY created_at DESC LIMIT 1"
+                etl_reports_data = await db.fetch(etl_query)
+            except Exception as e:
+                print(f"[RAG] Lỗi truy vấn etl_reports: {e}")
 
-        # 5. Xây dựng System Prompt kết hợp dữ liệu tra cứu
-        diseases_context = ""
-        if diseases:
-            diseases_context = "Dưới đây là một số thông tin y khoa liên quan có thể tham khảo:\n"
-            for d in diseases:
-                diseases_context += f"- {d['name']}: {d['description']}. Triệu chứng: {d['symptoms']}\n"
+        context = []
 
-        medicines_context = ""
-        if medicines:
-            medicines_context = "\nThông tin thuốc liên quan:\n"
-            for m in medicines:
-                medicines_context += f"- {m['name']}: {m['content']}\n"
+        for d in diseases:
+            context.append(f"Bệnh: {d['name']}\n{d['content']}")
 
-        doctor_context = ""
-        # 1. Thông tin bác sĩ từ chunks (kinh nghiệm, học vấn)
-        if doctor_chunks:
-            doctor_context = "\nThông tin chi tiết về bác sĩ phù hợp:\n"
-            for doc in doctor_chunks:
-                doctor_context += f"- Bác sĩ {doc['name']} ({doc['specialty']}): {doc['content']}\n"
+        for m in medicines:
+            context.append(f"Thuốc: {m['name']}\n{m['content']}")
 
-        # 2. Gợi ý từ Top Doctors (ETL)
-        trigger_words = ["bác sĩ", "đặt lịch", "khám", "tư vấn", "chuyên gia", "liên hệ", "ai", "ai tốt"]
-        if top_doctors and any(word in user_input.lower() for word in trigger_words):
-            doctor_context += "\nDanh sách bác sĩ gợi ý nổi bật:\n" + json.dumps(top_doctors, ensure_ascii=False)
+        for doc in doctor_chunks:
+            context.append(
+                f"Bác sĩ (Phù hợp): {doc['name']} ({doc['specialty']})\n{doc['content']}"
+            )
 
-        system_prompt = f"""
-        Bạn là trợ lý y tế MediCare. Hãy trả lời câu hỏi của bệnh nhân dựa trên ngữ cảnh y khoa sau:
+        for report in etl_reports_data:
+            try:
+                r_json = json.loads(report['reports']) if isinstance(report['reports'], str) else report['reports']
+                preview = r_json.get('previewData', [])
+                if preview:
+                    context.append(f"Gợi ý hệ thống (Top Bác sĩ nổi bật): {json.dumps(preview, ensure_ascii=False)}")
+            except Exception:
+                pass
 
-        {diseases_context}
-        {medicines_context}
-        {doctor_context}
+        context_text = "\n\n".join(context)
 
-        Lịch sử chat:
+        prompt = f"""
+        Bạn là trợ lý y tế AI (MediAssist).
+
+        Ngữ cảnh tham khảo (bao gồm thông tin vector và gợi ý từ hệ thống):
+        {context_text}
+
+        Lịch sử hội thoại:
         {history_text}
 
-        Câu hỏi hiện tại: {user_input}
+        Câu hỏi hiện tại:
+        {user_input}
 
-        Hướng dẫn:
-        - Trả lời thân thiện, chuyên nghiệp.
-        - Nếu có thông tin bệnh liên quan, hãy tham khảo để trả lời chính xác hơn.
-        - Nếu có thông tin bác sĩ, hãy gợi ý cho bệnh nhân nếu phù hợp.
-        - Tuyệt đối không tự ý kê đơn thuốc mạnh, hãy khuyên bệnh nhân đi khám nếu tình trạng nặng.
+        Yêu cầu: 
+        - Hãy trả lời ngắn gọn, chính xác, thân thiện và hữu ích.
+        - Nếu người dùng tìm bác sĩ hoặc đặt lịch, hãy ưu tiên dùng danh sách 'Bác sĩ (Phù hợp)' trước. Nếu có 'Gợi ý hệ thống (Top Bác sĩ)', có thể dùng để khuyến nghị thêm các lựa chọn uy tín nếu phù hợp.
+        - Nếu người dùng chỉ hỏi bệnh/thuốc, tập trung trả lời bệnh/thuốc, không tự tiện gợi ý bác sĩ nếu họ không hỏi.
         """
-        
-        try:
-            async for text in ai_provider.generate_chat(system_prompt):
-                yield f"data: {text}\n\n" 
-                
-        except errors.APIError as e:
-            print(f"Lỗi hệ thống: {e}")
-            yield f"data: Xin lỗi, hệ thống AI đang quá tải...\n\n"
-            
-        except Exception as e:
-            print(f"Lỗi hệ thống: {e}")
-            yield f"data: Đã xảy ra lỗi kết nối. Vui lòng thử lại sau.\n\n"
 
+        full_response = ""
+
+        try:
+            async for chunk in ai_provider.generate_chat(prompt):
+                full_response += chunk
+                yield chunk
+
+        except Exception as e:
+            error_message = "Xin lỗi, hệ thống AI hiện đang quá tải hoặc đã hết hạn mức sử dụng. Vui lòng thử lại sau."
+
+            full_response = error_message
+            yield error_message
+
+            print(f"[RAG] Gemini API error: {e}")
+
+        await db.execute(
+            """
+            INSERT INTO chat_messages (id, session_id, role, content)
+            VALUES ($1, $2, $3, $4)
+            """,
+            str(uuid.uuid4()),
+            session_id,
+            "AI",
+            full_response
+        )
+        
 rag_service = RAGService()

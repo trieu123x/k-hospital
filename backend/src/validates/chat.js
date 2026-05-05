@@ -10,7 +10,9 @@ export const chatSchema = {
   }),
 
   saveMessage: z.object({
-    role: z.enum(["USER", "AI", "SYSTEM"], { message: "Role không hợp lệ" }),
+    role: z.preprocess((val) => (typeof val === "string" ? val.toUpperCase() : val), 
+      z.enum(["USER", "AI", "SYSTEM"], { message: "Role không hợp lệ" })
+    ),
     content: z.string().min(1, "Nội dung tin nhắn không được để trống"),
     metadata: z.any().optional(),
   }),

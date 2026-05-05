@@ -44,18 +44,22 @@ export const getAllAppointments = catchError(async (req, res) => {
 })
 
 export const getAvailableSlots = catchError(async (req, res) => {
-    const { date, doctorId } = req.query
+    const { date, doctorId, patientId } = req.query; 
     
+    const requesterId = req.user?.id; 
+    const finalPatientId = patientId || requesterId;
+
     const data = await appointmentService.getAvailableSlots({ 
         date, 
-        doctorId
-    })
+        doctorId,
+        patientId: finalPatientId 
+    });
 
     res.status(200).json({
         success: true,
         message: "Lấy danh sách giờ trống thành công",
         data
-    })
+    });
 })
 
 export const getAppointmentDetail = catchError(async (req, res) => {

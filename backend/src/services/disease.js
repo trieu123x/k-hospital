@@ -3,7 +3,7 @@ import { diseaseRepository } from "../repositories/disease.js"
 import { eventService } from "./event.js"
 import axios from "axios"
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
 
 export const diseaseService = {
     getTotalCount: async () => {

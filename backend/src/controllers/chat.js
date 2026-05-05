@@ -43,8 +43,9 @@ export const getSessionHistory = catchError(async (req, res) => {
 export const saveMessage = catchError(async (req, res) => {
     const { id } = req.params
     const { role, content, metadata } = req.body
+    const userId = req.user?.id
 
-    const message = await chatService.saveMessage(id, role, content, metadata)
+    const message = await chatService.saveMessage(id, userId, role, content, metadata)
 
     res.status(201).json({
         success: true,

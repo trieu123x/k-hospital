@@ -2,7 +2,7 @@ import { chatRepository } from '../repositories/chat.js'
 import { eventService } from './event.js'
 import axios from 'axios'
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
 
 export const chatService = {
     createSession: async (userId, content) => {
@@ -36,7 +36,11 @@ export const chatService = {
         return { session, messages: messages || [] }
     },
 
-    saveMessage: async (sessionId, role, content, metadata = null) => {
+    saveMessage: async (sessionId, userId, role, content, metadata = null) => {
+        const session = await chatRepository.getSessionById(sessionId)
+        if (!session || (userId && session.userId !== userId)) {
+            throw Object.assign(new Error("Không tìm thấy phiên chat hoặc bạn không có quyền!"), { statusCode: 404 })
+        }
         return await chatRepository.createMessage(sessionId, role, content, metadata)
     },
 
