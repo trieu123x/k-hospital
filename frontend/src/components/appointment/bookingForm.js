@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
 import { specialtyApi } from "@/routers/speciality/specialityRouter"; 
+import { ROUTES } from "@/routers";
 
 export function BookingForm({ patientId, onConfirm, onChangeData }) { 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlSpecialtyId = searchParams.get("specialtyId");
   const urlDoctorId = searchParams.get("doctorId");
@@ -175,8 +177,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       if (res && res.success) {
         alert("Đặt lịch khám thành công!");
         onConfirm(); 
-        // Load lại trang sau khi confirm thành công
-        window.location.reload(); 
+        router.push(ROUTES.MEDICAL_RECORD_UPCOMING);
       } else {
         alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
       }
