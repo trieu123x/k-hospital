@@ -145,15 +145,7 @@ export const appointmentService = {
 
         
         if (patientId) {
-            const patientExistingAppointment = await prisma.appointment.findFirst({
-                where: {
-                    patientId: patientId,
-                    date: targetDate,
-                    status: {
-                        not:  'CANCELLED'
-                    }
-                }
-            });
+            const patientExistingAppointment = await appointmentRepository.findExistingPatientAppointment(patientId, date);
 
             if (patientExistingAppointment) {
                 return []; 
@@ -164,10 +156,7 @@ export const appointmentService = {
         if (doctorId) {
             targetDoctors = [{ id: doctorId }]
         } else {
-            targetDoctors = await prisma.profile.findMany({
-                where: { role: 'doctor', isActive: true },
-                select: { id: true }
-            })
+            targetDoctors = await appointmentRepository.findActiveDoctors()
         }
 
         if (targetDoctors.length === 0) return []

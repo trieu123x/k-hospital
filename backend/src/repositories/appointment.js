@@ -342,5 +342,28 @@ export const appointmentRepository = {
         return await prisma.doctorLeave.delete({
             where: { id }
         });
+    },
+
+    /**
+     * Kiểm tra bệnh nhân đã có lịch hẹn trong ngày chưa (timezone-safe).
+     */
+    findExistingPatientAppointment: async (patientId, date) => {
+        return await prisma.appointment.findFirst({
+            where: {
+                patientId,
+                date: toVNDateRange(date),
+                status: { not: 'CANCELLED' }
+            }
+        });
+    },
+
+    /**
+     * Lấy danh sách tất cả bác sĩ đang hoạt động.
+     */
+    findActiveDoctors: async () => {
+        return await prisma.profile.findMany({
+            where: { role: 'DOCTOR', isActive: true },
+            select: { id: true }
+        });
     }
 }
