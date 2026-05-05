@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import axiosInstance from '@/utils/axios'
+import { clearTokens } from '@/utils/axios'
 
 export const useAuthStore = create(
   persist(
@@ -33,10 +34,7 @@ export const useAuthStore = create(
       },
 
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-        }
+        clearTokens(); // Xóa token khỏi cả localStorage lẫn cookie
         set({
           user: null,
           isLogin: false,

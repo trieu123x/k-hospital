@@ -90,6 +90,57 @@ export const login = catchError(async (req, res) => {
 });
 
 /**
+ * POST /auth/refresh-token
+ * Body hoặc Cookie: refresh_token
+ * Trả về access_token mới nếu refresh_token còn hợp lệ
+ */
+export const refreshToken = catchError(async (req, res) => {
+  const token = req.body?.refreshToken || req.cookies?.refresh_token;
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Không có refresh token",
+    });
+  }
+
+  const { supabase } = await import("../configs/supabase-config.js");
+  // Supabase yêu cầu cả access_token lẫn refresh_token để refresh session
+  // Dùng refreshSession với chỉ refresh_token
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token: token });
+
+  if (error || !data?.session) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token không hợp lệ hoặc đã hết hạn, vui lòng đăng nhập lại",
+    });
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Cập nhật cookie với token mới
+  res.cookie("access_token", data.session.access_token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  res.cookie("refresh_token", data.session.refresh_token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Làm mới token thành công",
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+  });
+});
+
+/**
  * POST /auth/logout
  * Header: Authorization: Bearer <access_token>
  */

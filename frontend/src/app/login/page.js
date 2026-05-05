@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
+import { saveTokens } from "@/utils/axios";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/routers";
 
@@ -31,12 +32,8 @@ export default function Login() {
       const accessToken = res?.accessToken;
       const refreshToken = res?.refreshToken;
 
-      if (accessToken) {
-        localStorage.setItem('access_token', accessToken);
-      }
-      if (refreshToken) {
-        localStorage.setItem('refresh_token', refreshToken);
-      }
+      // Lưu token vào cả localStorage lẫn cookie
+      saveTokens(accessToken, refreshToken);
 
       console.log("Thông tin user sau khi đăng nhập:", userData);
 
