@@ -16,7 +16,7 @@ export const doctorService = {
         }
 
         const { doctors, total } = await doctorRepository.findAllDoctors(filters, skip, limit)
-        
+
         return {
             doctors,
             pagination: {
@@ -46,7 +46,7 @@ export const doctorService = {
         const { id, profile, specialty, ...allowedData } = updateData;
 
         const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
-        
+
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://tro-li-ai-production.up.railway.app'
             await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
@@ -69,7 +69,7 @@ export const doctorService = {
 
     createDoctor: async (data) => {
         const { email, password, fullName, phone, specialtyId, degree, experience, education, achievements } = data;
-        
+
         let userId;
 
         // 1. Create Supabase Auth User if not existing
@@ -78,14 +78,14 @@ export const doctorService = {
             if (!supabaseAdmin) {
                 throw Object.assign(new Error("Cần cấu hình SUPABASE_SERVICE_ROLE_KEY để tạo tài khoản."), { statusCode: 500 })
             }
-            
+
             const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
                 email,
                 password,
                 email_confirm: true,
                 user_metadata: { full_name: fullName, phone }
             })
-            
+
             if (authError) {
                 throw Object.assign(new Error(authError.message), { statusCode: 400 })
             }
@@ -95,7 +95,7 @@ export const doctorService = {
         }
 
         const { prisma } = await import("../configs/prisma-config.js")
-        
+
         // 2. Transact Profile creation and Doctor creation
         const newDoctor = await prisma.$transaction(async (tx) => {
             await tx.profile.create({
@@ -106,7 +106,7 @@ export const doctorService = {
                     role: "doctor"
                 }
             })
-            
+
             return await tx.doctor.create({
                 data: {
                     id: userId,
