@@ -1,5 +1,20 @@
 import { prisma, Prisma } from "../configs/prisma-config.js"
 
+/**
+ * Chuyển chuỗi date "YYYY-MM-DD" thành khoảng [startOfDay, startOfNextDay] theo UTC+7.
+ * Dùng để query Prisma thay cho exact DateTime, tránh lỗi timezone khi server chạy UTC.
+ * @param {string|Date} date - "2026-05-29" hoặc Date object
+ * @returns {{ gte: Date, lt: Date }}
+ */
+const toVNDateRange = (date) => {
+    const str = typeof date === 'string' ? date : date.toISOString().slice(0, 10);
+    const [year, month, day] = str.slice(0, 10).split('-').map(Number);
+    // UTC+7: nửa đêm Việt Nam = 17:00 UTC ngày hôm trước
+    const gte = new Date(Date.UTC(year, month - 1, day, 0, 0, 0) - 7 * 60 * 60 * 1000);
+    const lt  = new Date(Date.UTC(year, month - 1, day, 24, 0, 0) - 7 * 60 * 60 * 1000);
+    return { gte, lt };
+};
+
 export const appointmentRepository = {
     findAppointmentById: async (id) => {
         return await prisma.appointment.findUnique({
@@ -19,7 +34,7 @@ export const appointmentRepository = {
             const existingPatientAppointment = await tx.appointment.findFirst({
                 where: {
                     patientId: patientId,
-                    date: appointmentDate,
+                    date: toVNDateRange(date),
                     status: {
                         not:  'CANCELLED'
                     }
@@ -33,7 +48,7 @@ export const appointmentRepository = {
             const doctorLeave = await tx.doctorLeave.findFirst({
                 where: {
                     doctorId,
-                    date: appointmentDate,
+                    date: toVNDateRange(date),
                     OR: [
                         { shift: null }, 
                         { shift: shift } 
@@ -48,7 +63,7 @@ export const appointmentRepository = {
             const existingAppointment = await tx.appointment.findFirst({
                 where: { 
                     doctorId,
-                    date: appointmentDate,
+                    date: toVNDateRange(date),
                     shift,
                     status: {
                         not:  'CANCELLED'
@@ -92,7 +107,7 @@ export const appointmentRepository = {
         const whereClause = {}
 
         if (date) {
-            whereClause.date = new Date(date)
+            whereClause.date = toVNDateRange(date)
         }
         if (status) {
             whereClause.status = status
@@ -203,7 +218,7 @@ export const appointmentRepository = {
         const whereClause = { doctorId }
 
         if (date) {
-            whereClause.date = new Date(date)
+            whereClause.date = toVNDateRange(date)
         }
 
         return await prisma.appointment.findMany({
@@ -236,9 +251,9 @@ export const appointmentRepository = {
 
 
     getUnavailableSlots: async ({ date, doctorId }) => {
-        const targetDate = new Date(date)
+        const dateRange = toVNDateRange(date)
 
-        const whereBase = { date: targetDate }
+        const whereBase = { date: dateRange }
         if (doctorId) whereBase.doctorId = doctorId
 
         const [appointments, leaves] = await Promise.all([
@@ -298,7 +313,7 @@ export const appointmentRepository = {
         return await prisma.doctorLeave.findFirst({
             where: {
                 doctorId,
-                date: new Date(date),
+                date: toVNDateRange(date),
                 shift: shift || null
             }
         });
@@ -326,6 +341,29 @@ export const appointmentRepository = {
     deleteLeave: async (id) => {
         return await prisma.doctorLeave.delete({
             where: { id }
+        });
+    },
+
+    /**
+     * Kiểm tra bệnh nhân đã có lịch hẹn trong ngày chưa (timezone-safe).
+     */
+    findExistingPatientAppointment: async (patientId, date) => {
+        return await prisma.appointment.findFirst({
+            where: {
+                patientId,
+                date: toVNDateRange(date),
+                status: { not: 'CANCELLED' }
+            }
+        });
+    },
+
+    /**
+     * Lấy danh sách tất cả bác sĩ đang hoạt động.
+     */
+    findActiveDoctors: async () => {
+        return await prisma.profile.findMany({
+            where: { role: 'DOCTOR', isActive: true },
+            select: { id: true }
         });
     }
 }

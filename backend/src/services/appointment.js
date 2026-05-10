@@ -1,5 +1,29 @@
 import { appointmentRepository } from "../repositories/appointment.js"
 
+/**
+ * Chuyển "YYYY-MM-DD" thành đối tượng Date ở đầu ngày theo giờ Việt Nam (UTC+7).
+ * Tránh lỗi timezone khi server deploy chạy UTC.
+ */
+const toVNMidnight = (dateStr) => {
+    const str = typeof dateStr === 'string' ? dateStr : dateStr.toISOString().slice(0, 10);
+    const [year, month, day] = str.slice(0, 10).split('-').map(Number);
+    // 00:00:00 giờ Việt Nam = UTC-7h = ngày hôm đó 17:00 UTC
+    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0) - 7 * 60 * 60 * 1000);
+};
+
+/**
+ * Trả về đầu ngày hôm nay theo giờ Việt Nam.
+ */
+const todayVN = () => {
+    const now = new Date();
+    // Chuyển sang gờ Việt Nam rồi lấy ngày
+    const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const year = vnNow.getUTCFullYear();
+    const month = vnNow.getUTCMonth();
+    const day = vnNow.getUTCDate();
+    return new Date(Date.UTC(year, month, day, 0, 0, 0) - 7 * 60 * 60 * 1000);
+};
+
 const ALL_SHIFTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export const appointmentService = {
@@ -112,9 +136,8 @@ export const appointmentService = {
             throw Object.assign(new Error("Vui lòng cung cấp ngày cần xem lịch!"), { statusCode: 400 })
         }
 
-        const targetDate = new Date(date)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        const targetDate = toVNMidnight(date)
+        const today = todayVN()
 
         if (targetDate < today) {
             return []
@@ -122,15 +145,7 @@ export const appointmentService = {
 
         
         if (patientId) {
-            const patientExistingAppointment = await prisma.appointment.findFirst({
-                where: {
-                    patientId: patientId,
-                    date: targetDate,
-                    status: {
-                        not:  'CANCELLED'
-                    }
-                }
-            });
+            const patientExistingAppointment = await appointmentRepository.findExistingPatientAppointment(patientId, date);
 
             if (patientExistingAppointment) {
                 return []; 
@@ -141,10 +156,7 @@ export const appointmentService = {
         if (doctorId) {
             targetDoctors = [{ id: doctorId }]
         } else {
-            targetDoctors = await prisma.profile.findMany({
-                where: { role: 'doctor', isActive: true },
-                select: { id: true }
-            })
+            targetDoctors = await appointmentRepository.findActiveDoctors()
         }
 
         if (targetDoctors.length === 0) return []
@@ -198,11 +210,8 @@ export const appointmentService = {
     registerDoctorLeave: async (data) => {
         const { doctorId, date, shift, reason } = data;
         
-        const startOfLeaveDate = new Date(date);
-        startOfLeaveDate.setHours(0, 0, 0, 0);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const startOfLeaveDate = toVNMidnight(date);
+        const today = todayVN();
         if (startOfLeaveDate < today) {
             throw Object.assign(new Error("Không thể đăng ký nghỉ cho ngày đã qua!"), { statusCode: 400 });
         }
@@ -286,9 +295,8 @@ export const appointmentService = {
     bookAppointment: async (data) => {
         const { doctorId, date, shift, reason, patientId } = data 
         
-        const appointmentDate = new Date(date) 
-        const today = new Date()
-        today.setHours(0, 0, 0, 0) 
+        const appointmentDate = toVNMidnight(date)
+        const today = todayVN()
 
         if (appointmentDate < today) {
             throw Object.assign(new Error("Không thể đặt lịch khám đã qua!"), { statusCode: 400 })
