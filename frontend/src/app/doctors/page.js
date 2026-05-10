@@ -98,7 +98,7 @@ export default function DoctorsPage() {
           <Filter className="text-black size-5 hidden md:block" />
           <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
           <div className="relative w-fit">
-            <SelectBox value={selectedSpecialty || "Tất cả"} options={specialties.map(spec => spec.name)} onChange={(value) => setSelectedSpecialty(value)} />
+            <SelectBox value={selectedSpecialty || "Tất cả chuyên khoa"} options={specialties.map(spec => spec.name)} onChange={(value) => setSelectedSpecialty(value)} />
           </div>
         </div>
 

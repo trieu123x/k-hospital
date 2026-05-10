@@ -65,7 +65,7 @@ export default function MedicineLookupPage() {
               <Filter className="text-black size-5 hidden md:block" />
               <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
               <div className="relative w-fit">
-                <SelectBox value={selectedType || "Tất cả"} options={medicineTypes.map(type => type.name)} onChange={(value) => setSelectedType(value)} />
+                <SelectBox value={selectedType || "Tất cả loại thuốc"} options={medicineTypes.map(type => type.name)} onChange={(value) => setSelectedType(value)} />
               </div>
             </div>
           </div>

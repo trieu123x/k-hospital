@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Phone, Award, GraduationCap, Briefcase, ChevronLeft, Calendar } from "lucide-react";
 import axiosInstance from "@/utils/axios";
+import { Button } from "@/components/ui/Button";
 
 export default function DoctorDetailPage() {
   const params = useParams();
@@ -65,24 +66,19 @@ export default function DoctorDetailPage() {
     const searchParams = new URLSearchParams();
     searchParams.set("doctorId", uuid);
     if (specialty?.id) searchParams.set("specialtyId", specialty.id);
-    
+
     router.push(`/appointment?${searchParams.toString()}`);
   };
 
   return (
-    <div className="min-h-screen bg-white pb-12">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Breadcrumb / Back Link */}
-        <Link href="/doctors" className="inline-flex items-center text-sm text-gray-500 hover:text-blue-600 mb-8 transition-colors">
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          Danh sách bác sĩ
-        </Link>
+    <div className="bg-white pb-12 rasa-font">
+      <div className="px-6 sm:px-8 lg:px-12 pt-8">
 
-        <div className="flex flex-col lg:flex-row gap-16">
+        <div className="flex flex-col lg:flex-row gap-16 grow">
           {/* Left Column: Profile Card */}
-          <div className="lg:w-1/3 xl:w-1/4">
-            <div className="sticky top-24">
-              <div className="relative w-2/3 aspect-[4/5] rounded-sm overflow-hidden shadow-2xl mb-6 bg-gray-100">
+          <div className="relative flex flex-col items-center min-w-55 h-full">
+            <div className="w-full sticky top-24">
+              <div className="relative w-full h-63 mb-2">
                 <Image
                   src={profile?.avatarUrl || "/images/Avartar.jpg"}
                   alt={profile?.fullName || "Doctor"}
@@ -92,98 +88,57 @@ export default function DoctorDetailPage() {
                 />
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Thông tin liên hệ</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start">
-                      <div className="bg-blue-50 p-2 rounded-lg mr-3">
-                        <Briefcase className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Chuyên khoa</p>
-                        <p className="text-sm font-medium text-gray-900">{specialty?.name || "Đa khoa"}</p>
-                      </div>
-                    </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-55 text-[18px]">
+                <span>Chuyên khoa: <strong className="font-bold">{specialty?.name || "Đa khoa"}</strong></span>
 
-                    <div className="flex items-start">
-                      <div className="bg-blue-50 p-2 rounded-lg mr-3">
-                        <GraduationCap className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Bằng cấp</p>
-                        <p className="text-sm font-medium text-gray-900">{degree?.name || "Bác sĩ"}</p>
-                      </div>
-                    </div>
+                <span className="">Bằng cấp: <strong className="font-bold">{degree?.name || "Bác sĩ"}</strong></span>
 
-                    <div className="flex items-start">
-                      <div className="bg-blue-50 p-2 rounded-lg mr-3">
-                        <Phone className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Số điện thoại</p>
-                        <p className="text-sm font-medium text-gray-900">{profile?.phone || "0123456789"}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={handleBookingClick}
-                  className="w-full bg-[#0a008c] hover:bg-blue-900 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Đặt lịch khám ngay!
-                </button>
+                <span>Loại thuốc: <strong className="font-bold capitalize">{profile?.phone || "0123456789"}</strong></span>
               </div>
             </div>
+
+            <Button onClick={handleBookingClick} className="absolute top-[180%] bg-[#0a008c] hover:bg-blue-900 text-white px-6 py-1.5">
+              Đặt lịch khám ngay!
+            </Button>
           </div>
 
           {/* Right Column: Detailed Info */}
-          <div className="lg:w-2/3 xl:w-3/4">
-            <header className="mb-10">
-              <h1 className="text-3xl md:text-3xl font-extrabold text-gray-900 leading-tight">
+          <div className="w-full">
+            <header className="">
+              <h1 className="text-[30px] font-extrabold leading-none">
                 {degree ? `${degree.name} - ` : ""} {profile?.fullName}
               </h1>
-              <div className="mt-4 h-1.5 w-24 bg-blue-600 rounded-full"></div>
             </header>
 
-            <div className="space-y-12">
+            <div className="h-px w-full bg-[#B1B1B1] my-4"></div>
+
+            <div className="space-y-4">
               {/* Experience Section */}
               <section className="relative">
-                <div className="flex items-center mb-6">
-                  <div className="bg-blue-100 p-2 rounded-lg mr-4">
-                    <Briefcase className="w-6 h-6 text-blue-700" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Kinh nghiệm làm việc:</h2>
+                <div className="flex items-center leading-none">
+                  <h2 className="text-[24px] font-bold">Kinh nghiệm làm việc:</h2>
                 </div>
-                <div className="pl-1 text-gray-700 leading-relaxed text-lg whitespace-pre-line">
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
                   {experience || "Thông tin kinh nghiệm đang được cập nhật."}
                 </div>
               </section>
 
               {/* Education Section */}
               <section className="relative">
-                <div className="flex items-center mb-6">
-                  <div className="bg-blue-100 p-2 rounded-lg mr-4">
-                    <GraduationCap className="w-6 h-6 text-blue-700" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Trình độ học vấn:</h2>
+                <div className="flex items-center leading-none">
+                  <h2 className="text-[24px] font-bold">Trình độ học vấn:</h2>
                 </div>
-                <div className="pl-1 text-gray-700 leading-relaxed text-lg whitespace-pre-line">
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
                   {education || "Thông tin học vấn đang được cập nhật."}
                 </div>
               </section>
 
               {/* Achievements Section */}
               <section className="relative">
-                <div className="flex items-center mb-6">
-                  <div className="bg-blue-100 p-2 rounded-lg mr-4">
-                    <Award className="w-6 h-6 text-blue-700" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Thành tựu:</h2>
+                <div className="flex items-center leading-none">
+                  <h2 className="text-[24px] font-bold">Thành tựu:</h2>
                 </div>
-                <div className="pl-1 text-gray-700 leading-relaxed text-lg whitespace-pre-line">
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
                   {achievements || "Thông tin thành tựu đang được cập nhật."}
                 </div>
               </section>
