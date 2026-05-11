@@ -61,14 +61,14 @@ export default function MedicineDetailPage() {
   const specialtyDisplay = specialtyNames?.length > 0 ? specialtyNames.join(", ") : "Đang cập nhật";
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen text-black rasa-font">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-12">
         <div className="flex flex-col md:flex-row gap-12 lg:gap-20">
-          
+
           {/* Left Column: Image and Metadata */}
-          <div className="w-full md:w-1/4">
+          <div className="w-full md:w-fit">
             <div className="sticky top-24">
-              <div className="relative aspect-square bg-gray-50 border border-gray-100 rounded-lg overflow-hidden mb-6 flex items-center justify-center p-4">
+              <div className="relative w-55 aspect-square overflow-hidden mb-2 flex items-center justify-center">
                 <Image
                   src={medicine.imageUrl || "/images/Diseases.jpg"}
                   alt={medicine.name}
@@ -76,60 +76,55 @@ export default function MedicineDetailPage() {
                   className="object-contain p-4"
                 />
               </div>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex gap-2">
-                  <span className="text-gray-500">Nhóm bệnh:</span>
-                  <span className="text-gray-900 font-bold">{categoryDisplay}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-500">Chuyên khoa:</span>
-                  <span className="text-gray-900 font-bold">{specialtyDisplay}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-500">Loại thuốc:</span>
-                  <span className="text-gray-900 font-bold capitalize">{medicine.medicineType?.name || "Xịt"}</span>
-                </div>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-55 text-[18px]">
+                <span>Nhóm bệnh: <strong className="font-bold">{categoryDisplay}</strong></span>
+
+                <span className="">Chuyên khoa: <strong className="font-bold">{specialtyDisplay}</strong></span>
+
+                <span>Loại thuốc: <strong className="font-bold capitalize">{medicine.medicineType?.name || "Xịt"}</strong></span>
               </div>
             </div>
           </div>
 
           {/* Right Column: Detailed Info */}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100">
+            <h1 className="text-3xl font-bold leading-none">
               {medicine.name}
             </h1>
 
-            <div className="space-y-10">
+            <div className="h-px w-full bg-[#B1B1B1] my-4"></div>
+
+            <div className="space-y-4">
               {/* Ingredients */}
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Thành phần:</h2>
-                <div className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {medicine.ingredients || "Chưa có thông tin về thành phần."}
+                <h2 className="text-[24px] font-bold leading-none">Thành phần:</h2>
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
+                  - {medicine.ingredients || "Chưa có thông tin về thành phần."}
                 </div>
               </section>
 
               {/* Dosage */}
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Liều lượng khuyên dùng:</h2>
-                <div className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {medicine.dosage || "Vui lòng xem hướng dẫn của bác sĩ."}
+                <h2 className="text-[24px] font-bold leading-none">Liều lượng khuyên dùng:</h2>
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
+                  - {medicine.dosage || "Vui lòng xem hướng dẫn của bác sĩ."}
                 </div>
               </section>
 
               {/* Usage Instructions */}
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Hướng dẫn sử dụng:</h2>
-                <div className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {medicine.usageInstruction || "Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng."}
+                <h2 className="text-[24px] font-bold leading-none">Hướng dẫn sử dụng:</h2>
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
+                  - {medicine.usageInstruction || "Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng."}
                 </div>
               </section>
 
               {/* Side Effects */}
               <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Tác dụng phụ:</h2>
-                <div className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {medicine.sideEffects || medicine.side_effects || "Có thể gặp các tác dụng phụ không mong muốn. Vui lòng liên hệ bác sĩ nếu có dấu hiệu bất thường."}
+                <h2 className="text-[24px] font-bold leading-none">Tác dụng phụ:</h2>
+                <div className="text-[22px] leading-relaxed whitespace-pre-line">
+                  - {medicine.sideEffects || medicine.side_effects || "Có thể gặp các tác dụng phụ không mong muốn. Vui lòng liên hệ bác sĩ nếu có dấu hiệu bất thường."}
                 </div>
               </section>
             </div>
