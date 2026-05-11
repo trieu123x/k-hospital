@@ -85,12 +85,25 @@ export const userService = {
       experience,
       education,
       achievements,
+      avatarCropData,
       ...allowedData
     } = updateData;
 
     // Parse dob to Date if provided as string
     if (allowedData.dob) {
       allowedData.dob = new Date(allowedData.dob);
+    }
+    
+    if (avatarCropData !== undefined) {
+      if (typeof avatarCropData === "string") {
+        try {
+          allowedData.avatarCropData = JSON.parse(avatarCropData);
+        } catch {
+          allowedData.avatarCropData = null;
+        }
+      } else {
+        allowedData.avatarCropData = avatarCropData;
+      }
     }
 
     if (file) {

@@ -212,9 +212,9 @@ class RAGService:
         {user_input}
 
         Yêu cầu: 
-        - Hãy trả lời ngắn gọn, chính xác, thân thiện và hữu ích.
+        - Hãy trả lời ngắn gọn, chính xác, và hữu ích.
+        - Không cần chào
         - Nếu người dùng tìm bác sĩ hoặc đặt lịch, hãy ưu tiên dùng danh sách 'Bác sĩ (Phù hợp)' trước. Nếu có 'Gợi ý hệ thống (Top Bác sĩ)', có thể dùng để khuyến nghị thêm các lựa chọn uy tín nếu phù hợp.
-        - Nếu người dùng chỉ hỏi bệnh/thuốc, tập trung trả lời bệnh/thuốc, không tự tiện gợi ý bác sĩ nếu họ không hỏi.
         """
 
         full_response = ""

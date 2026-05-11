@@ -20,6 +20,7 @@ export default function Detail() {
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
+  const [currentCropData, setCurrentCropData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -47,6 +48,12 @@ export default function Detail() {
               .getPublicUrl(avatarToSet).data.publicUrl;
           }
           setCurrentAvatarUrl(avatarToSet);
+          
+          let cropToSet = profile.avatarCropData || null;
+          if (typeof cropToSet === 'string') {
+            try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+          }
+          setCurrentCropData(cropToSet);
         } else {
           console.error("Lỗi từ server:", res?.message);
         }
@@ -91,7 +98,7 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file) => {
+  const handleAvatarChange = async (file, backendCropData) => {
     if (!file) return;
 
     try {
@@ -121,8 +128,14 @@ export default function Detail() {
       const publicUrl = uploadData.secure_url;
       console.log("Cloudinary URL:", publicUrl);
 
+      const payload = new FormData();
+      payload.append("avatarUrl", publicUrl);
+      if (backendCropData) {
+        payload.append("avatarCropData", JSON.stringify(backendCropData));
+      }
+
       // 2. Gửi URL này lên Backend của bạn để lưu thông qua API
-      const res = await userApi.updateUser(userId, { avatarUrl: publicUrl });
+      const res = await userApi.updateUser(userId, payload);
 
       if (!res || !res.success) {
         throw new Error(res?.message || "Lỗi khi lưu ảnh vào database");
@@ -130,6 +143,7 @@ export default function Detail() {
 
       // 3. Hiển thị lại ảnh
       setCurrentAvatarUrl(publicUrl);
+      setCurrentCropData(backendCropData);
       alert("Đã cập nhật ảnh đại diện mới thành công!");
     } catch (error) {
       console.error(error);
@@ -206,6 +220,7 @@ export default function Detail() {
             label="Họ và tên"
             onChange={handleAvatarChange}
             defaultImage={currentAvatarUrl}
+            defaultCropData={currentCropData}
             cropMode={true}
           />
         </div>

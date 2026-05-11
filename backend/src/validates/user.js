@@ -37,8 +37,9 @@ export const userSchema = {
         .nullable(),
       address: z.string().optional().nullable(),
       avatarUrl: z.string().url("Link ảnh không hợp lệ").optional().nullable(),
-      avatarCropData: z.string().optional().nullable().transform((val) => {
+      avatarCropData: z.any().optional().nullable().transform((val) => {
         if (!val) return null;
+        if (typeof val === 'object') return val;
         try {
           return JSON.parse(val);
         } catch {

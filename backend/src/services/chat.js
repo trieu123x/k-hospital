@@ -50,7 +50,7 @@ export const chatService = {
                 session_id: sessionId
             })
 
-            const topic = aiResponse.data?.topic || "No Topic"
+            const topic = aiResponse.data?.data?.topic_name || "Nội tổng quát"
 
             await chatRepository.updateSessionTopic(sessionId, topic)
 

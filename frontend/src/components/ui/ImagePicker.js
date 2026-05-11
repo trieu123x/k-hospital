@@ -14,6 +14,7 @@ export function AvatarPicker({
   onChange = (file, cropData) => { },
   className = "",
   defaultImage = null,
+  defaultCropData = null,
   cropMode = false,
 }) {
   const [previewUrl, setPreviewUrl] = useState(defaultImage)
@@ -38,7 +39,14 @@ export function AvatarPicker({
   useEffect(() => {
     setPreviewUrl(defaultImage)
     setImgSrc(defaultImage)
-  }, [defaultImage])
+    
+    // Khôi phục logoUrl ban đầu nếu có defaultCropData
+    if (defaultImage && defaultCropData && cropMode) {
+      import('@/utils/image').then(({ getCroppedAvatarUrl }) => {
+        setLogoUrl(getCroppedAvatarUrl(defaultImage, defaultCropData))
+      })
+    }
+  }, [defaultImage, defaultCropData, cropMode])
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0]
@@ -75,18 +83,45 @@ export function AvatarPicker({
   const handleImageLoad = (e) => {
     imgRef.current = e.currentTarget
 
-    const { width, height } = e.currentTarget
-    const size = Math.min(width, height)
-    const x = (width - size) / 2
-    const y = (height - size) / 2
+    const { width, height, naturalWidth } = e.currentTarget
+    
+    let initialCrop;
 
-    const initialCrop = {
-      unit: 'px',
-      width: size,
-      height: size,
-      x,
-      y,
-      aspect: 1
+    let parsedCropData = defaultCropData;
+    if (typeof parsedCropData === 'string') {
+      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) {}
+    }
+    
+    // Đảm bảo parse lồng nhau nếu bị double-stringify
+    if (typeof parsedCropData === 'string') {
+      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) {}
+    }
+
+    if (parsedCropData && typeof parsedCropData === 'object' && parsedCropData.width && imgSrc === defaultImage) {
+      const displayToTargetScale = naturalWidth / width;
+      initialCrop = {
+        unit: 'px',
+        width: parsedCropData.width / displayToTargetScale,
+        height: parsedCropData.height / displayToTargetScale,
+        x: parsedCropData.x / displayToTargetScale,
+        y: parsedCropData.y / displayToTargetScale,
+        aspect: 1
+      }
+      console.log("Khôi phục crop:", initialCrop);
+    } else {
+      console.log("Không có default crop, tính crop tự động. parsedCropData:", parsedCropData, "imgSrc:", imgSrc, "default:", defaultImage);
+      const size = Math.min(width, height)
+      const x = (width - size) / 2
+      const y = (height - size) / 2
+
+      initialCrop = {
+        unit: 'px',
+        width: size,
+        height: size,
+        x,
+        y,
+        aspect: 1
+      }
     }
 
     setCrop(initialCrop)

@@ -49,17 +49,16 @@ export const doctorService = {
 
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
-            await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",
                 experience: updatedDoctor.experience || "",
                 education: updatedDoctor.education || ""
-            }).then(res => {
-                const chunks = res.data?.chunks
-                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
-                    doctorRepository.createChunks(doctorId, chunks)
-                }
             })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await doctorRepository.createChunks(doctorId, chunks)
+            }
         } catch (error) {
             console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ:", error.message)
         }
@@ -151,17 +150,16 @@ export const doctorService = {
 
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
-            await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",
                 experience: updatedDoctor.experience || "",
                 education: updatedDoctor.education || ""
-            }).then(res => {
-                const chunks = res.data?.chunks
-                if (chunks && Array.isArray(chunks) && chunks.length > 0) {
-                    doctorRepository.createChunks(doctorId, chunks)
-                }
             })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await doctorRepository.createChunks(doctorId, chunks)
+            }
         } catch (error) {
             console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ (Admin):", error.message)
         }

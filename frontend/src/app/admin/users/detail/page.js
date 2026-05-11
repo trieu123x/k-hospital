@@ -34,6 +34,7 @@ function DetailContent() {
   const [imageFile, setImageFile] = useState(null)
   const [cropData, setCropData] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
+  const [previewCropData, setPreviewCropData] = useState(null)
   const [loading, setLoading] = useState(isEditMode)
   const [degreeOptions, setDegreeOptions] = useState([])
   const [specialtyOptions, setSpecialtyOptions] = useState([])
@@ -75,6 +76,12 @@ function DetailContent() {
             setAchievements(dataToUse.doctor?.achievements || "")
 
             setPreviewImage(dataToUse.avatarUrl || null)
+            
+            let cropToSet = dataToUse.avatarCropData || null;
+            if (typeof cropToSet === 'string') {
+              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+            }
+            setPreviewCropData(cropToSet)
             setUserRole(dataToUse.role || null)
 
             setInitialData({
@@ -229,6 +236,7 @@ function DetailContent() {
           label="Ảnh đại diện"
           onChange={handleAvatarChange}
           defaultImage={previewImage}
+          defaultCropData={previewCropData}
           cropMode={true}
         />
       </div>

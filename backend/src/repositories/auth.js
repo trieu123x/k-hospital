@@ -15,6 +15,7 @@ export const profileRepository = {
                 address: true,
                 createdAt: true,
                 isActive: true,
+                avatarCropData: true
             }
         })
     },

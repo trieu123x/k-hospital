@@ -11,6 +11,7 @@ import { NotificationForm } from "../notification/form";
 import { ROUTES } from "@/routers";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
+import { getCroppedAvatarUrl } from "@/utils/image";
 
 export default function Navbar({ setSidebarOpen = () => { } }) {
   const isLogin = useAuthStore(state => state.isLogin)
@@ -151,7 +152,9 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor) 
   
-  const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  const cropData = user?.profile?.avatarCropData || user?.avatarCropData
+  const avatarUrl = getCroppedAvatarUrl(rawAvatarUrl, cropData)
   
   let profileLink = "/profile/patient/detail"
   if (isAdmin) profileLink = "/admin/aggregate"
@@ -179,7 +182,9 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor) 
 
-  const avatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
+  const cropData = user?.profile?.avatarCropData || user?.avatarCropData
+  const avatarUrl = getCroppedAvatarUrl(rawAvatarUrl, cropData)
   
   let profileLink = "/profile/patient"
   if (isAdmin) profileLink = "/admin/aggregate"
