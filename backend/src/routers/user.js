@@ -1,5 +1,5 @@
 import express from "express"
-import { userController } from "../controllers/user.js"
+import { getUsersForAdmin, userController } from "../controllers/user.js"
 import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
 
 import { validate } from "../middlewares/validate-handler.js"
@@ -14,7 +14,7 @@ const router = express.Router()
 router.get("/", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getAll), userController.getAllUsers)
 
 // GET /users/admin: Fetch all users for admin (using same logic as getAllUsers)
-router.get("/admin", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getAll), userController.getAllUsers)
+router.get("/admin", authenticate, authorizeRoles('ADMIN'), validate(userSchema.getAll), getUsersForAdmin)
 
 // GET /users/count: Count total users
 router.get("/count", authenticate, authorizeRoles('ADMIN'), userController.getTotalUsers)

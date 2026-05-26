@@ -2,35 +2,36 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
-import { specialtyApi } from "@/routers/speciality/specialityRouter"; 
+import { appointmentApi } from "@/routers/appointment/appointmentRouter";
+import { specialtyApi } from "@/routers/speciality/specialityRouter";
+import { ChevronDown } from "lucide-react";
 import { ROUTES } from "@/routers";
 
-export function BookingForm({ patientId, onConfirm, onChangeData }) { 
+export function BookingForm({ patientId, onConfirm, onChangeData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlSpecialtyId = searchParams.get("specialtyId");
   const urlDoctorId = searchParams.get("doctorId");
 
   const [formData, setFormData] = useState({
-    specialtyId: urlSpecialtyId || "",   
-    specialtyName: "", 
-    doctorId: urlDoctorId || "",      
-    doctorName: "",    
+    specialtyId: urlSpecialtyId || "",
+    specialtyName: "",
+    doctorId: urlDoctorId || "",
+    doctorName: "",
     date: "",
     shift: "",
-    reason: "" 
+    reason: ""
   });
-  
+
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  
+
   const [availableShifts, setAvailableShifts] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [fetchingSpecs, setFetchingSpecs] = useState(true);
   const [fetchingDocs, setFetchingDocs] = useState(false);
-  const [fetchingShifts, setFetchingShifts] = useState(false); 
+  const [fetchingShifts, setFetchingShifts] = useState(false);
 
   useEffect(() => {
     if (onChangeData) onChangeData(formData);
@@ -42,7 +43,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         const res = await specialtyApi.getAllSpecialties();
         if (res && res.success) {
           setSpecialties(res.data);
-          
+
           if (urlSpecialtyId) {
             const found = res.data.find(s => s.id === urlSpecialtyId);
             if (found) {
@@ -93,7 +94,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
   useEffect(() => {
     if (!formData.doctorId || !formData.date) {
       setAvailableShifts([]);
-      setFormData(prev => ({ ...prev, shift: "" })); 
+      setFormData(prev => ({ ...prev, shift: "" }));
       return;
     }
 
@@ -103,9 +104,9 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         const res = await appointmentApi.getAvailableSlots({
           doctorId: formData.doctorId,
           date: formData.date,
-          patientId: patientId 
+          patientId: patientId
         });
-        
+
         if (res && res.success) {
           setAvailableShifts(res.data);
         } else {
@@ -120,7 +121,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     };
 
     fetchAvailableShifts();
-  }, [formData.doctorId, formData.date, patientId]); 
+  }, [formData.doctorId, formData.date, patientId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -129,14 +130,14 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
   const handleSpecialtyChange = (e) => {
     const selectedId = e.target.value;
-    const selectedSpec = specialties.find(s => s.id === selectedId || s._id === selectedId); 
+    const selectedSpec = specialties.find(s => s.id === selectedId || s._id === selectedId);
     setFormData(prev => ({
       ...prev,
       specialtyId: selectedId,
       specialtyName: selectedSpec ? selectedSpec.name : "",
-      doctorId: "",   
+      doctorId: "",
       doctorName: "",
-      shift: "" 
+      shift: ""
     }));
   };
 
@@ -147,7 +148,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       ...prev,
       doctorId: selectedId,
       doctorName: selectedDoc ? `${selectedDoc.degree ? `${selectedDoc.degree} - ` : ""}${selectedDoc.profile?.fullName}` : "",
-      shift: "" 
+      shift: ""
     }));
   };
 
@@ -166,17 +167,17 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     try {
       const payload = {
         patientId: patientId,
-        doctorId: formData.doctorId, 
+        doctorId: formData.doctorId,
         date: formData.date,
         shift: parseInt(formData.shift),
         reason: formData.reason
       };
 
       const res = await appointmentApi.bookAppointment(payload);
-      
+
       if (res && res.success) {
         alert("Đặt lịch khám thành công!");
-        onConfirm(); 
+        onConfirm();
         router.push(ROUTES.MEDICAL_RECORD_UPCOMING);
       } else {
         alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
@@ -195,85 +196,106 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
   return (
     <div className="w-full h-full flex flex-col p-4 lg:p-8 bg-[#FBFBFB]">
-      <div className="flex flex-col gap-5">
-        
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Chuyên khoa *</label>
-          <select value={formData.specialtyId} onChange={handleSpecialtyChange} disabled={fetchingSpecs} className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font">
+      <div className="flex flex-col gap-1">
+
+        <div className="relative flex flex-col">
+          <label className="rasa-font font-bold text-[24px] text-black">
+            Chuyên khoa <span className="text-red-500">*</span>
+          </label>
+
+          <select
+            value={formData.specialtyId}
+            onChange={handleSpecialtyChange}
+            disabled={fetchingSpecs}
+            className="peer flex items-center appearance-none w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none bg-white rasa-font focus:border-[#0B1460]"
+          >
             <option value="" disabled hidden>{fetchingSpecs ? "Đang tải..." : "Lựa chọn khoa"}</option>
-            {specialties.map(spec => <option key={spec.id || spec._id} value={spec.id || spec._id}>{spec.name}</option>)}
+            {specialties.map(spec => (
+              <option key={spec.id || spec._id} value={spec.id || spec._id}>{spec.name}</option>
+            ))}
           </select>
+
+          <div className="pointer-events-none absolute top-11.5 right-2 flex items-center transition-transform duration-300 peer-focus:-rotate-180">
+            <ChevronDown className="h-5 w-5 text-gray-500" />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Bác sĩ *</label>
-          <select value={formData.doctorId} onChange={handleDoctorChange} disabled={!formData.specialtyId || fetchingDocs} className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font">
+        <div className="relative flex flex-col">
+          <label className="rasa-font font-bold text-[24px] text-black">Bác sĩ <span className="text-red-500">*</span></label>
+          <select value={formData.doctorId} onChange={handleDoctorChange} disabled={!formData.specialtyId || fetchingDocs} className="peer appearance-none w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font">
             <option value="" disabled hidden>{!formData.specialtyId ? "Chọn khoa trước" : fetchingDocs ? "Đang tải..." : "Lựa chọn bác sĩ"}</option>
             {doctors.map(doc => <option key={doc.id || doc._id} value={doc.id || doc._id}>{doc.degree ? `${doc.degree} - ` : ""}{doc.profile?.fullName}</option>)}
           </select>
+
+          <div className="pointer-events-none absolute top-11.5 right-2 flex items-center transition-transform duration-300 peer-focus:-rotate-180">
+            <ChevronDown className="h-5 w-5 text-gray-500" />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Ngày khám *</label>
-          <input 
-            type="date" 
-            name="date" 
-            value={formData.date} 
-            onChange={handleChange} 
-            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font" 
+        <div className="flex flex-col">
+          <label className="rasa-font font-bold text-[24px] text-black">Ngày khám <span className="text-red-500">*</span></label>
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font"
           />
         </div>
 
         {formData.doctorId && formData.date && (
-          <div className="flex flex-col gap-1">
-            <label className="rasa-font font-bold text-[24px] text-black">Ca khám *</label>
-            <select 
-              name="shift" 
-              value={formData.shift} 
-              onChange={handleChange} 
+          <div className="relative flex flex-col">
+            <label className="rasa-font font-bold text-[24px] text-black">Ca khám <span className="text-red-500">*</span></label>
+            <select
+              name="shift"
+              value={formData.shift}
+              onChange={handleChange}
               disabled={fetchingShifts || availableShifts.length === 0}
-              className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font"
+              className="peer appearance-none w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-500 outline-none focus:border-[#0B1460] bg-white rasa-font"
             >
               <option value="" disabled hidden>
-                {fetchingShifts 
-                  ? "Đang tải ca trống..." 
-                  : availableShifts.length === 0 
-                    ? "Bác sĩ đã kín lịch hoặc bạn đã đặt lịch vào ngày này" 
+                {fetchingShifts
+                  ? "Đang tải ca trống..."
+                  : availableShifts.length === 0
+                    ? "Bác sĩ đã kín lịch hoặc bạn đã đặt lịch vào ngày này"
                     : "Lựa chọn ca khám"
                 }
               </option>
-              
+
               {availableShifts.map((slot) => (
                 <option key={slot.shift} value={slot.shift}>
                   {formatShiftTime(slot.shift)}
                 </option>
               ))}
-              
+
             </select>
+
+            <div className="pointer-events-none absolute top-11.5 right-2 flex items-center transition-transform duration-300 peer-focus:-rotate-180">
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-1">
-          <label className="rasa-font font-bold text-[24px] text-black">Lý do khám *</label>
-          <textarea 
-            name="reason" 
-            value={formData.reason} 
-            onChange={handleChange} 
+        <div className="flex flex-col">
+          <label className="rasa-font font-bold text-[24px] text-black">Lý do khám <span className="text-red-500">*</span></label>
+          <textarea
+            name="reason"
+            value={formData.reason}
+            onChange={handleChange}
             rows="3"
-            placeholder="Ví dụ: Đau đầu, chóng mặt và buồn nôn 2 ngày nay..." 
-            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font resize-none" 
+            placeholder="Ví dụ: Đau đầu, chóng mặt và buồn nôn 2 ngày nay..."
+            className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-800 outline-none focus:border-[#0B1460] bg-white rasa-font resize-none"
           />
         </div>
 
       </div>
 
-      <div className="mt-12 flex justify-end">
-        <button 
-          onClick={handleSubmit} 
-          disabled={loading} 
-          className={`flex items-center justify-center gap-2 text-white rasa-font px-8 py-2 rounded-[20px] text-[15px] transition-colors duration-200 ${
-            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0B1460] hover:bg-[#152085]'
-          }`}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`flex items-center justify-center gap-2 text-white rasa-font px-8 py-1.5 rounded-[20px] text-[15px] transition-colors duration-200 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0B1460] hover:bg-[#152085]'
+            }`}
         >
           {loading && (
             <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
