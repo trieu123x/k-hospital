@@ -11,7 +11,8 @@ import "react-day-picker/dist/style.css"
 export function CalendarSelectBox({
   value = null,
   onChange,
-  placeholder = "Ngày bắt đầu"
+  placeholder = "Ngày bắt đầu",
+  disabled
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -55,6 +56,8 @@ export function CalendarSelectBox({
               if (onChange) onChange(date)
               setIsOpen(false)
             }}
+            defaultMonth={value || new Date()}
+            disabled={disabled}
             locale={vi}
           />
 

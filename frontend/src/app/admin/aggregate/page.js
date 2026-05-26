@@ -137,7 +137,7 @@ export default function Aggregate() {
     handleFetchReport()
   }, [startDate, endDate])
 
-  if (isLoading) return <div className="p-10 italic text-gray-500">Đang tải dữ liệu...</div>
+
 
   return <div className="grow flex flex-col rasa-font bg-white">
     <div className="flex h-15 px-10 items-end justify-between">
@@ -145,10 +145,12 @@ export default function Aggregate() {
         <Filter className="w-6 h-6 flex-none" />
         <h1 className="mr-2 text-[20px] flex-none">Bộ lọc:</h1>
         <CalendarSelectBox placeholder="Ngày bắt đầu"
-          value={startDate} onChange={setStartDate} />
+          value={startDate} onChange={setStartDate}
+          disabled={endDate ? { after: endDate } : undefined} />
 
         <CalendarSelectBox placeholder="Ngày kết thúc"
-          value={endDate} onChange={setEndDate} />
+          value={endDate} onChange={setEndDate}
+          disabled={startDate ? { before: startDate } : undefined} />
       </div>
 
       <div className="flex items-center gap-1.5">

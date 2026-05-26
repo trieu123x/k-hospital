@@ -1,14 +1,51 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
 export function KpiCard({ value }) {
+  const [displayValue, setDisplayValue] = useState(0)
+
+  useEffect(() => {
+    let startTimestamp = null;
+    const duration = 700;
+    const target = Number(value) || 0;
+
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // easeOutQuart
+      const easeProgress = 1 - Math.pow(1 - progress, 4);
+      setDisplayValue(Math.floor(easeProgress * target));
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        setDisplayValue(target);
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, [value])
+
   return (
     <div className="text-[32px] text-black flex items-center justify-center h-full">
-      {value}
+      {displayValue}
     </div>
   )
 }
 
 export function VerticalBarChart({ data = [] }) {
+  const [animate, setAnimate] = useState(false)
+  const [prevData, setPrevData] = useState(data)
+
+  if (data !== prevData) {
+    setAnimate(false)
+    setPrevData(data)
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimate(true), 50)
+    return () => clearTimeout(timer)
+  }, [data])
+
   if (!data || data.length === 0) return null
   const maxValue = Math.max(...data.map(d => d.value))
 
@@ -32,9 +69,9 @@ export function VerticalBarChart({ data = [] }) {
               <span className="text-[13px] font-medium">{item.value}</span>
               <div
                 className={`w-full rounded-full transition-all
-                  duration-300 cursor-pointer hover:opacity-80`}
+                  duration-800 ease-out cursor-pointer hover:opacity-80`}
                 style={{
-                  height: `${heightPercent * 0.9}%`,
+                  height: animate ? `${heightPercent * 0.9}%` : '0%',
                   backgroundColor: barColor
                 }}
               ></div>
@@ -48,6 +85,19 @@ export function VerticalBarChart({ data = [] }) {
 }
 
 export function HorizontalBarChart({ data = [] }) {
+  const [animate, setAnimate] = useState(false)
+  const [prevData, setPrevData] = useState(data)
+
+  if (data !== prevData) {
+    setAnimate(false)
+    setPrevData(data)
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimate(true), 50)
+    return () => clearTimeout(timer)
+  }, [data])
+
   if (!data || data.length === 0) return null
   const maxValue = Math.max(...data.map(d => d.value))
 
@@ -64,7 +114,6 @@ export function HorizontalBarChart({ data = [] }) {
       <div className="flex-1 flex flex-col justify-between w-full h-full gap-1">
         {data.map((item, index) => {
           const widthPercent = maxValue > 0 ? (item.value / maxValue) * 100 : 0
-
           const barColor = getBarColor(widthPercent)
 
           return (
@@ -72,14 +121,17 @@ export function HorizontalBarChart({ data = [] }) {
               <div className="w-120 h-full flex items-center">
                 <div
                   className={`h-full rounded-r-full flex items-center
-                    px-3 transition-all duration-500 cursor-pointer hover:opacity-80`}
+                    px-3 transition-all duration-800 ease-out cursor-pointer hover:opacity-80`}
                   style={{
-                    width: `${widthPercent * 0.7}%`,
+                    width: animate ? `${widthPercent * 0.7}%` : '0%',
                     backgroundColor: barColor,
-                    minWidth: 'fit-content'
+                    minWidth: animate ? 'fit-content' : '0px',
+                    overflow: 'hidden'
                   }}
                 >
-                  <span className="text-white text-[13px] font-medium">{item.value}</span>
+                  <span className={`text-white text-[13px] font-medium transition-opacity duration-500 ${animate ? 'opacity-100' : 'opacity-0'}`}>
+                    {item.value}
+                  </span>
                 </div>
 
                 <span className="text-[13px] font-bold text-black ml-2 whitespace-nowrap">
