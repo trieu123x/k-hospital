@@ -21,6 +21,7 @@ export default function Detail() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
+  const [currentCropData, setCurrentCropData] = useState(null);
 
   // Thông tin chuyên môn (chỉ cho bác sĩ)
   const [specialtyId, setSpecialtyId] = useState("");
@@ -68,6 +69,12 @@ export default function Detail() {
                 .getPublicUrl(avatarToSet).data.publicUrl;
             }
             setCurrentAvatarUrl(avatarToSet);
+            
+            let cropToSet = profile.avatarCropData || null;
+            if (typeof cropToSet === 'string') {
+              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+            }
+            setCurrentCropData(cropToSet);
           }
         } catch (err) {
           console.error("Lỗi tải Profile:", err);
@@ -138,7 +145,7 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file) => {
+  const handleAvatarChange = async (file, backendCropData) => {
     if (!file) return;
     try {
       setSaving(true);
@@ -154,11 +161,16 @@ export default function Detail() {
       const uploadData = await uploadRes.json();
       if (uploadData.error) throw new Error(uploadData.error.message);
 
-      const res = await userApi.updateUser(userId, {
-        avatarUrl: uploadData.secure_url,
-      });
+      const payload = new FormData();
+      payload.append("avatarUrl", uploadData.secure_url);
+      if (backendCropData) {
+        payload.append("avatarCropData", JSON.stringify(backendCropData));
+      }
+
+      const res = await userApi.updateUser(userId, payload);
       if (res?.success) {
         setCurrentAvatarUrl(uploadData.secure_url);
+        setCurrentCropData(backendCropData);
         alert("Đã cập nhật ảnh đại diện thành công!");
       }
     } catch (error) {
@@ -279,6 +291,7 @@ export default function Detail() {
             label="Ảnh đại diện"
             onChange={handleAvatarChange}
             defaultImage={currentAvatarUrl}
+            defaultCropData={currentCropData}
             cropMode={true}
           />
         </div>
