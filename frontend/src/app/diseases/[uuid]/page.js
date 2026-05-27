@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Stethoscope, Pill as PillIcon } from "lucide-react";
 import axiosInstance from "@/utils/axios";
+import { useAuthStore } from "@/stores/auth";
 
 export default function DiseaseDetailPage() {
   const { uuid } = useParams();
@@ -31,7 +32,26 @@ export default function DiseaseDetailPage() {
     };
     if (uuid) fetchDisease();
   }, [uuid]);
-  console.log(disease)
+
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (!disease || user?.role !== 'PATIENT') return;
+    
+    const timer = setTimeout(async () => {
+      try {
+        await axiosInstance.post('/event/track', {
+          userId: user?.userId || user?.id || null,
+          eventType: 'VIEW_DISEASE',
+          metadata: { diseaseId: uuid }
+        });
+      } catch (err) {
+        console.error("Failed to track event", err);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [disease, uuid, user]);
   if (loading) {
     return (
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-12 animate-pulse">

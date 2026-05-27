@@ -13,6 +13,7 @@ import {
   createChatSession,
   getSessionHistory,
   saveChatMessage,
+  updateTopic
 } from "@/routers/chat-api";
 import { ChatHistory } from "./history";
 import ReactMarkdown from "react-markdown";
@@ -38,6 +39,39 @@ export function ChatForm() {
   const textareaRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const isFetchingRef = useRef(false);
+  const hasNewMessagesRef = useRef(false);
+  const prevSessionRef = useRef(session);
+
+  useEffect(() => {
+    if (prevSessionRef.current && prevSessionRef.current !== session) {
+      if (hasNewMessagesRef.current) {
+        updateTopic(prevSessionRef.current).catch(err => console.error("Lỗi update topic:", err));
+        hasNewMessagesRef.current = false;
+      }
+    }
+    prevSessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
+    const handleUnload = () => {
+      if (session && hasNewMessagesRef.current) {
+        const token = localStorage.getItem("access_token") || "";
+        const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
+        const url = `${API_URL}/chat/${session}/topic`;
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          keepalive: true
+        }).catch(() => { });
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [session]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -155,6 +189,8 @@ export function ChatForm() {
         });
       }
 
+      hasNewMessagesRef.current = true;
+
       let fullResponseText = "";
       let hasCreatedAIBubble = false;
 
@@ -228,12 +264,12 @@ export function ChatForm() {
                 <div className="w-full h-full flex items-center justify-center transition-all duration-300 px-8 text-center">
                   <div className="flex flex-col gap-4 items-center fade-in">
                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-2">
-                       <ChatIcon className="text-white scale-150" />
+                      <ChatIcon className="text-white scale-150" />
                     </div>
                     <h2 className="text-white font-bold text-[24px] leading-tight">
                       Bạn cần đăng nhập để sử dụng trợ lý y tế
                     </h2>
-                    <Link 
+                    <Link
                       href={ROUTES.LOGIN}
                       className="bg-[#303EFF] text-white px-8 py-2 rounded-full font-bold hover:bg-[#1e27cc] transition-all"
                     >
@@ -347,14 +383,36 @@ export function ChatForm() {
 }
 
 function MessageForm({ messageData, role = "AI", haveObject = false }) {
+  // Parsing the messageData to extract DOCTOR_CARDs
+  const doctorCardRegex = /\[DOCTOR_CARD\s+id="([^"]+)"\s+name="([^"]+)"\s+specialty="([^"]+)"\s+avatar="([^"]+)"\]/g;
+
+  let match;
+  let cards = [];
+  let cleanMessage = messageData;
+
+  if (role === "AI") {
+    while ((match = doctorCardRegex.exec(messageData)) !== null) {
+      cards.push({
+        id: match[1],
+        name: match[2],
+        specialty: match[3],
+        avatar: match[4]
+      });
+    }
+    // Remove the cards from the text message to display
+    cleanMessage = messageData.replace(/\[DOCTOR_CARD\s+id="[^"]+"\s+name="[^"]+"\s+specialty="[^"]+"\s+avatar="[^"]+"\]/g, "");
+  }
+
   return (
     <div
       className={`w-full flex ${role === "USER" && "flex-row-reverse"} gap-2 px-4`}
     >
       <LogoMessage />
-      <div className="flex flex-col gap-2">
-        <TextMessage message={messageData} />
-        {haveObject && <ObjectMessage />}
+      <div className="flex flex-col gap-2 w-full max-w-75">
+        {cleanMessage.trim() && <TextMessage message={cleanMessage} />}
+        {cards.map((card, idx) => (
+          <ObjectMessage key={idx} data={card} />
+        ))}
       </div>
     </div>
   );
@@ -362,15 +420,33 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
 
 function TextMessage({ message = "" }) {
   return (
-    <div className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word">
-      <ReactMarkdown>{message}</ReactMarkdown>
+    <div className="bg-[#8380FF] rounded-2xl px-4 py-2 wrap-break-word text-white">
+      <div className="prose prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 text-white">
+        <ReactMarkdown>{message}</ReactMarkdown>
+      </div>
     </div>
   );
 }
 
-function ObjectMessage() {
+function ObjectMessage({ data }) {
+  if (!data) return null;
+  const { id, name, specialty, avatar } = data;
+  const fallbackAvatar = "/images/Avartar.jpg";
+  const avatarSrc = avatar && avatar !== "None" ? avatar : fallbackAvatar;
+
   return (
-    <div className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word"></div>
+    <Link href={`/doctors/${id}`} className="bg-white hover:bg-gray-50 transition-colors rounded-2xl p-3 flex gap-3 items-center w-full">
+      <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-gray-200 bg-gray-100">
+        <Image fill src={avatarSrc} alt={name} className="object-cover" />
+      </div>
+      <div className="flex flex-col text-black flex-1 min-w-0">
+        <span className="font-bold text-[15px] leading-none text-gray-800 truncate">{name}</span>
+        <span className="text-[13px] text-gray-500 line-clamp-1 mt-0.5">{specialty}</span>
+        <span className="text-[12px] font-medium text-[#303EFF] mt-1 flex items-center">
+          Xem chi tiết <span className="ml-1 text-[16px] leading-none">&rarr;</span>
+        </span>
+      </div>
+    </Link>
   );
 }
 

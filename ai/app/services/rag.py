@@ -133,7 +133,7 @@ class RAGService:
         """
 
         doctor_chunks_query = """
-            SELECT p.full_name as name, s.name as specialty, doc_c.content,
+            SELECT d.id as doctor_id, p.full_name as name, p.avatar_url, s.name as specialty, doc_c.content,
                    (1 - (doc_c.embedding <=> $1::vector)) as score
             FROM doctor_chunks doc_c
             JOIN doctors d ON doc_c.doctor_id = d.id
@@ -185,7 +185,7 @@ class RAGService:
 
         for doc in doctor_chunks:
             context.append(
-                f"Bác sĩ (Phù hợp): {doc['name']} ({doc['specialty']})\n{doc['content']}"
+                f"Bác sĩ (Phù hợp): [ID: {doc['doctor_id']}] [Avatar: {doc['avatar_url']}] {doc['name']} ({doc['specialty']})\n{doc['content']}"
             )
 
         for report in etl_reports_data:
@@ -193,7 +193,7 @@ class RAGService:
                 r_json = json.loads(report['reports']) if isinstance(report['reports'], str) else report['reports']
                 preview = r_json.get('previewData', [])
                 if preview:
-                    context.append(f"Gợi ý hệ thống (Top Bác sĩ nổi bật): {json.dumps(preview, ensure_ascii=False)}")
+                    context.append(f"Gợi ý hệ thống (Top Bác sĩ nổi bật, chứa id, name, specialty, avatar_url): {json.dumps(preview, ensure_ascii=False)}")
             except Exception:
                 pass
 
@@ -215,6 +215,9 @@ class RAGService:
         - Hãy trả lời ngắn gọn, chính xác, và hữu ích.
         - Không cần chào
         - Nếu người dùng tìm bác sĩ hoặc đặt lịch, hãy ưu tiên dùng danh sách 'Bác sĩ (Phù hợp)' trước. Nếu có 'Gợi ý hệ thống (Top Bác sĩ)', có thể dùng để khuyến nghị thêm các lựa chọn uy tín nếu phù hợp.
+        - QUAN TRỌNG: Nếu bạn gợi ý hoặc nhắc đến một bác sĩ từ Ngữ cảnh tham khảo, BẮT BUỘC phải đính kèm một thẻ thông tin bác sĩ vào cuối phần mô tả về bác sĩ đó theo định dạng sau:
+          [DOCTOR_CARD id="<id>" name="<name>" specialty="<specialty>" avatar="<avatar_url>"]
+          Hãy chắc chắn thay thế <id>, <name>, <specialty>, <avatar_url> bằng dữ liệu thật trong ngữ cảnh. Nếu không có avatar, để avatar="None".
         """
 
         full_response = ""

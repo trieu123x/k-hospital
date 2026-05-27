@@ -1,71 +1,36 @@
 import axios from 'axios';
 
-// Định cấu hình URL gốc của API.
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
 
-// --- Cookie Helpers ---
-const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-
 /**
- * Lưu một giá trị vào cookie phía client.
- * @param {string} name  - Tên cookie
- * @param {string} value - Giá trị
- * @param {number} days  - Số ngày hết hạn
+ * Lưu access_token vào localStorage.
+ * (Refresh Token đã được Backend tự động lưu vào HttpOnly Cookie)
  */
-const setCookie = (name, value, days) => {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  const sameSite = isHttps ? 'None' : 'Lax';
-  const secure = isHttps ? '; Secure' : '';
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=${sameSite}${secure}`;
-};
-
-/**
- * Xóa cookie phía client.
- * @param {string} name - Tên cookie cần xóa
- */
-const removeCookie = (name) => {
-  if (typeof document === 'undefined') return;
-  const sameSite = isHttps ? 'None' : 'Lax';
-  const secure = isHttps ? '; Secure' : '';
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=${sameSite}${secure}`;
-};
-
-/**
- * Lưu cả access_token và refresh_token vào localStorage + cookie.
- */
-const saveTokens = (accessToken, refreshToken) => {
-  if (!accessToken) return;
-  localStorage.setItem('access_token', accessToken);
-  setCookie('access_token', accessToken, 7);
-  if (refreshToken) {
-    localStorage.setItem('refresh_token', refreshToken);
-    setCookie('refresh_token', refreshToken, 30);
+const saveToken = (accessToken) => {
+  if (accessToken) {
+    localStorage.setItem('access_token', accessToken);
   }
 };
 
 /**
- * Xóa token khỏi localStorage + cookie.
+ * Xóa token khỏi localStorage.
  */
-const clearTokens = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  removeCookie('access_token');
-  removeCookie('refresh_token');
+const clearToken = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('access_token');
+  }
 };
 
-// Xuất helpers để dùng ở nơi khác (ví dụ: login page, auth store)
-export { saveTokens, clearTokens, setCookie, removeCookie };
+export { saveToken, clearToken };
 
 // ---------------------------------------------------------------------------
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 30000,
-  withCredentials: true, // Gửi cookie đính kèm request
+  withCredentials: true,
 });
 
-// Interceptor cho Request: tự động gắn access_token vào header
 axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -79,43 +44,29 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --- Token Refresh Logic ---
 let isRefreshing = false;
-let failedQueue = []; // Hàng đợi các request bị lỗi 401
+let failedQueue = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token);
   });
   failedQueue = [];
 };
 
-// Interceptor cho Response: tự động refresh token khi hết hạn
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     const originalRequest = error.config;
 
-    // Chỉ xử lý lỗi 401 và chưa retry lần nào
+    // Lỗi 401 (Hết hạn Access Token) 
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      typeof window !== 'undefined'
+      typeof window !== 'undefined' &&
+      originalRequest.url !== '/auth/login'
     ) {
-      const refreshTokenValue = localStorage.getItem('refresh_token');
-
-      // Nếu không có refresh token → xóa hết và về login
-      if (!refreshTokenValue) {
-        clearTokens();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
-      // Nếu đang refresh thì đưa request vào hàng đợi chờ
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -127,35 +78,31 @@ axiosInstance.interceptors.response.use(
           .catch((err) => Promise.reject(err));
       }
 
-      // Bắt đầu refresh token
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const res = await axios.post(
-          `${API_URL}/auth/refresh-token`,
-          { refreshToken: refreshTokenValue },
-          { withCredentials: true }
-        );
+        // Gọi API làm mới lại access token.
+        const res = await axios.post(`${API_URL}/auth/refresh-token`, {}, {
+          withCredentials: true
+        });
 
-        const { accessToken, refreshToken: newRefreshToken } = res.data;
+        const { accessToken } = res.data;
 
-        // Lưu token mới vào cả localStorage lẫn cookie
-        saveTokens(accessToken, newRefreshToken);
-
-        // Cập nhật header mặc định
+        // Lưu access token mới
+        saveToken(accessToken);
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-        // Xử lý hàng đợi
+        // Chạy lại các request đang xếp hàng
         processQueue(null, accessToken);
 
-        // Retry request gốc với token mới
+        // Chạy lại request gốc bị lỗi
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Refresh token cũng hết hạn → bắt buộc đăng nhập lại
+        // Nếu API refresh báo lỗi chuyển sang Login
         processQueue(refreshError, null);
-        clearTokens();
+        clearToken();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

@@ -79,11 +79,10 @@ function ResetPasswordContent() {
             {error && <p className="absolute -top-4 text-red-500 text-xs font-semibold mb-2">{error}</p>}
             <input
               type="text"
-              placeholder="Nhập mã OTP 6 số"
+              placeholder="Nhập mã OTP từ Email"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 transition-colors"
-              maxLength={6}
               required
             />
           </div>

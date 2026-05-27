@@ -21,6 +21,7 @@ export default function Detail() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
   const [currentCropData, setCurrentCropData] = useState(null);
+  const [initialData, setInitialData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -48,12 +49,19 @@ export default function Detail() {
               .getPublicUrl(avatarToSet).data.publicUrl;
           }
           setCurrentAvatarUrl(avatarToSet);
-          
+
           let cropToSet = profile.avatarCropData || null;
           if (typeof cropToSet === 'string') {
-            try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+            try { cropToSet = JSON.parse(cropToSet); } catch (e) { }
           }
           setCurrentCropData(cropToSet);
+
+          setInitialData({
+            fullName: profile.fullName || "",
+            address: profile.address || "",
+            phone: profile.phone || "",
+            avatarUrl: profile.avatarUrl || "",
+          });
         } else {
           console.error("Lỗi từ server:", res?.message);
         }
@@ -67,22 +75,44 @@ export default function Detail() {
     fetchUserInfo();
   }, [userId]);
 
+  const hasChanges = () => {
+    if (!initialData) return false;
+    if (avatarFile !== null || currentCropData !== null) return true;
+    return (
+      fullName !== initialData.fullName ||
+      hometown !== initialData.address ||
+      phone !== initialData.phone
+    );
+  };
+
   const handleSave = async () => {
     if (!userId) return;
     setSaving(true);
 
     try {
-      const jsonPayload = {};
-      if (fullName) jsonPayload.fullName = fullName;
-      if (hometown) jsonPayload.address = hometown;
-      if (email) jsonPayload.email = email;
-      if (phone) jsonPayload.phone = phone;
+      const payload = new FormData();
+      if (fullName) payload.append("fullName", fullName);
+      if (hometown) payload.append("address", hometown);
+      if (phone) payload.append("phone", phone);
+
+      if (avatarFile) {
+        payload.append("avatar", avatarFile);
+      }
+      if (currentCropData) {
+        payload.append("avatarCropData", JSON.stringify(currentCropData));
+      }
 
       // Các trường thông tin khác
-      const res = await userApi.updateUser(userId, jsonPayload);
+      const res = await userApi.updateUser(userId, payload);
 
       if (res && res.success) {
         alert("Cập nhật thông tin thành công!");
+        setInitialData({
+          fullName,
+          address: hometown,
+          phone,
+        });
+        setAvatarFile(null);
       } else {
         alert("Lỗi: " + (res?.message || "Không thể cập nhật"));
       }
@@ -98,59 +128,12 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file, backendCropData) => {
+  const handleAvatarChange = (file, backendCropData) => {
     if (!file) return;
-
-    try {
-      setSaving(true);
-
-      // 1. Upload ảnh lên Cloudinary
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "medicare_avatar");
-      const cloudName = "dfnlbrk4w";
-
-      console.log("Đang upload lên Cloudinary...");
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const uploadData = await uploadRes.json();
-
-      if (uploadData.error) {
-        throw new Error(uploadData.error.message);
-      }
-
-      const publicUrl = uploadData.secure_url;
-      console.log("Cloudinary URL:", publicUrl);
-
-      const payload = new FormData();
-      payload.append("avatarUrl", publicUrl);
-      if (backendCropData) {
-        payload.append("avatarCropData", JSON.stringify(backendCropData));
-      }
-
-      // 2. Gửi URL này lên Backend của bạn để lưu thông qua API
-      const res = await userApi.updateUser(userId, payload);
-
-      if (!res || !res.success) {
-        throw new Error(res?.message || "Lỗi khi lưu ảnh vào database");
-      }
-
-      // 3. Hiển thị lại ảnh
-      setCurrentAvatarUrl(publicUrl);
-      setCurrentCropData(backendCropData);
-      alert("Đã cập nhật ảnh đại diện mới thành công!");
-    } catch (error) {
-      console.error(error);
-      alert("Lỗi upload: " + error.message);
-    } finally {
-      setSaving(false);
-    }
+    setAvatarFile(file);
+    setCurrentCropData(backendCropData);
+    const previewUrl = URL.createObjectURL(file);
+    setCurrentAvatarUrl(previewUrl);
   };
 
   if (loading) {
@@ -213,6 +196,18 @@ export default function Detail() {
             value={phone}
             setValue={setPhone}
           />
+          {hasChanges() && (
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className={`w-fit px-8 mt-3
+            bg-[#070575] hover:bg-[#08069b] py-1.5 text-white transition-opacity
+            ${saving ? "opacity-70 cursor-not-allowed" : ""}
+          `}
+            >
+              {saving ? "Đang lưu..." : "Lưu lại thay đổi"}
+            </Button>
+          )}
         </div>
 
         <div className="w-full">
@@ -224,17 +219,6 @@ export default function Detail() {
             cropMode={true}
           />
         </div>
-
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className={`absolute bottom-5 right-10 
-          bg-[#070575] hover:bg-[#08069b] py-2 text-white transition-opacity
-          ${saving ? "opacity-70 cursor-not-allowed" : ""}
-        `}
-        >
-          {saving ? "Đang lưu..." : "Lưu lại thay đổi"}
-        </Button>
       </div>
     </div>
   );
@@ -244,7 +228,7 @@ function InputForm({
   label,
   placeholder,
   value,
-  setValue = (value) => {},
+  setValue = (value) => { },
   mode = "normal",
   options = [],
   isReadOnly = false,

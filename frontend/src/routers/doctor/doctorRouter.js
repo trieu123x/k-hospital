@@ -10,5 +10,10 @@ export const doctorApi = {
   updateDoctorInfo: async (doctorId, updateData) => {
     const response = await axiosInstance.patch(`/doctors/${doctorId}`, updateData);
     return response;
+  },
+
+  updateDoctorByAdmin: async (doctorId, data) => {
+    const response = await axiosInstance.put(`/doctors/${doctorId}`, data);
+    return response;
   }
 };

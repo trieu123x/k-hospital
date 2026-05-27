@@ -6,6 +6,7 @@ import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { specialtyApi } from "@/routers/speciality/specialityRouter";
 import { ChevronDown } from "lucide-react";
 import { ROUTES } from "@/routers";
+import axiosInstance from "@/utils/axios";
 
 export function BookingForm({ patientId, onConfirm, onChangeData }) {
   const router = useRouter();
@@ -177,6 +178,17 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
       if (res && res.success) {
         alert("Đặt lịch khám thành công!");
+
+        try {
+          await axiosInstance.post('/event/track', {
+            userId: patientId,
+            eventType: 'BOOK_APPOINTMENT',
+            metadata: { doctorId: formData.doctorId, date: formData.date, shift: formData.shift, specialtyId: formData.specialtyId }
+          });
+        } catch (err) {
+          console.error("Failed to track event", err);
+        }
+
         onConfirm();
         router.push(ROUTES.MEDICAL_RECORD_UPCOMING);
       } else {

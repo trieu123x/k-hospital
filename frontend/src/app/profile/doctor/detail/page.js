@@ -21,7 +21,9 @@ export default function Detail() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
   const [currentCropData, setCurrentCropData] = useState(null);
+  const [initialData, setInitialData] = useState(null);
 
   // Thông tin chuyên môn (chỉ cho bác sĩ)
   const [specialtyId, setSpecialtyId] = useState("");
@@ -69,12 +71,19 @@ export default function Detail() {
                 .getPublicUrl(avatarToSet).data.publicUrl;
             }
             setCurrentAvatarUrl(avatarToSet);
-            
+
             let cropToSet = profile.avatarCropData || null;
             if (typeof cropToSet === 'string') {
-              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+              try { cropToSet = JSON.parse(cropToSet); } catch (e) { }
             }
             setCurrentCropData(cropToSet);
+
+            setInitialData({
+              fullName: profile.fullName || "",
+              address: profile.address || "",
+              phone: profile.phone || "",
+              avatarUrl: profile.avatarUrl || "",
+            });
           }
         } catch (err) {
           console.error("Lỗi tải Profile:", err);
@@ -107,17 +116,33 @@ export default function Detail() {
     fetchData();
   }, [userId]);
 
+  const hasChanges = () => {
+    if (!initialData) return false;
+    if (avatarFile !== null || currentCropData !== null) return true;
+    return (
+      fullName !== initialData.fullName ||
+      hometown !== initialData.address ||
+      phone !== initialData.phone
+      // Note: we can add checking for doctor data as well if we saved initial doctor data, but let's keep it simple for now.
+    );
+  };
+
   const handleSave = async () => {
     if (!userId) return;
     setSaving(true);
 
     try {
-      const profilePayload = {
-        fullName,
-        address: hometown,
-        email,
-        phone,
-      };
+      const profilePayload = new FormData();
+      profilePayload.append("fullName", fullName);
+      profilePayload.append("address", hometown);
+      profilePayload.append("phone", phone);
+
+      if (avatarFile) {
+        profilePayload.append("avatar", avatarFile);
+      }
+      if (currentCropData) {
+        profilePayload.append("avatarCropData", JSON.stringify(currentCropData));
+      }
 
       const doctorPayload = {
         specialtyId: specialtyId || null,
@@ -134,6 +159,12 @@ export default function Detail() {
 
       if (resProfile.success && resDoctor.success) {
         alert("Cập nhật thông tin thành công!");
+        setInitialData({
+          fullName,
+          address: hometown,
+          phone,
+        });
+        setAvatarFile(null);
       } else {
         alert("Có lỗi xảy ra khi cập nhật một số thông tin.");
       }
@@ -145,39 +176,12 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file, backendCropData) => {
+  const handleAvatarChange = (file, backendCropData) => {
     if (!file) return;
-    try {
-      setSaving(true);
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "medicare_avatar");
-      const cloudName = "dfnlbrk4w";
-
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body: formData },
-      );
-      const uploadData = await uploadRes.json();
-      if (uploadData.error) throw new Error(uploadData.error.message);
-
-      const payload = new FormData();
-      payload.append("avatarUrl", uploadData.secure_url);
-      if (backendCropData) {
-        payload.append("avatarCropData", JSON.stringify(backendCropData));
-      }
-
-      const res = await userApi.updateUser(userId, payload);
-      if (res?.success) {
-        setCurrentAvatarUrl(uploadData.secure_url);
-        setCurrentCropData(backendCropData);
-        alert("Đã cập nhật ảnh đại diện thành công!");
-      }
-    } catch (error) {
-      alert("Lỗi upload: " + error.message);
-    } finally {
-      setSaving(false);
-    }
+    setAvatarFile(file);
+    setCurrentCropData(backendCropData);
+    const previewUrl = URL.createObjectURL(file);
+    setCurrentAvatarUrl(previewUrl);
   };
 
   if (loading) {
@@ -283,6 +287,19 @@ export default function Detail() {
               mode="textarea"
             />
           </div>
+
+          {hasChanges() && (
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className={`w-fit px-8 mt-3
+            bg-[#070575] hover:bg-[#08069b] py-1.5 text-white transition-opacity
+            ${saving ? "opacity-70 cursor-not-allowed" : ""}
+          `}
+            >
+              {saving ? "Đang lưu..." : "Lưu lại thay đổi"}
+            </Button>
+          )}
         </div>
 
         {/* Cột phải: Avatar */}
@@ -295,17 +312,6 @@ export default function Detail() {
             cropMode={true}
           />
         </div>
-
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className={`absolute bottom-5 right-10 
-          bg-[#070575] hover:bg-[#08069b] py-2 text-white transition-opacity
-          ${saving ? "opacity-70 cursor-not-allowed" : ""}
-        `}
-        >
-          {saving ? "Đang lưu..." : "Lưu lại thay đổi"}
-        </Button>
       </div>
     </div>
   );
@@ -315,7 +321,7 @@ function InputForm({
   label,
   placeholder,
   value,
-  setValue = () => {},
+  setValue = () => { },
   mode = "normal",
 }) {
   return (

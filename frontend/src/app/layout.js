@@ -35,16 +35,19 @@ export default function RootLayout({ children }) {
   const user = useAuthStore(state => state.user)
 
   useEffect(() => {
-    setIsHydrated(true)
-    fetchUser();
-  }, [fetchUser]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      fetchUser();
+    }
+  }, [fetchUser, isHydrated]);
 
   // Chuyển hướng nếu tài khoản bị khóa
   useEffect(() => {
     if (isHydrated && user) {
-      console.log("Full User Object:", user);
-      console.log("isActive property:", user.isActive);
-
       if (user.isActive === false && pathname !== "/account-locked") {
         router.push("/account-locked")
       }

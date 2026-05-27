@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/utils/axios";
-import { saveTokens } from "@/utils/axios";
+import { saveToken } from "@/utils/axios";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/routers";
 
@@ -27,23 +27,17 @@ export default function Login() {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
 
-      // Axios Instance đã trả về trực tiếp response.data, nên res lúc này là object { success, message, data, accessToken }
       const userData = res?.data;
       const accessToken = res?.accessToken;
-      const refreshToken = res?.refreshToken;
 
-      // Lưu token vào cả localStorage lẫn cookie
-      saveTokens(accessToken, refreshToken);
-
-      console.log("Thông tin user sau khi đăng nhập:", userData);
+      saveToken(accessToken);
 
       setUser(userData);
-
       window.location.href = ROUTES.HOME;
 
     } catch (err) {
-      setError(err.response?.data?.message + "!" || "Email or password failed!");
-      setTimeout(() => setError(""), 3000)
+      setError(err.response?.data?.message || "Đăng nhập thất bại!");
+      setTimeout(() => setError(""), 3000);
     } finally {
       setLoading(false);
     }

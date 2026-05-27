@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Phone, Award, GraduationCap, Briefcase, ChevronLeft, Calendar } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 import { Button } from "@/components/ui/Button";
+import { useAuthStore } from "@/stores/auth";
 
 export default function DoctorDetailPage() {
   const params = useParams();
@@ -39,6 +40,26 @@ export default function DoctorDetailPage() {
       fetchDoctor();
     }
   }, [uuid]);
+
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (!doctor || user?.role !== 'PATIENT') return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await axiosInstance.post('/event/track', {
+          userId: user?.userId || user?.id || null,
+          eventType: 'VIEW_DOCTOR',
+          metadata: { doctorId: uuid }
+        });
+      } catch (err) {
+        console.error("Failed to track event", err);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [doctor, uuid, user]);
 
   if (loading) {
     return (

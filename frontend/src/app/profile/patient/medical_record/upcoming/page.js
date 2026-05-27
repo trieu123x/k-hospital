@@ -7,6 +7,7 @@ import { UpcomingAppointmentItem } from "../../../../../components/medicalRecord
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { ConfirmModal } from "@/components/ui/Modal"; 
 import { useAuthStore } from "@/stores/auth";
+import axiosInstance from "@/utils/axios";
 
 export default function UpcomingAppointmentsPage() {
   const { user, isDoctor, isAdmin } = useAuthStore();
@@ -76,6 +77,16 @@ export default function UpcomingAppointmentsPage() {
     try {
       await appointmentApi.cancelAppointment(appointmentId);
       
+      try {
+        await axiosInstance.post('/event/track', {
+          userId: userId,
+          eventType: 'CANCEL_APPOINTMENT',
+          metadata: { appointmentId: appointmentId }
+        });
+      } catch (err) {
+        console.error("Failed to track event", err);
+      }
+
       alert("Đã hủy lịch khám thành công!");
       
       fetchUpcomingAppointments(); 

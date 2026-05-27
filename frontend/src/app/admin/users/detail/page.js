@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { getUserById, updateUser, createDoctorAccount } from "@/routers/user-api"
 import { getAllDegrees } from "@/routers/degree-api"
 import { getSpecialties } from "@/routers/specialty-api"
+import { doctorApi } from "@/routers/doctor/doctorRouter"
 
 function DetailContent() {
   const searchParams = useSearchParams()
@@ -76,10 +77,10 @@ function DetailContent() {
             setAchievements(dataToUse.doctor?.achievements || "")
 
             setPreviewImage(dataToUse.avatarUrl || null)
-            
+
             let cropToSet = dataToUse.avatarCropData || null;
             if (typeof cropToSet === 'string') {
-              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
+              try { cropToSet = JSON.parse(cropToSet); } catch (e) { }
             }
             setPreviewCropData(cropToSet)
             setUserRole(dataToUse.role || null)
@@ -164,24 +165,23 @@ function DetailContent() {
 
       if (isEditMode) {
         payload.append("address", hometown)
-        const selectedDegree = degreeOptions.find(d => d.name === degree)
-        if (selectedDegree) {
-          payload.append("degreeId", selectedDegree.id)
-        } else {
-          payload.append("degreeId", "")
-        }
-
-        const selectedSpecialty = specialtyOptions.find(s => s.name === specialty)
-        if (selectedSpecialty) {
-          payload.append("specialtyId", selectedSpecialty.id)
-        } else {
-          payload.append("specialtyId", "")
-        }
-        payload.append("education", education)
-        payload.append("experience", experience)
-        payload.append("achievements", achievements)
-
         await updateUser(id, payload)
+
+        if (userRole !== 'PATIENT') {
+          const doctorPayload = {
+            education,
+            experience,
+            achievements
+          }
+
+          const selectedDegree = degreeOptions.find(d => d.name === degree)
+          doctorPayload.degreeId = selectedDegree ? selectedDegree.id : null
+
+          const selectedSpecialty = specialtyOptions.find(s => s.name === specialty)
+          doctorPayload.specialtyId = selectedSpecialty ? selectedSpecialty.id : null
+
+          await doctorApi.updateDoctorByAdmin(id, doctorPayload)
+        }
         alert("Cập nhật thành công!")
         setInitialData(getCurrentData())
         setImageFile(null)
@@ -208,26 +208,31 @@ function DetailContent() {
           value={email} setValue={(value) => setEmail(value)} />
         <InputForm label={"Số điện thoại"} placeholder={"Nhập số điện thoại"}
           value={phone} setValue={(value) => setPhone(value)} />
-
         {isEditMode && (
+          <InputForm label={"Quê quán"} placeholder={"Nhập quên quán của bạn"}
+            value={hometown} setValue={(value) => setHometown(value)} />
+        )}
+        {isEditMode && userRole !== 'PATIENT' && (
           <>
-            <InputForm label={"Quê quán"} placeholder={"Nhập quên quán của bạn"}
-              value={hometown} setValue={(value) => setHometown(value)} />
-            {userRole !== 'PATIENT' && (
-              <>
-                <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
-                  value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
-                <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
-                  value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
-                <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
-                  value={education} setValue={(value) => setEducation(value)} />
-                <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}
-                  value={experience} setValue={(value) => setExperience(value)} />
-                <InputForm label={"Thành tựu"} placeholder={"Nhập thông tin"}
-                  value={achievements} setValue={(value) => setAchievements(value)} />
-              </>
-            )}
+            <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
+              value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
+            <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
+              value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
+            <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
+              value={education} setValue={(value) => setEducation(value)} />
+            <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}
+              value={experience} setValue={(value) => setExperience(value)} />
+            <InputForm label={"Thành tựu"} placeholder={"Nhập thông tin"}
+              value={achievements} setValue={(value) => setAchievements(value)} />
           </>
+        )}
+
+        {showSubmitButton && (
+          <Button onClick={handleSubmit} className={`w-fit px-8 mt-3
+                bg-[#070575] hover:bg-[#08069b] py-1.5 text-white
+              `}>
+            {isEditMode ? "Lưu lại thay đổi" : "Thêm"}
+          </Button>
         )}
       </div>
 
@@ -240,14 +245,6 @@ function DetailContent() {
           cropMode={true}
         />
       </div>
-
-      {showSubmitButton && (
-        <Button onClick={handleSubmit} className={`absolute bottom-5 right-10 
-          bg-[#070575] hover:bg-[#08069b] py-2 text-white
-        `}>
-          {isEditMode ? "Lưu lại thay đổi" : "Thêm"}
-        </Button>
-      )}
     </div>
   </div>
 }

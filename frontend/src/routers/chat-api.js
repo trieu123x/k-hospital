@@ -21,6 +21,10 @@ export const deleteChatSession = async (sessionId) => {
   return await axiosInstance.delete(`/chat/${sessionId}`)
 }
 
+export const updateTopic = async (sessionId) => {
+  return await axiosInstance.post(`/chat/${sessionId}/topic`)
+}
+
 export const aiChatApi = async (
   sessionId,
   userInput,

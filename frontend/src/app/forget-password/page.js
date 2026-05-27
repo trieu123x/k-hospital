@@ -22,7 +22,7 @@ export default function ForgetPassword() {
     // According to the backend API, we only support email reset right now.
     // If user picks phone, we show an error to emulate the missing route logic as per requested design constraint.
     if (method === "phone") {
-      setError("Phone number not exit!");
+      setError("Chức năng hiện đang bảo trì, vui lòng sử dụng Email!");
       setLoading(false);
       return;
     }

@@ -43,8 +43,9 @@ class PredictionService:
         if not db_specialties:
             return {"id": None, "name": "Nội tổng quát"}
 
-        # 2. Biến toàn bộ lịch sử chat thành 1 Vector
-        full_chat_text = " ".join(chat_history_contents)
+        # 2. Biến toàn bộ lịch sử chat thành 1 Vector (chỉ lấy tối đa 50 tin nhắn gần nhất)
+        recent_chat_history = chat_history_contents[-50:] if len(chat_history_contents) > 50 else chat_history_contents
+        full_chat_text = " ".join(recent_chat_history)
         chat_vector = await embedding_service.embed_user_query(full_chat_text)
 
         best_spec = db_specialties[0]
