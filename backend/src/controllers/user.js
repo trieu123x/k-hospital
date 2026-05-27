@@ -4,7 +4,7 @@ import { catchError } from "../helpers/catch-error.js"
 export const userController = {
     getAllUsers: async (req, res, next) => {
         try {
-            const requesterRole = req.user.profile.role
+            const requesterRole = req.user.role
             const page = parseInt(req.query.page) || 1
             const limit = parseInt(req.query.limit) || 10
 
@@ -35,7 +35,7 @@ export const userController = {
     getUserById: async (req, res, next) => {
         try {
             const { id } = req.params
-            const requesterRole = req.user.profile.role
+            const requesterRole = req.user.role
             const requesterId = req.user.id
 
             const user = await userService.getUserById(id, requesterRole, requesterId)
@@ -52,7 +52,7 @@ export const userController = {
     updateUser: async (req, res, next) => {
         try {
             const { id } = req.params
-            const requesterRole = req.user.profile.role
+            const requesterRole = req.user.role
             const requesterId = requesterRole === 'admin' || requesterRole === 'ADMIN' ? id : req.user.id
             const updateData = req.body
             const updatedUser = await userService.updateUser(id, requesterId, updateData, req.file)

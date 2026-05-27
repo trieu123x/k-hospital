@@ -1,4 +1,5 @@
 import { medicineRepository } from "../repositories/medicine.js"
+import { uploadHelper } from "../helpers/storage-helper.js"
 import axios from "axios"
 
 export const medicineService = {
@@ -32,7 +33,12 @@ export const medicineService = {
         return medicine
     },
 
-    createMedicine: async (data) => {
+    createMedicine: async (data, file) => {
+        if (file) {
+            const imageUrl = await uploadHelper.uploadFile(file, 'medicare', 'medicines')
+            data.imageUrl = imageUrl
+        }
+
         const newMedicine = await medicineRepository.create(data)
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
@@ -52,7 +58,16 @@ export const medicineService = {
         return newMedicine
     },
 
-    updateMedicine: async (id, data) => {
+    updateMedicine: async (id, data, file) => {
+        if (file) {
+            const existingMedicine = await medicineRepository.findById(id)
+            if (existingMedicine?.imageUrl) {
+                await uploadHelper.deleteFile(existingMedicine.imageUrl, 'medicare')
+            }
+            const newImageUrl = await uploadHelper.uploadFile(file, 'medicare', 'medicines')
+            data.imageUrl = newImageUrl
+        }
+
         const updatedMedicine = await medicineRepository.update(id, data)
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
@@ -73,6 +88,10 @@ export const medicineService = {
     },
 
     deleteMedicine: async (id) => {
+        const existing = await medicineRepository.findById(id)
+        if (existing?.imageUrl) {
+            await uploadHelper.deleteFile(existing.imageUrl, 'medicare')
+        }
         return await medicineRepository.delete(id)
     }
 }

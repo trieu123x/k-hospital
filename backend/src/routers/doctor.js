@@ -1,6 +1,6 @@
 import express from "express"
 import { doctorController } from "../controllers/doctor.js"
-import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
+import { authenticate, authorizeAdmin, authorizeDoctor } from "../middlewares/authenticate.js"
 
 import { validate } from "../middlewares/validate-handler.js"
 import { doctorSchema } from "../validates/doctor.js"
@@ -14,12 +14,12 @@ router.get("/", validate(doctorSchema.getAll), doctorController.getAllDoctors)
 router.get("/:id", validate(doctorSchema.getById), doctorController.getDoctorById)
 
 // PATCH /doctors/:id: Update specific doctor info (self-only)
-router.patch("/:id", authenticate, authorizeRoles('DOCTOR'), validate(doctorSchema.update), doctorController.updateDoctorInfo)
+router.patch("/:id", authenticate, authorizeDoctor, validate(doctorSchema.update), doctorController.updateDoctorInfo)
 
 // POST /doctors: Create a new doctor account
-router.post("/", authenticate, authorizeRoles('ADMIN'), validate(doctorSchema.create), doctorController.createDoctor)
+router.post("/", authenticate, authorizeAdmin, validate(doctorSchema.create), doctorController.createDoctor)
 
 // PUT /doctors/:id: Full update of a doctor profile by ADMIN
-router.put("/:id", authenticate, authorizeRoles('ADMIN'), validate(doctorSchema.update), doctorController.updateDoctorByAdmin)
+router.put("/:id", authenticate, authorizeAdmin, validate(doctorSchema.update), doctorController.updateDoctorByAdmin)
 
 export default router

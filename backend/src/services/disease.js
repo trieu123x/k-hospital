@@ -1,6 +1,5 @@
 import { uploadHelper } from "../helpers/storage-helper.js"
 import { diseaseRepository } from "../repositories/disease.js"
-import { eventService } from "./event.js"
 import axios from "axios"
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
@@ -96,8 +95,6 @@ export const diseaseService = {
         if (!disease) {
             throw Object.assign(new Error("Không tìm thấy thông tin bệnh!"), { statusCode: 404 })
         }
-
-        eventService.track(userId, 'VIEW_DISEASE', id)
 
         return disease
     },

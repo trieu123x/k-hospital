@@ -1,40 +1,38 @@
-import { prisma } from "../configs/prisma-config.js"
+import { prisma } from "../configs/prisma-config.js";
 
 export const profileRepository = {
     findById: async (id) => {
         return await prisma.profile.findUnique({
             where: { id },
-            select: {
-                id: true,
-                fullName: true,
-                email: true,
-                phone: true,
-                avatarUrl: true,
-                role: true,
-                dob: true,
-                address: true,
-                createdAt: true,
-                isActive: true,
-                avatarCropData: true
-            }
-        })
-    },
-
-    create: async ({ id, fullName, email, phone, role = "patient" }) => {
-        return await prisma.profile.create({
-            data: { id, fullName, email, phone, role }
-        })
+            include: { doctor: true }
+        });
     },
 
     findByPhone: async (phone) => {
+        if (!phone) return null;
         return await prisma.profile.findFirst({
             where: { phone }
-        })
+        });
     },
 
     findByEmail: async (email) => {
+        if (!email) return null;
         return await prisma.profile.findFirst({
             where: { email }
-        })
+        });
+    },
+
+
+    initDoctor: async ({ id, avatarUrl, avatarCropData }) => {
+        return await prisma.profile.update({
+            where: { id },
+            data: {
+                avatarUrl,
+                avatarCropData,
+                doctor: {
+                    create: {}
+                }
+            }
+        });
     }
-}
+};

@@ -1,6 +1,6 @@
 import express from "express"
 import { bookAppointment, getAvailableSlots, getAppointmentDetail, getPatientHistory, cancelAppointment, updateAppointmentStatus, getDoctorSchedule, getAllAppointments, registerDoctorLeave, cancelDoctorLeave, getDoctorLeaves} from "../controllers/appointment.js"
-import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
+import { authenticate, authorizeRoles, authorizeDoctor } from "../middlewares/authenticate.js"
 import { createMedicalRecord, getMedicalRecordDetail, updateMedicalRecord } from "../controllers/medical-record.js"
 import { validate } from "../middlewares/validate-handler.js"
 import { appointmentSchema } from "../validates/appointment.js"
@@ -21,13 +21,13 @@ router.get("/doctor/:doctorId", authenticate, authorizeRoles('ADMIN', 'DOCTOR'),
 router.patch("/cancel/:appointmentId", authenticate, authorizeRoles('PATIENT', 'ADMIN'), validate(appointmentSchema.checkParamId), cancelAppointment)
 router.patch("/update/status/:appointmentId", authenticate, authorizeRoles('ADMIN', 'DOCTOR'), validate(appointmentSchema.updateStatus), updateAppointmentStatus)
 // Medical Record
-router.post("/medical-record/create/:appointmentId", authenticate, authorizeRoles('DOCTOR'), validate(medicalRecordSchema.create), createMedicalRecord)
+router.post("/medical-record/create/:appointmentId", authenticate, authorizeDoctor, validate(medicalRecordSchema.create), createMedicalRecord)
 router.get("/medical-record/:appointmentId", authenticate, authorizeRoles('DOCTOR', 'PATIENT'), validate(medicalRecordSchema.getDetail), getMedicalRecordDetail)
-router.patch("/medical-record/update/:appointmentId", authenticate, authorizeRoles('DOCTOR'), validate(medicalRecordSchema.update), updateMedicalRecord)
+router.patch("/medical-record/update/:appointmentId", authenticate, authorizeDoctor, validate(medicalRecordSchema.update), updateMedicalRecord)
 
 // Đăng ký nghỉ và hủy nghỉ — đặt TRƯỚC /:appointmentId để không bị bắt nhầm
-router.post("/leave", authenticate, authorizeRoles('DOCTOR'), validate(appointmentSchema.registerLeave), registerDoctorLeave)
-router.delete("/leave/:leaveId", authenticate, authorizeRoles('DOCTOR'), validate(appointmentSchema.cancelLeave), cancelDoctorLeave)
+router.post("/leave", authenticate, authorizeDoctor, validate(appointmentSchema.registerLeave), registerDoctorLeave)
+router.delete("/leave/:leaveId", authenticate, authorizeDoctor, validate(appointmentSchema.cancelLeave), cancelDoctorLeave)
 router.get("/leaves/:doctorId", authenticate, authorizeRoles('ADMIN', 'DOCTOR', 'PATIENT'), validate(appointmentSchema.getLeaves), getDoctorLeaves)
 
 // Route động 

@@ -3,75 +3,26 @@ import { catchError } from "../helpers/catch-error.js";
 
 /**
  * POST /auth/register
- * Body: { email, password, fullName, phone }
  */
 export const register = catchError(async (req, res) => {
-  const { email, password, fullName, phone } = req.body;
-
-  const data = await authService.register({ email, password, fullName, phone });
-
-  res.status(200).json({
-    success: true,
-    message: "Mã OTP xác nhận đã được gửi đến email của bạn.",
-    data,
-  });
+  const data = await authService.register(req.body);
+  res.status(200).json({ success: true, message: data.message });
 });
 
 /**
  * POST /auth/register-doctor
- * Body: { email, fullName, phone, avatarCropData } + file
  */
 export const registerDoctor = catchError(async (req, res) => {
-  const { email, fullName, phone, avatarCropData } = req.body;
-  const file = req.file;
-
-  const data = await authService.registerDoctor({
-    email,
-    fullName,
-    phone,
-    file,
-    avatarCropData,
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Tạo tài khoản bác sĩ thành công.",
-    data,
-  });
-});
-
-/**
- * POST /auth/verify-register
- * Body: { email, otp }
- */
-export const verifyRegister = catchError(async (req, res) => {
-  const { email, otp } = req.body;
-
-  const data = await authService.verifyRegister({ email, otp });
-
-  res.status(201).json({
-    success: true,
-    message: "Đăng ký thành công",
-    data,
-  });
+  const data = await authService.registerDoctor({ ...req.body, file: req.file });
+  res.status(201).json({ success: true, message: "Tạo tài khoản bác sĩ thành công.", data });
 });
 
 /**
  * POST /auth/login
- * Body: { email, password }
  */
 export const login = catchError(async (req, res) => {
-  const { email, password } = req.body;
-
-  const data = await authService.login({ email, password });
+  const data = await authService.login(req.body);
   const isProduction = process.env.NODE_ENV === "production";
-
-  res.cookie("access_token", data.accessToken, {
-    httpOnly: true,
-    secure: isProduction, // Chỉ bật secure khi ở production (HTTPS)
-    sameSite: isProduction ? "none" : "lax", // Lax cho localhost, None cho production
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
-  });
 
   res.cookie("refresh_token", data.refreshToken, {
     httpOnly: true,
@@ -85,17 +36,16 @@ export const login = catchError(async (req, res) => {
     message: "Đăng nhập thành công",
     data: data.user,
     accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
+    expiresIn: data.expiresIn,
   });
 });
 
 /**
  * POST /auth/refresh-token
- * Body hoặc Cookie: refresh_token
- * Trả về access_token mới nếu refresh_token còn hợp lệ
+ * Lấy Refresh Token từ Cookie, cấp lại Access Token mới
  */
 export const refreshToken = catchError(async (req, res) => {
-  const token = req.body?.refreshToken || req.cookies?.refresh_token;
+  const token = req.cookies?.refresh_token;
 
   if (!token) {
     return res.status(401).json({
@@ -105,26 +55,22 @@ export const refreshToken = catchError(async (req, res) => {
   }
 
   const { supabase } = await import("../configs/supabase-config.js");
-  // Supabase yêu cầu cả access_token lẫn refresh_token để refresh session
-  // Dùng refreshSession với chỉ refresh_token
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: token });
-
-  if (error || !data?.session) {
-    return res.status(401).json({
-      success: false,
-      message: "Refresh token không hợp lệ hoặc đã hết hạn, vui lòng đăng nhập lại",
-    });
-  }
 
   const isProduction = process.env.NODE_ENV === "production";
 
-  // Cập nhật cookie với token mới
-  res.cookie("access_token", data.session.access_token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  if (error || !data?.session) {
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+    });
+    return res.status(401).json({
+      success: false,
+      message: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
+    });
+  }
+
   res.cookie("refresh_token", data.session.refresh_token, {
     httpOnly: true,
     secure: isProduction,
@@ -132,32 +78,29 @@ export const refreshToken = catchError(async (req, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 
+  // Trả Access Token mới về cho Frontend
   return res.status(200).json({
     success: true,
     message: "Làm mới token thành công",
     accessToken: data.session.access_token,
-    refreshToken: data.session.refresh_token,
+    expiresIn: data.session.expires_in,
   });
 });
 
 /**
  * POST /auth/logout
- * Header: Authorization: Bearer <access_token>
  */
 export const logout = catchError(async (req, res) => {
-  const token =
-    req.cookies?.access_token || req.headers.authorization?.split(" ")[1];
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
   if (token) {
     await authService.logout(token);
   }
 
   const isProduction = process.env.NODE_ENV === "production";
 
-  res.clearCookie("access_token", {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-  });
+  // Xóa sạch Cookie khi đăng xuất
   res.clearCookie("refresh_token", {
     httpOnly: true,
     secure: isProduction,
@@ -172,8 +115,6 @@ export const logout = catchError(async (req, res) => {
 
 /**
  * GET /auth/me
- * Header: Authorization: Bearer <access_token>
- * Middleware: authenticate
  */
 export const getMe = catchError(async (req, res) => {
   const userId = req.user.id;
@@ -186,22 +127,12 @@ export const getMe = catchError(async (req, res) => {
   });
 });
 
-/**
- * POST /auth/forgot-password
- * Body: { email }
- */
 export const forgotPassword = catchError(async (req, res) => {
-  const { email } = req.body;
-  const data = await authService.forgotPassword({ email });
+  const data = await authService.forgotPassword(req.body);
   res.status(200).json({ success: true, ...data });
 });
 
-/**
- * POST /auth/reset-password
- * Body: { email, otp, newPassword }
- */
 export const resetPassword = catchError(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  const data = await authService.resetPassword({ email, otp, newPassword });
+  const data = await authService.resetPassword(req.body);
   res.status(200).json({ success: true, ...data });
 });

@@ -1,25 +1,50 @@
-import express from "express"
-import { register, login, logout, getMe, forgotPassword, resetPassword, verifyRegister, registerDoctor, refreshToken } from "../controllers/auth.js"
-import { validate } from "../middlewares/validate-handler.js"
-import { authSchema } from "../validates/auth.js"
-import { authenticate } from "../middlewares/authenticate.js"
+import express from "express";
+import multer from "multer";
+import {
+  register,
+  login,
+  logout,
+  getMe,
+  forgotPassword,
+  resetPassword,
+  registerDoctor,
+  refreshToken
+} from "../controllers/auth.js";
+import { validate } from "../middlewares/validate-handler.js";
+import { authSchema } from "../validates/auth.js";
+import { authenticate, authorizeAdmin } from "../middlewares/authenticate.js";
 
-const router = express.Router()
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
-import multer from "multer"
-const upload = multer({ storage: multer.memoryStorage() })
+// ================================
+// PUBLIC ROUTES (Không cần Token)
+// ================================
+router.post("/register", validate({ body: authSchema.register }), register);
+router.post("/login", validate({ body: authSchema.login }), login);
+router.post("/forgot-password", validate({ body: authSchema.forgotPassword }), forgotPassword);
+router.post("/reset-password", validate({ body: authSchema.resetPassword }), resetPassword);
 
-// Public routes
-router.post("/register", validate({ body: authSchema.register }), register)
-router.post("/verify-register", validate({ body: authSchema.verifyRegister }), verifyRegister)
-router.post("/login", validate({ body: authSchema.login }), login)
-router.post("/forgot-password", validate({ body: authSchema.forgotPassword }), forgotPassword)
-router.post("/reset-password", validate({ body: authSchema.resetPassword }), resetPassword)
-router.post("/register-doctor", upload.single("avatar"), validate({ body: authSchema.registerDoctor }), registerDoctor)
-router.post("/refresh-token", refreshToken)
+router.post("/refresh-token", refreshToken);
 
-// Protected routes
-router.post("/logout", authenticate, logout)
-router.get("/me", authenticate, getMe)
 
-export default router
+// ================================
+// PROTECTED ROUTES (Cần Token)
+// ================================
+router.post("/logout", authenticate, logout);
+router.get("/me", authenticate, getMe);
+
+
+// ================================
+// ADMIN ROUTES 
+// ================================
+router.post(
+  "/register-doctor",
+  authenticate,
+  authorizeAdmin,
+  upload.single("avatar"),
+  validate({ body: authSchema.registerDoctor }),
+  registerDoctor
+);
+
+export default router;

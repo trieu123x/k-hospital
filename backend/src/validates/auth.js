@@ -24,11 +24,6 @@ export const authSchema = {
       ),
   }),
 
-  verifyRegister: z.object({
-    email: z.string().email({ message: "Email không hợp lệ" }),
-    otp: z.string().length(6, "OTP phải có 6 chữ số"),
-  }),
-
   login: z.object({
     email: z.string().email({ message: "Email không hợp lệ" }),
     password: z.string().min(1, "Vui lòng nhập mật khẩu"),
@@ -40,7 +35,7 @@ export const authSchema = {
 
   resetPassword: z.object({
     email: z.string().email({ message: "Email không hợp lệ" }),
-    otp: z.string().length(6, "OTP phải có 6 chữ số"),
+    otp: z.string().min(1, "Vui lòng nhập mã OTP"),
     newPassword: z.string().min(6, "Mật khẩu mới phải từ 6 ký tự trở lên"),
   }),
 };

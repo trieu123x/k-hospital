@@ -2,7 +2,7 @@ import express from "express"
 import { createSession, getSessions, getSessionHistory, saveMessage, updateTopic, deleteSession } from "../controllers/chat.js"
 import { validate } from "../middlewares/validate-handler.js"
 import { chatSchema } from "../validates/chat.js"
-import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
+import { authenticate, authorizeAdmin } from "../middlewares/authenticate.js"
 
 const router = express.Router()
 
@@ -17,11 +17,11 @@ router.get("/:id/messages", authenticate, validate({
 }), getSessionHistory)
 
 router.post("/:id/messages", authenticate, validate({
-    params: chatSchema.params, 
+    params: chatSchema.params,
     body: chatSchema.saveMessage
 }), saveMessage)
 
-router.post("/:id/topic", authenticate, authorizeRoles("ADMIN"), validate({ params: chatSchema.params }), updateTopic)
+router.post("/:id/topic", authenticate, validate({ params: chatSchema.params }), updateTopic)
 
 router.delete("/:id", authenticate, validate({ params: chatSchema.params }), deleteSession)
 

@@ -45,7 +45,8 @@ export const getMedicineById = catchError(async (req, res) => {
 })
 
 export const createMedicine = catchError(async (req, res) => {
-    const data = await medicineService.createMedicine(req.body)
+    const file = req.file
+    const data = await medicineService.createMedicine(req.body, file)
     res.status(201).json({
         success: true,
         message: "Thêm thuốc thành công",
@@ -55,7 +56,8 @@ export const createMedicine = catchError(async (req, res) => {
 
 export const updateMedicine = catchError(async (req, res) => {
     const { id } = req.params
-    const data = await medicineService.updateMedicine(id, req.body)
+    const file = req.file
+    const data = await medicineService.updateMedicine(id, req.body, file)
     res.status(200).json({
         success: true,
         message: "Cập nhật thuốc thành công",
