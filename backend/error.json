@@ -1,5 +1,0 @@
-{
-  "success": false,
-  "status": "error",
-  "message": "\nInvalid `prisma.profile.update()` invocation:\n\n\nUnique constraint failed on the fields: (`email`)"
-}
