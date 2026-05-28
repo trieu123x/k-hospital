@@ -9,7 +9,7 @@ import { useAuthStore } from "@/stores/auth";
 
 export default function DoctorMedicalHistoryPage() {
   const { user, isDoctor } = useAuthStore();
-  const doctorId = user?.id; 
+  const doctorId = user?.id;
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,11 +20,11 @@ export default function DoctorMedicalHistoryPage() {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     try {
       const res = await appointmentApi.getDoctorSchedule(doctorId);
-      
+
       if (res && res.success) {
         const completedApps = res.data.filter(
           (app) => app.status === "COMPLETED"
@@ -34,7 +34,7 @@ export default function DoctorMedicalHistoryPage() {
           completedApps.map(async (app) => {
             try {
               const recordRes = await appointmentApi.getMedicalRecordDetail(app.appointmentId);
-              
+
               if (recordRes && recordRes.success) {
                 return {
                   ...app,
@@ -46,7 +46,7 @@ export default function DoctorMedicalHistoryPage() {
               return app;
             } catch (err) {
               console.error(`Lỗi lấy bệnh án cho lịch khám ${app.appointmentId}:`, err);
-              return app; 
+              return app;
             }
           })
         );
@@ -62,12 +62,12 @@ export default function DoctorMedicalHistoryPage() {
 
   useEffect(() => {
     fetchMedicalHistory();
-  }, [doctorId, isDoctor]); 
+  }, [doctorId, isDoctor]);
 
   const displayedRecords = useMemo(() => {
     let result = records.map((item) => {
       const appDate = new Date(item.date);
-      
+
       const shiftStartHour = 6 + item.shift;
       const shiftEndHour = shiftStartHour + 1;
 
@@ -75,17 +75,17 @@ export default function DoctorMedicalHistoryPage() {
         id: item.appointmentId,
         patientName: item.patient?.name || "Bệnh nhân ẩn danh",
         phone: item.patient?.phone || "---",
-        doctor: item.doctor?.name || "Bác sĩ hệ thống", 
+        doctor: item.doctor?.name || "Bác sĩ hệ thống",
         department: item.doctor?.specialityName || "Đa khoa",
         date: appDate.toLocaleDateString("vi-VN"),
         timestamp: appDate.getTime(),
         shift: `Ca ${item.shift} (${shiftStartHour}h - ${shiftEndHour}h)`,
         location: "Số 55, Phố Yên Ninh, Phường Ba Đình, Thành phố Hà Nội",
-        
+
         diagnosis: item.diagnosis || "Chưa có kết luận",
-        prescription: item.prescription || "Không có", 
-        note: item.note || "Không có",                
-        symptoms: item.symptoms || item.reason || "Không có triệu chứng", 
+        prescription: item.prescription || "Không có",
+        note: item.note || "Không có",
+        symptoms: item.symptoms || item.reason || "Không có triệu chứng",
       };
     });
 
@@ -100,7 +100,7 @@ export default function DoctorMedicalHistoryPage() {
 
   if (!doctorId && !loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#FBFBFB] text-gray-500 rasa-font">
+      <div className="flex items-center justify-center bg-[#FBFBFB] text-gray-500 rasa-font">
         <p className="text-lg italic">Vui lòng đăng nhập với tài khoản bác sĩ để xem lịch sử khám.</p>
       </div>
     );
@@ -108,7 +108,7 @@ export default function DoctorMedicalHistoryPage() {
 
   if (!isDoctor && !loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FBFBFB] rasa-font">
+      <div className="flex flex-col items-center justify-center bg-[#FBFBFB] rasa-font">
         <p className="text-red-500 font-bold text-2xl mb-2">Truy cập bị từ chối!</p>
         <p className="text-gray-600 text-lg">Trang lịch sử khám bệnh này chỉ dành riêng cho Bác sĩ.</p>
       </div>
@@ -116,14 +116,14 @@ export default function DoctorMedicalHistoryPage() {
   }
 
   return (
-    <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 min-h-screen flex justify-center">
+    <div className="w-full bg-[#FBFBFB] p-6 lg:p-10 flex justify-center">
       <div className="w-full max-w-[1400px]">
-        
+
         <div className="flex items-center gap-3 mb-6 rasa-font text-[20px]">
           <Image src={FilterImage} alt="Filter" height={20} width={20} />
           <span className="font-bold">Bộ lọc:</span>
-          
-          <select 
+
+          <select
             className="border border-gray-300 bg-white px-3 py-1.5 rounded-md text-[15px] outline-none cursor-pointer focus:border-blue-500"
             value={filterOption}
             onChange={(e) => setFilterOption(e.target.value)}

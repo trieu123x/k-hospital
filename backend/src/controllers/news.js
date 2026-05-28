@@ -10,17 +10,18 @@ export const getTotalNews = catchError(async (req, res) => {
 })
 
 export const getNewsForAdmin = catchError(async (req, res) => {
-    const { title, lastId, date, limit } = req.query
+    const { title, page, date, limit } = req.query
     const data = await newsService.getNewsForAdmin({
         title,
-        lastId,
+        page: page ? parseInt(page) : 1,
         date,
         limit: limit ? parseInt(limit) : 30
     })
     res.status(200).json({
         success: true,
         message: "Lấy danh sách tin tức cho admin thành công",
-        data
+        data: data.items,
+        pagination: data.pagination
     })
 })
 
@@ -37,11 +38,11 @@ export const createNews = catchError(async (req, res) => {
 })
 
 export const getNewsList = catchError(async (req, res) => {
-    const { title, lastId, date, limit } = req.query;
+    const { title, page, date, limit } = req.query;
 
     const filter = {
         title: title || undefined,
-        lastId: lastId || undefined,
+        page: page ? parseInt(page, 10) : 1,
         date: date || undefined,
         limit: limit ? parseInt(limit, 10) : 30
     };
@@ -51,7 +52,8 @@ export const getNewsList = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Lấy danh sách tin tức thành công",
-        data
+        data: data.items,
+        pagination: data.pagination
     });
 });
 

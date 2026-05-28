@@ -12,18 +12,29 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchNews = async (searchQuery = "") => {
+  const fetchNews = async (searchQuery = "", currentPage = 1) => {
     setLoading(true);
     setError("");
     try {
       const cleanQuery = searchQuery.trim();
-      const params = cleanQuery ? { title: cleanQuery } : {};
+      const params = cleanQuery ? { title: cleanQuery, page: currentPage } : { page: currentPage };
 
       const result = await newsApi.getNewsList(params);
 
       if (result && result.success) {
-        setNewsList(result.data || []);
+        if (result.data && Array.isArray(result.data)) {
+          setNewsList(result.data);
+          setTotalPages(result.pagination?.totalPages || 1);
+        } else if (result.items) {
+          setNewsList(result.items);
+          setTotalPages(result.pagination?.totalPages || 1);
+        } else {
+          setNewsList(result.data?.items || []);
+          setTotalPages(result.data?.pagination?.totalPages || 1);
+        }
       } else {
         setError(result?.message || "Lỗi khi lấy dữ liệu từ máy chủ.");
       }
@@ -37,12 +48,14 @@ export default function NewsPage() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchNews(searchTitle);
+      fetchNews(searchTitle, page);
     }, 500);
 
-
     return () => clearTimeout(delayDebounceFn);
+  }, [searchTitle, page]);
 
+  useEffect(() => {
+    setPage(1);
   }, [searchTitle]);
   return (
     <div className="w-full min-h-screen bg-[#FBFBFB] py-8 rasa-font">
@@ -50,13 +63,15 @@ export default function NewsPage() {
 
         <div className="flex w-full justify-end mb-5 rasa-font">
           <div className="relative w-[400px]">
-            <SearchInput className="absplute py-1.5 bg-[#ECECEC]"
+            <SearchInput className="absplute py-1.5 bg-[#ECECEC]" placeholder="Nhập tiêu đề để tìm kiếm"
               value={searchTitle} onChange={(e) => setSearchTitle(e.target.value)} />
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-10 text-gray-500 italic">Đang tải tin tức...</div>
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         ) : error ? (
           <div className="text-center py-10 text-red-500">{error}</div>
         ) : newsList.length === 0 ? (
@@ -68,6 +83,40 @@ export default function NewsPage() {
             {newsList.map((item) => (
               <Newsitem key={item.id} data={item} />
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center items-center mt-10 gap-2 mb-6">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
+            >
+              Trước
+            </button>
+            <div className="flex gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i + 1)}
+                  className={`w-10 h-10 rounded-md border text-sm font-medium transition-colors duration-200 cursor-pointer ${page === i + 1
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
+            >
+              Sau
+            </button>
           </div>
         )}
 

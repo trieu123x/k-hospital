@@ -7,6 +7,7 @@ import { Filter, Search, ChevronRight } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 import { SelectBox } from "@/components/ui/SelectBox";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { getAllMedicineTypes } from "@/routers/medicine-type-api";
 
 export default function MedicineLookupPage() {
   const [medicines, setMedicines] = useState([]);
@@ -16,13 +17,19 @@ export default function MedicineLookupPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Medicine types based on Prisma schema
-  const medicineTypes = [
-    { id: "uống", name: "Thuốc uống" },
-    { id: "ngậm", name: "Thuốc ngậm" },
-    { id: "bôi", name: "Thuốc bôi" },
-    { id: "tiêm", name: "Thuốc tiêm" },
-  ];
+  const [medicineTypes, setMedicineTypes] = useState([]);
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const typesRes = await getAllMedicineTypes()
+        if (typesRes.data) setMedicineTypes(typesRes.data)
+      } catch (error) {
+        console.error("Lỗi lấy loại thuốc:", error)
+      }
+    }
+    fetchTypes()
+  }, [])
   console.log(medicines)
   // Fetch medicines based on filters
   useEffect(() => {
@@ -30,15 +37,24 @@ export default function MedicineLookupPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedType) params.append("medicineType", selectedType);
+        if (selectedType && selectedType !== "Tất cả loại thuốc") {
+          const type = medicineTypes.find(t => t.name === selectedType);
+          if (type) params.append("typeId", type.id);
+        }
         if (searchQuery) params.append("name", searchQuery);
         params.append("limit", "12");
         params.append("page", page.toString());
 
         const res = await axiosInstance.get(`/medicines?${params.toString()}`);
-        if (res.success) {
-          setMedicines(res.data.medicines || []);
-          setTotalPages(res.data.pagination?.totalPages || 1);
+        if (res.success && res.data) {
+          setMedicines(res.data);
+          setTotalPages(res.pagination?.totalPages || 1);
+        } else if (Array.isArray(res)) {
+          setMedicines(res);
+          setTotalPages(1);
+        } else {
+          setMedicines([]);
+          setTotalPages(1);
         }
       } catch (err) {
         console.error("Failed to fetch medicines", err);
@@ -71,7 +87,7 @@ export default function MedicineLookupPage() {
           </div>
 
           <div className="relative w-full md:w-100 rounded-[12px]">
-            <SearchInput className="py-1.5 bg-[#ECECEC]"
+            <SearchInput className="py-1.5 bg-[#ECECEC]" placeholder="Nhập tên thuốc để tìm kiếm"
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
@@ -80,10 +96,8 @@ export default function MedicineLookupPage() {
       {/* Main Content: Medicine Grid */}
       <div className="max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-6">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-100 h-64 animate-pulse"></div>
-            ))}
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : medicines.length > 0 ? (
           <div className="cursor-pointer grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5">
@@ -99,6 +113,10 @@ export default function MedicineLookupPage() {
                     alt={medicine.name}
                     fill
                     className="object-contain p-2 group-hover:scale-105 transition-transform"
+                    onError={(e) => {
+                      e.currentTarget.srcset = "";
+                      e.currentTarget.src = "/images/Medicines.webp";
+                    }}
                   />
                 </div>
 

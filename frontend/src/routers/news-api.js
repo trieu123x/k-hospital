@@ -4,10 +4,6 @@ export const getNewsForAdmin = async (params = {}) => {
   return await axiosInstance.get('/news/admin', { params })
 }
 
-export const getTotalNews = async () => {
-  return await axiosInstance.get('/news/count')
-}
-
 export const getNewsById = async (newsId) => {
   return await axiosInstance.get(`/news/${newsId}`)
 }

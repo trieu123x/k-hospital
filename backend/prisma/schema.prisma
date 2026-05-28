@@ -61,19 +61,20 @@ enum UserRole {
 }
 
 model Profile {
-  id             String    @id @default(uuid()) @db.Uuid
-  fullName       String    @map("full_name")
+  id            String  @id @default(uuid()) @db.Uuid
+  fullName      String  @map("full_name")
+  fullNameClean String? @map("full_name_clean")
+
   email          String?   @unique
   phone          String    @unique
   avatarUrl      String?   @map("avatar_url")
-  avatarCropData Json?     @map("avatar_crop_data") // Lưu metadata cắt ảnh (x, y, width, height)
-  role           UserRole? // Ràng buộc bằng Enum
+  avatarCropData Json?     @map("avatar_crop_data")
+  role           UserRole?
   dob            DateTime? @db.Date
   address        String?
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
   isActive       Boolean   @default(true) @map("is_active")
 
-  // Relations
   doctor                Doctor?
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
@@ -81,6 +82,7 @@ model Profile {
   notifications         Notification[]
   chatSessions          ChatSession[]
 
+  @@index([fullNameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_profile_fullname_clean_trgm") // THÊM DÒNG NÀY
   @@map("profiles")
 }
 
@@ -96,9 +98,9 @@ model Doctor {
   education    String?
   achievements String?
 
-  profile   Profile    @relation(fields: [id], references: [id], onDelete: Cascade)
-  specialty Specialty? @relation(fields: [specialtyId], references: [id])
-  degree    Degree?    @relation(fields: [degreeId], references: [id])
+  profile   Profile       @relation(fields: [id], references: [id], onDelete: Cascade)
+  specialty Specialty?    @relation(fields: [specialtyId], references: [id])
+  degree    Degree?       @relation(fields: [degreeId], references: [id])
   chunks    DoctorChunk[]
 
   @@index([specialtyId], name: "idx_doctor_specialty")
@@ -107,9 +109,9 @@ model Doctor {
 }
 
 model DoctorChunk {
-  id        String  @id @default(uuid()) @db.Uuid
-  doctorId  String  @map("doctor_id") @db.Uuid
-  content   String  @db.Text
+  id        String                      @id @default(uuid()) @db.Uuid
+  doctorId  String                      @map("doctor_id") @db.Uuid
+  content   String                      @db.Text
   embedding Unsupported("vector(768)")?
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
@@ -134,8 +136,6 @@ model Disease {
   symptoms      String
   homeTreatment String? @map("home_treatment")
 
-  embedding Unsupported("vector(1536)")?
-
   category  DiseaseCategory?  @relation(fields: [categoryId], references: [id])
   specialty Specialty?        @relation(fields: [specialtyId], references: [id])
   medicines DiseaseMedicine[]
@@ -148,9 +148,9 @@ model Disease {
 }
 
 model DiseaseChunk {
-  id        String  @id @default(uuid()) @db.Uuid
-  diseaseId String  @map("disease_id") @db.Uuid
-  content   String  @db.Text
+  id        String                      @id @default(uuid()) @db.Uuid
+  diseaseId String                      @map("disease_id") @db.Uuid
+  content   String                      @db.Text
   embedding Unsupported("vector(768)")?
 
   disease Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
@@ -159,10 +159,12 @@ model DiseaseChunk {
 }
 
 model Medicine {
-  id               String  @id @default(uuid()) @db.Uuid
-  name             String
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  nameClean String? @map("name_clean") // THÊM DÒNG NÀY
+
   imageUrl         String? @map("image_url")
-  typeId           String? @map("type_id") @db.Uuid // Khóa ngoại trỏ sang bảng MedicineType
+  typeId           String? @map("type_id") @db.Uuid
   ingredients      String?
   dosage           String?
   usageInstruction String? @map("usage_instruction")
@@ -173,13 +175,14 @@ model Medicine {
   chunks       MedicineChunk[]
 
   @@index([typeId], name: "idx_medicine_type")
+  @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_medicine_name_clean_trgm") // THÊM DÒNG NÀY
   @@map("medicines")
 }
 
 model MedicineChunk {
-  id         String  @id @default(uuid()) @db.Uuid
-  medicineId String  @map("medicine_id") @db.Uuid
-  content    String  @db.Text
+  id         String                      @id @default(uuid()) @db.Uuid
+  medicineId String                      @map("medicine_id") @db.Uuid
+  content    String                      @db.Text
   embedding  Unsupported("vector(768)")?
 
   medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
@@ -296,12 +299,15 @@ model Notification {
 // ================================
 
 model News {
-  id        String   @id @default(uuid()) @db.Uuid
-  title     String
+  id         String  @id @default(uuid()) @db.Uuid
+  title      String
+  titleClean String? @map("title_clean") // THÊM DÒNG NÀY
+
   content   String
   newUrl    String?  @map("new_url")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  @@index([titleClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_news_title_clean_trgm") // THÊM DÒNG NÀY
   @@map("news")
 }
 
@@ -395,3 +401,23 @@ model EtlReports {
   @@index([reportName, startDate])
   @@map("etl_reports")
 }
+
+// /** Payload dành cho các sự kiện liên quan đến Bác sĩ và Lịch khám */
+// export type DoctorEventMeta = { 
+//   doctorId: string; 
+//   /** Bắt buộc có khi đặt lịch/hủy lịch, có thể bỏ qua nếu chỉ xem hồ sơ */
+//   shift?: number | string; 
+// };
+
+// /** Payload dành cho các sự kiện tra cứu Bệnh lý */
+// export type DiseaseEventMeta = { 
+//   diseaseId: string; 
+// };
+
+// /** Payload dành cho các sự kiện giao tiếp với AI Chatbot */
+// export type ChatEventMeta = { 
+//   /** Chủ đề đang chat (VD: "Tim mạch", "Đau đầu") */
+//   topic: string; 
+//   /** ID của phiên chat để gom nhóm nội dung */
+//   sessionId: string; 
+// };

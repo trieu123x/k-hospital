@@ -25,8 +25,6 @@ export const diseaseService = {
                 const chunks = res.data?.chunks
                 if (chunks && Array.isArray(chunks) && chunks.length > 0) {
                     await diseaseRepository.createChunks(newDisease.id, chunks)
-                    // Vẫn cập nhật vector tổng cho disease nếu cần (lấy chunk đầu tiên làm đại diện)
-                    await diseaseRepository.updateEmbedding(newDisease.id, chunks[0].vector)
                 }
             }
         } catch (error) {
@@ -59,8 +57,6 @@ export const diseaseService = {
                 const chunks = res.data?.chunks
                 if (chunks && Array.isArray(chunks) && chunks.length > 0) {
                     await diseaseRepository.createChunks(id, chunks)
-                    // Vẫn cập nhật vector tổng cho disease nếu cần
-                    await diseaseRepository.updateEmbedding(id, chunks[0].vector)
                 }
             } catch (error) {
                 console.error("Lỗi Cập nhật Embedding Vector:", error.message)
@@ -85,9 +81,18 @@ export const diseaseService = {
     },
 
     getDiseasesForAdmin: async (filters) => {
-        const diseases = await diseaseRepository.findAllForAdmin(filters)
+        const { page = 1, limit = 30 } = filters
+        const { items, total } = await diseaseRepository.findAllForAdmin(filters)
 
-        return diseases
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     },
 
     getDiseaseDetail: async (id, userId = null) => {

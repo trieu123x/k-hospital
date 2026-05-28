@@ -49,20 +49,26 @@ export default function Aggregate() {
 
   const extractRows = (apiRes) => {
     const records = apiRes?.data || []
+    console.log("Records: ", records)
     let rows = []
     records.forEach(record => {
       const rep = record.reports
+      console.log("rep: ", rep)
       if (Array.isArray(rep)) rows = [...rows, ...rep]
       else if (rep?.previewData) rows = [...rows, ...rep.previewData]
       else if (rep?.data?.previewData) rows = [...rows, ...rep.data.previewData]
     })
     setLoading(false)
+
+    console.log("rows: ", rows)
     return rows
   }
 
   useEffect(() => {
     const handleFetchReport = async () => {
       if (!startDate || !endDate) return
+
+      setLoading(true)
 
       try {
         const formattedStartDate = format(startDate, 'yyyy-MM-dd')
@@ -75,6 +81,14 @@ export default function Aggregate() {
           getReportsByTimeRange("top_diseases", formattedStartDate, formattedEndDate),
           getReportsByTimeRange("peak_shifts", formattedStartDate, formattedEndDate)
         ])
+
+        console.log("A")
+
+        console.log("summerRes", summerRes)
+        console.log("chatRes", chatRes)
+        console.log("doctorRes", doctorRes)
+        console.log("diseaseRes", diseaseRes)
+        console.log("peakShiftRes", peakShiftRes)
 
         const dailyRows = extractRows(summerRes)
         const chatRows = extractRows(chatRes)
@@ -143,7 +157,12 @@ export default function Aggregate() {
     <div className="flex h-15 px-10 items-end justify-between">
       <div className="flex items-center gap-1">
         <Filter className="w-6 h-6 flex-none" />
-        <h1 className="mr-2 text-[20px] flex-none">Bộ lọc:</h1>
+        <h1 className="mr-2 text-[20px] flex-none flex items-center gap-2">
+          Bộ lọc:
+          {isLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-b-transparent"></div>
+          )}
+        </h1>
         <CalendarSelectBox placeholder="Ngày bắt đầu"
           value={startDate} onChange={setStartDate}
           disabled={endDate ? { after: endDate } : undefined} />
@@ -233,6 +252,7 @@ export default function Aggregate() {
           </div>
 
           <Table
+            isLoading={isLoading}
             data={tableMode === "doctor" ? topDoctors : topDiseases}
             columns={tableMode === "doctor" ? DOCTOR_COLUMNS : DISEASE_COLUMNS}
             className="px-2 absolute top-13 h-90"

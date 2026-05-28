@@ -55,20 +55,27 @@ export default function DiseaseLookupPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedSpecialty) params.append("specialtyId", selectedSpecialty);
-        if (selectedCategory) params.append("categoryId", selectedCategory);
+        if (selectedSpecialty && selectedSpecialty !== "Tất cả chuyên khoa") {
+          const spec = specialties.find(s => s.name === selectedSpecialty);
+          if (spec) params.append("specialtyId", spec.id);
+        }
+        if (selectedCategory && selectedCategory !== "Tất cả nhóm bệnh") {
+          const cat = categories.find(c => c.name === selectedCategory);
+          if (cat) params.append("categoryId", cat.id);
+        }
         if (searchQuery) params.append("name", searchQuery);
         params.append("page", page.toString());
 
         const res = await axiosInstance.get(`/disease?${params.toString()}`);
-        if (res.success) {
-          if (res.data.items) {
-            setDiseases(res.data.items);
-            setTotalPages(res.data.pagination?.totalPages || 1);
-          } else {
-            setDiseases(res.data);
-            setTotalPages(1);
-          }
+        if (res.success && res.data) {
+          setDiseases(res.data);
+          setTotalPages(res.pagination?.totalPages || 1);
+        } else if (Array.isArray(res)) {
+          setDiseases(res);
+          setTotalPages(1);
+        } else {
+          setDiseases([]);
+          setTotalPages(1);
         }
       } catch (err) {
         console.error("Failed to fetch diseases", err);
@@ -101,7 +108,7 @@ export default function DiseaseLookupPage() {
           </div>
 
           <div className="relative w-full md:w-100 rounded-[12px]">
-            <SearchInput className="py-1.5 bg-[#ECECEC]"
+            <SearchInput className="py-1.5 bg-[#ECECEC]" placeholder="Nhập tên bệnh để tìm kiếm"
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
         </div>
@@ -110,10 +117,8 @@ export default function DiseaseLookupPage() {
       {/* Main Content: Disease Grid */}
       <div className="max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-2">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white border border-gray-100 h-40 animate-pulse"></div>
-            ))}
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : diseases.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
@@ -129,6 +134,10 @@ export default function DiseaseLookupPage() {
                     alt={disease.name}
                     fill
                     className="object-cover"
+                    onError={(e) => {
+                      e.currentTarget.srcset = "";
+                      e.currentTarget.src = "/images/Diseases.jpg";
+                    }}
                   />
                 </div>
 

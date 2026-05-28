@@ -34,17 +34,11 @@ export function KpiCard({ value }) {
 
 export function VerticalBarChart({ data = [] }) {
   const [animate, setAnimate] = useState(false)
-  const [prevData, setPrevData] = useState(data)
-
-  if (data !== prevData) {
-    setAnimate(false)
-    setPrevData(data)
-  }
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimate(true), 50)
     return () => clearTimeout(timer)
-  }, [data])
+  }, [])
 
   if (!data || data.length === 0) return null
   const maxValue = Math.max(...data.map(d => d.value))
@@ -86,17 +80,11 @@ export function VerticalBarChart({ data = [] }) {
 
 export function HorizontalBarChart({ data = [] }) {
   const [animate, setAnimate] = useState(false)
-  const [prevData, setPrevData] = useState(data)
-
-  if (data !== prevData) {
-    setAnimate(false)
-    setPrevData(data)
-  }
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimate(true), 50)
     return () => clearTimeout(timer)
-  }, [data])
+  }, [])
 
   if (!data || data.length === 0) return null
   const maxValue = Math.max(...data.map(d => d.value))

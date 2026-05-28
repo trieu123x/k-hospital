@@ -62,11 +62,13 @@ export default function UpcomingAppointmentsPage() {
     fetchUpcomingAppointments();
   }, [userId, isDoctor, isAdmin]); 
 
-  const requestCancelAppointment = (appointmentId, shiftNum) => {
+  const requestCancelAppointment = (appointmentId, shiftNum, doctorId) => {
     setModalConfig({
       isOpen: true,
       appointmentId,
       shiftName: `ca ${shiftNum}`,
+      shiftNum,
+      doctorId,
     });
   };
 
@@ -81,7 +83,11 @@ export default function UpcomingAppointmentsPage() {
         await axiosInstance.post('/event/track', {
           userId: userId,
           eventType: 'CANCEL_APPOINTMENT',
-          metadata: { appointmentId: appointmentId }
+          metadata: { 
+            appointmentId: modalConfig.appointmentId,
+            doctorId: modalConfig.doctorId,
+            shift: modalConfig.shiftNum
+          }
         });
       } catch (err) {
         console.error("Failed to track event", err);
@@ -194,7 +200,7 @@ export default function UpcomingAppointmentsPage() {
               <UpcomingAppointmentItem 
                 key={record.id} 
                 data={record} 
-                onCancel={() => requestCancelAppointment(record.id, record.shiftNum)}
+                onCancel={() => requestCancelAppointment(record.id, record.shift || record.shiftNum, record.doctorId || record.doctor?.id)}
               />
             ))
           ) : (

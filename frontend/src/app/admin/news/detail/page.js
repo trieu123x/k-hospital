@@ -7,10 +7,12 @@ import { AvatarPicker } from "@/components/ui/ImagePicker"
 import { Button } from "@/components/ui/Button"
 import { useSearchParams, useRouter } from "next/navigation"
 import { getNewsById, createNews, updateNews } from "@/routers/news-api"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 function DetailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   const id = searchParams.get("id")
   const isEditMode = !!id
@@ -81,6 +83,7 @@ function DetailContent() {
   const showSubmitButton = !isEditMode || hasChanges()
 
   const handleSubmit = async () => {
+    showLoading("Đang xử lý yêu cầu...")
     try {
       const payload = new FormData()
       payload.append("title", title)
@@ -107,6 +110,8 @@ function DetailContent() {
     } catch (error) {
       console.error("Lỗi lưu thay đổi:", error)
       alert("Lưu thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 

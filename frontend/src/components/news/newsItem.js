@@ -18,6 +18,10 @@ export function Newsitem({ data }) {
                     width={140}
                     height={150}
                     className="h-full w-full object-cover"
+                    onError={(e) => { 
+                      e.currentTarget.srcset = ""; 
+                      e.currentTarget.src = "/images/News.webp"; 
+                    }}
                 />
             </div>
 

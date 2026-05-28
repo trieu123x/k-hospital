@@ -1,32 +1,36 @@
 import { prisma } from "../configs/prisma-config.js"
+import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const medicineRepository = {
     countAll: async () => {
         return await prisma.medicine.count()
     },
 
-    findAllForAdmin: async ({ name, typeId, lastId, limit = 30 }) => {
+    findAllForAdmin: async ({ name, typeId, page = 1, limit = 30 }) => {
         const where = {}
-        if (name) where.name = { contains: name, mode: 'insensitive' }
+        if (name) where.nameClean = { contains: removeVietnameseTones(name), mode: 'insensitive' }
         if (typeId) where.typeId = typeId
 
-        if (lastId) {
-            where.id = { gt: lastId }
-        }
-
-        return await prisma.medicine.findMany({
-            where,
-            take: limit,
-            orderBy: { id: 'asc' },
-            include: { medicineType: true }
-        })
+        const skip = (page - 1) * limit
+        const [medicines, total] = await Promise.all([
+            prisma.medicine.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { id: 'asc' },
+                include: { medicineType: true }
+            }),
+            prisma.medicine.count({ where })
+        ])
+        
+        return { medicines, total }
     },
 
     findAll: async (filters = {}, skip = 0, limit = 10) => {
         const where = {}
 
         if (filters.name) {
-            where.name = { contains: filters.name, mode: 'insensitive' }
+            where.nameClean = { contains: removeVietnameseTones(filters.name), mode: 'insensitive' }
         }
         if (filters.typeId) {
             where.typeId = filters.typeId
@@ -36,7 +40,8 @@ export const medicineRepository = {
             prisma.medicine.findMany({
                 where,
                 skip,
-                take: limit
+                take: limit,
+                include: { medicineType: true }
             }),
             prisma.medicine.count({ where })
         ])

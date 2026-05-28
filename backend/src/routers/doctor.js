@@ -16,10 +16,10 @@ router.get("/:id", validate(doctorSchema.getById), doctorController.getDoctorByI
 // PATCH /doctors/:id: Update specific doctor info (self-only)
 router.patch("/:id", authenticate, authorizeDoctor, validate(doctorSchema.update), doctorController.updateDoctorInfo)
 
+// PUT /doctors/:id: Update specific doctor info (Admin only)
+router.put("/:id", authenticate, authorizeAdmin, validate(doctorSchema.update), doctorController.updateDoctorInfoAdmin)
+
 // POST /doctors: Create a new doctor account
 router.post("/", authenticate, authorizeAdmin, validate(doctorSchema.create), doctorController.createDoctor)
-
-// PUT /doctors/:id: Full update of a doctor profile by ADMIN
-router.put("/:id", authenticate, authorizeAdmin, validate(doctorSchema.update), doctorController.updateDoctorByAdmin)
 
 export default router

@@ -1,4 +1,4 @@
-import { supabase } from '../configs/supabase-config.js'
+import { supabase, supabaseAdmin } from '../configs/supabase-config.js'
 
 export const uploadHelper = {
     uploadFile: async (file, bucket = 'medicare', folderName) => {
@@ -8,8 +8,10 @@ export const uploadHelper = {
             const fileExt = file.originalname.split('.').pop()
             const fileName = `${Date.now()}.${fileExt}`
             const filePath = `${folderName}/${fileName}`
+            
+            const client = supabaseAdmin || supabase;
 
-            const { _ , error } = await supabase.storage
+            const { _ , error } = await client.storage
                 .from(bucket)
                 .upload(filePath, file.buffer, {
                     contentType: file.mimetype,
@@ -38,8 +40,10 @@ export const uploadHelper = {
             const urlParts = url.split(`${bucket}/`)
             if (urlParts.length < 2) return
             const filePath = urlParts[1]
+            
+            const client = supabaseAdmin || supabase;
 
-            const { error } = await supabase.storage
+            const { error } = await client.storage
                 .from(bucket)
                 .remove([filePath])
 

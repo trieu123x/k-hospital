@@ -10,10 +10,12 @@ import { getUserById, updateUser, createDoctorAccount } from "@/routers/user-api
 import { getAllDegrees } from "@/routers/degree-api"
 import { getSpecialties } from "@/routers/specialty-api"
 import { doctorApi } from "@/routers/doctor/doctorRouter"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 function DetailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   const id = searchParams.get("id")
   const isEditMode = !!id
@@ -146,6 +148,7 @@ function DetailContent() {
   const showSubmitButton = !isEditMode || hasChanges()
 
   const handleSubmit = async () => {
+    showLoading("Đang xử lý yêu cầu...")
     try {
       const payload = new FormData()
       payload.append("fullName", fullName)
@@ -187,13 +190,34 @@ function DetailContent() {
         setImageFile(null)
         setCropData(null)
       } else {
-        await createDoctorAccount(payload)
+        const createRes = await createDoctorAccount(payload)
+        
+        // After creating the doctor, update their specific doctor fields (degree, specialty, etc.)
+        const newDoctorId = createRes?.data?.data?.userId || createRes?.data?.userId;
+        if (newDoctorId) {
+          const doctorPayload = {
+            education,
+            experience,
+            achievements
+          }
+
+          const selectedDegree = degreeOptions.find(d => d.name === degree)
+          doctorPayload.degreeId = selectedDegree ? selectedDegree.id : null
+
+          const selectedSpecialty = specialtyOptions.find(s => s.name === specialty)
+          doctorPayload.specialtyId = selectedSpecialty ? selectedSpecialty.id : null
+
+          await doctorApi.updateDoctorByAdmin(newDoctorId, doctorPayload)
+        }
+
         alert("Tạo tài khoản bác sĩ thành công!")
         router.push("/admin/users")
       }
     } catch (error) {
       console.error("Lỗi lưu thay đổi:", error)
       alert("Lưu thất bại! Vui lòng kiểm tra lại (VD: Số điện thoại/Email có thể bị trùng).")
+    } finally {
+      hideLoading()
     }
   }
 
@@ -203,27 +227,27 @@ function DetailContent() {
     <div className="relative grow flex px-10 py-8 justify-between gap-35">
       <div className="w-200 flex flex-col flex-none">
         <InputForm label={"Họ và tên"} placeholder={"Nhập tên của bạn"}
-          value={fullName} setValue={(value) => setFullName(value)} />
+          value={fullName} setValue={(value) => setFullName(value)} readOnly={isEditMode} />
         <InputForm label={"Email"} placeholder={"Nhập email của bạn"}
-          value={email} setValue={(value) => setEmail(value)} />
+          value={email} setValue={(value) => setEmail(value)} readOnly={isEditMode} />
         <InputForm label={"Số điện thoại"} placeholder={"Nhập số điện thoại"}
-          value={phone} setValue={(value) => setPhone(value)} />
+          value={phone} setValue={(value) => setPhone(value)} readOnly={isEditMode} />
         {isEditMode && (
           <InputForm label={"Quê quán"} placeholder={"Nhập quên quán của bạn"}
-            value={hometown} setValue={(value) => setHometown(value)} />
+            value={hometown} setValue={(value) => setHometown(value)} readOnly={isEditMode} />
         )}
-        {isEditMode && userRole !== 'PATIENT' && (
+        {(!isEditMode || userRole !== 'PATIENT') && (
           <>
             <InputForm label={"Bằng cấp"} placeholder={"Chọn bằng cấp"} options={degreeOptions.map(d => d.name)}
-              value={degree} setValue={(value) => setDegree(value)} mode={"select"} />
+              value={degree} setValue={(value) => setDegree(value)} mode={"select"} readOnly={isEditMode} />
             <InputForm label={"Chuyên khoa"} placeholder={"Chọn chuyên khoa"} options={specialtyOptions.map(s => s.name)}
-              value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} />
+              value={specialty} setValue={(value) => setSpecialty(value)} mode={"select"} readOnly={isEditMode} />
             <InputForm label={"Trình độ học vấn"} placeholder={"Nhập thông tin"}
-              value={education} setValue={(value) => setEducation(value)} />
+              value={education} setValue={(value) => setEducation(value)} readOnly={isEditMode} />
             <InputForm label={"Kinh nghiệm làm việc"} placeholder={"Nhập thông tin"}
-              value={experience} setValue={(value) => setExperience(value)} />
+              value={experience} setValue={(value) => setExperience(value)} readOnly={isEditMode} />
             <InputForm label={"Thành tựu"} placeholder={"Nhập thông tin"}
-              value={achievements} setValue={(value) => setAchievements(value)} />
+              value={achievements} setValue={(value) => setAchievements(value)} readOnly={isEditMode} />
           </>
         )}
 
@@ -236,13 +260,13 @@ function DetailContent() {
         )}
       </div>
 
-      <div className="w-full">
+      <div className={isEditMode ? "w-full pointer-events-none" : "w-full"}>
         <AvatarPicker
           label="Ảnh đại diện"
           onChange={handleAvatarChange}
           defaultImage={previewImage}
           defaultCropData={previewCropData}
-          cropMode={true}
+          cropMode={!isEditMode}
         />
       </div>
     </div>
@@ -257,7 +281,7 @@ export default function Detail() {
   )
 }
 
-function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [] }) {
+function InputForm({ label, placeholder, value, setValue = (value) => { }, mode = "normal", options = [], readOnly = false }) {
   return <div className="w-full flex justify-between gap-3">
     <EditField
       label={label}
@@ -266,7 +290,8 @@ function InputForm({ label, placeholder, value, setValue = (value) => { }, mode 
       onChange={(newValue) => setValue(newValue)}
       className="w-full"
       mode={mode}
-      options={options} />
-    <Pencil className="mt-11 size-6 opacity-60" />
+      options={options}
+      readOnly={readOnly} />
+    {!readOnly && <Pencil className="mt-11 size-6 opacity-60" />}
   </div>
 }

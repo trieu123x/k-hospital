@@ -11,7 +11,6 @@ const router = express.Router()
 // PUBLIC ROUTES
 // ================================
 router.get("/", validate(medicineSchema.getAll), getAllMedicines)
-router.get("/:id", validate(medicineSchema.getById), getMedicineById)
 
 import multer from "multer"
 const upload = multer({ storage: multer.memoryStorage() })
@@ -21,6 +20,7 @@ const upload = multer({ storage: multer.memoryStorage() })
 // ================================
 router.get("/admin", authenticate, authorizeAdmin, validate(medicineSchema.getAll), getMedicinesForAdmin)
 router.get("/count", authenticate, authorizeAdmin, getTotalMedicines)
+router.get("/:id", validate(medicineSchema.getById), getMedicineById)
 router.post("/", authenticate, authorizeAdmin, upload.single("image"), validate(medicineSchema.create), createMedicine)
 router.put("/:id", authenticate, authorizeAdmin, upload.single("image"), validate(medicineSchema.update), updateMedicine)
 router.delete("/:id", authenticate, authorizeAdmin, validate(medicineSchema.getById), deleteMedicine)

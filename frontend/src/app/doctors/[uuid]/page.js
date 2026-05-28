@@ -114,7 +114,7 @@ export default function DoctorDetailPage() {
 
                 <span className="">Bằng cấp: <strong className="font-bold">{degree?.name || "Bác sĩ"}</strong></span>
 
-                <span>Loại thuốc: <strong className="font-bold capitalize">{profile?.phone || "0123456789"}</strong></span>
+                <span>Số điện thoại: <strong className="font-bold capitalize">{profile?.phone || "0123456789"}</strong></span>
               </div>
             </div>
 

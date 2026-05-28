@@ -1,30 +1,37 @@
 import { prisma } from "../configs/prisma-config.js"
+import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const userRepository = {
     countAll: async () => {
         return await prisma.profile.count()
     },
 
-    findAllForAdmin: async ({ role, name, lastId, limit = 30 }) => {
+    findAllForAdmin: async ({ role, name, page = 1, limit = 30 }) => {
         const where = {}
         if (role) where.role = role
-        if (name) where.fullName = { contains: name, mode: 'insensitive' }
-        if (lastId) where.id = { gt: lastId }
+        if (name) where.fullNameClean = { contains: removeVietnameseTones(name), mode: 'insensitive' }
 
-        return await prisma.profile.findMany({
-            where,
-            take: limit,
-            orderBy: { id: 'asc' },
-            select: {
-                id: true,
-                fullName: true,
-                phone: true,
-                email: true,
-                role: true,
-                isActive: true,
-                avatarCropData: true
-            }
-        })
+        const skip = (page - 1) * limit
+        const [users, total] = await Promise.all([
+            prisma.profile.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { id: 'asc' },
+                select: {
+                    id: true,
+                    fullName: true,
+                    phone: true,
+                    email: true,
+                    role: true,
+                    isActive: true,
+                    avatarCropData: true
+                }
+            }),
+            prisma.profile.count({ where })
+        ])
+
+        return { users, total }
     },
 
     findAll: async (filters = {}, skip = 0, take = 10) => {

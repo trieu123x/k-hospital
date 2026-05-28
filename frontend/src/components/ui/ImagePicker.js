@@ -7,7 +7,6 @@ import Image from "next/image"
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import { Button } from "./Button"
-import { supabase } from "@/utils/supabase"
 
 export function AvatarPicker({
   label = "Tiêu đề",
@@ -20,6 +19,10 @@ export function AvatarPicker({
   const [previewUrl, setPreviewUrl] = useState(defaultImage)
   const [logoUrl, setLogoUrl] = useState(null)
   const fileInputRef = useRef(null)
+
+  // --- CÁC STATE QUẢN LÝ ĐỒNG BỘ VÀ LOCAL ---
+  const [hasLocalChanges, setHasLocalChanges] = useState(false)
+  const [prevDefaultImage, setPrevDefaultImage] = useState(defaultImage)
 
   // Crop states
   const [isCropModalOpen, setIsCropModalOpen] = useState(false)
@@ -34,24 +37,47 @@ export function AvatarPicker({
   const [completedCrop, setCompletedCrop] = useState(null)
   const [imgSrc, setImgSrc] = useState(defaultImage) // The source loaded in the cropper
   const imgRef = useRef(null)
-  const [currentFile, setCurrentFile] = useState(null) // Keep track of the raw file
+  const [currentFile, setCurrentFile] = useState(null)
 
-  useEffect(() => {
+  // ======================================================================
+  // 1. ĐỒNG BỘ STATE TỪ SERVER TRONG QUÁ TRÌNH RENDER (CHỐNG LỖI CASCADING)
+  // ======================================================================
+  if (!hasLocalChanges && defaultImage !== prevDefaultImage) {
+    setPrevDefaultImage(defaultImage)
     setPreviewUrl(defaultImage)
     setImgSrc(defaultImage)
-    
-    // Khôi phục logoUrl ban đầu nếu có defaultCropData
-    if (defaultImage && defaultCropData && cropMode) {
-      import('@/utils/image').then(({ getCroppedAvatarUrl }) => {
-        setLogoUrl(getCroppedAvatarUrl(defaultImage, defaultCropData))
-      })
+  }
+
+  // ======================================================================
+  // 2. USE-EFFECT CHỈ DÙNG CHO TÁC VỤ BẤT ĐỒNG BỘ (VẼ CANVAS)
+  // ======================================================================
+  useEffect(() => {
+    if (!hasLocalChanges && defaultImage && defaultCropData && cropMode) {
+      let isMounted = true; // Cờ bảo vệ chống memory leak
+
+      generateLogoFromUrl(defaultImage, defaultCropData).then((base64Logo) => {
+        if (isMounted) {
+          setLogoUrl(base64Logo);
+        }
+      });
+
+      return () => {
+        isMounted = false;
+      };
     }
-  }, [defaultImage, defaultCropData, cropMode])
+  }, [defaultImage, defaultCropData, cropMode, hasLocalChanges])
+
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0]
     if (file) {
       setCurrentFile(file)
+
+      // Đánh dấu người dùng đã can thiệp, khóa chặn data từ Server
+      setHasLocalChanges(true)
+      // Xóa khung crop cũ đi để ảnh mới luôn được cắt ở tâm
+      setCompletedCrop(null)
+      setCrop({ unit: '%', width: 50, height: 50, x: 25, y: 25, aspect: 1 })
 
       if (cropMode) {
         const reader = new FileReader()
@@ -82,24 +108,28 @@ export function AvatarPicker({
 
   const handleImageLoad = (e) => {
     imgRef.current = e.currentTarget
-
     const { width, height, naturalWidth } = e.currentTarget
-    
-    let initialCrop;
 
-    let parsedCropData = defaultCropData;
-    if (typeof parsedCropData === 'string') {
-      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) {}
-    }
-    
-    // Đảm bảo parse lồng nhau nếu bị double-stringify
-    if (typeof parsedCropData === 'string') {
-      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) {}
+    // 1. Nếu mở lại Modal trên ảnh đang chỉnh sửa (Local), giữ nguyên khung crop vừa cắt
+    if (hasLocalChanges && completedCrop && completedCrop.width) {
+      setCrop(completedCrop);
+      return;
     }
 
-    if (parsedCropData && typeof parsedCropData === 'object' && parsedCropData.width && imgSrc === defaultImage) {
+    // 2. Nếu là ảnh từ Server, nạp tọa độ từ Server vào
+    let parsedCropData = !hasLocalChanges ? defaultCropData : null;
+
+    // Parse lồng nhau an toàn
+    if (typeof parsedCropData === 'string') {
+      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) { }
+    }
+    if (typeof parsedCropData === 'string') {
+      try { parsedCropData = JSON.parse(parsedCropData); } catch (e) { }
+    }
+
+    if (parsedCropData && typeof parsedCropData === 'object' && parsedCropData.width) {
       const displayToTargetScale = naturalWidth / width;
-      initialCrop = {
+      const initialCrop = {
         unit: 'px',
         width: parsedCropData.width / displayToTargetScale,
         height: parsedCropData.height / displayToTargetScale,
@@ -107,25 +137,18 @@ export function AvatarPicker({
         y: parsedCropData.y / displayToTargetScale,
         aspect: 1
       }
-      console.log("Khôi phục crop:", initialCrop);
+      setCrop(initialCrop)
+      setCompletedCrop(initialCrop)
     } else {
-      console.log("Không có default crop, tính crop tự động. parsedCropData:", parsedCropData, "imgSrc:", imgSrc, "default:", defaultImage);
+      // 3. Nếu là ảnh mới up lên, cắt tự động ở giữa tâm
       const size = Math.min(width, height)
       const x = (width - size) / 2
       const y = (height - size) / 2
+      const initialCrop = { unit: 'px', width: size, height: size, x, y, aspect: 1 }
 
-      initialCrop = {
-        unit: 'px',
-        width: size,
-        height: size,
-        x,
-        y,
-        aspect: 1
-      }
+      setCrop(initialCrop)
+      setCompletedCrop(initialCrop)
     }
-
-    setCrop(initialCrop)
-    setCompletedCrop(initialCrop)
   }
 
   const handleSaveCrop = async () => {
@@ -136,7 +159,11 @@ export function AvatarPicker({
         currentFile?.name || 'avatar.jpg'
       )
 
+      setHasLocalChanges(true)
       setPreviewUrl(fullPreviewUrl)
+
+      // Gán ảnh 400px ngược lại làm base để lần mở sau không bị lệch tọa độ
+      setImgSrc(fullPreviewUrl)
       setLogoUrl(logoUrl)
       onChange(resizedFile, backendCropData)
     }
@@ -251,6 +278,10 @@ export function AvatarPicker({
   )
 }
 
+// ======================================================================
+// HELPER FUNCTIONS (Đặt bên dưới Component)
+// ======================================================================
+
 async function processAvatarData(image, crop, originalFileName = 'image.jpg') {
   let targetWidth = image.naturalWidth;
   let targetHeight = image.naturalHeight;
@@ -307,3 +338,48 @@ async function processAvatarData(image, crop, originalFileName = 'image.jpg') {
     fullPreviewUrl
   };
 }
+
+const generateLogoFromUrl = (imageUrl, cropData) => {
+  return new Promise((resolve) => {
+    if (!imageUrl || !cropData) return resolve(imageUrl);
+
+    // Xử lý parse JSON an toàn (chống double stringify)
+    let parsedData = cropData;
+    if (typeof parsedData === 'string') {
+      try { parsedData = JSON.parse(parsedData); } catch (e) { }
+    }
+    if (typeof parsedData === 'string') {
+      try { parsedData = JSON.parse(parsedData); } catch (e) { }
+    }
+
+    // Nếu không có tọa độ, trả về ảnh gốc
+    if (!parsedData || !parsedData.width) return resolve(imageUrl);
+
+    // Tải ảnh vào bộ nhớ để cắt
+    const img = new window.Image();
+    img.crossOrigin = "anonymous"; // Bắt buộc để không bị lỗi CORS từ Supabase
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = parsedData.width;
+      canvas.height = parsedData.height;
+      const ctx = canvas.getContext('2d');
+
+      // Vẽ đúng vùng đã cắt vào canvas
+      ctx.drawImage(
+        img,
+        parsedData.x, parsedData.y, parsedData.width, parsedData.height, // Vùng nguồn
+        0, 0, parsedData.width, parsedData.height // Vùng đích
+      );
+
+      resolve(canvas.toDataURL('image/jpeg'));
+    };
+
+    img.onerror = () => {
+      console.error("Lỗi khi tải ảnh để tạo logo preview");
+      resolve(imageUrl); // Fallback về ảnh gốc nếu mạng lỗi
+    };
+
+    img.src = imageUrl;
+  });
+};

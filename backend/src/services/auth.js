@@ -1,30 +1,43 @@
 import { supabase, supabaseAdmin } from "../configs/supabase-config.js";
 import { profileRepository } from "../repositories/auth.js";
 import { uploadHelper } from "../helpers/storage-helper.js";
+import { formatPhoneE164 } from "../helpers/string-format.js";
 
 export const authService = {
   registerDoctor: async ({ email, fullName, phone, file, avatarCropData }) => {
     // 1. Phòng thủ trùng lặp Email & Số điện thoại
+    const formattedPhone = formatPhoneE164(phone);
+
+    // 2. Phòng thủ trùng lặp Email & Số điện thoại (dùng số đã chuẩn hóa)
     if (email) {
       const existingEmail = await profileRepository.findByEmail(email);
       if (existingEmail) throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 });
     }
 
-    if (phone) {
-      const existingPhone = await profileRepository.findByPhone(phone);
+    if (formattedPhone) {
+      const existingPhone = await profileRepository.findByPhone(formattedPhone); // Tìm theo +84...
       if (existingPhone) throw Object.assign(new Error("Số điện thoại đã được sử dụng"), { statusCode: 409 });
     }
 
     if (!supabaseAdmin) throw Object.assign(new Error("Cần cấu hình SUPABASE_SERVICE_ROLE_KEY"), { statusCode: 500 });
 
-    // 2. Đẩy thông tin lên Supabase 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: "medicare", // Mật khẩu mặc định, bác sĩ đổi lại sau
-      user_metadata: { full_name: fullName, phone, role: "DOCTOR" },
-      email_confirm: true,  // Kích hoạt thẳng không cần xác thực link
+    const userPayload = {
+      password: "medicare",
+      user_metadata: { full_name: fullName, phone: formattedPhone, role: "DOCTOR" },
+      email_confirm: true,
       phone_confirm: true,
-    });
+    };
+
+    if (email && email.trim() !== "") {
+      userPayload.email = email.trim();
+    }
+
+    if (formattedPhone) {
+      userPayload.phone = formattedPhone;
+    }
+
+    // 2. Đẩy thông tin lên Supabase 
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser(userPayload);
 
     if (authError) throw Object.assign(new Error(authError.message), { statusCode: 400 });
     const userId = authData.user?.id;
@@ -64,18 +77,19 @@ export const authService = {
    */
   register: async ({ email, password, fullName, phone }) => {
     // 1. Kiểm tra trùng lặp thông tin
-    const existingPhone = await profileRepository.findByPhone(phone);
+    const formattedPhone = formatPhoneE164(phone);
+    const existingPhone = await profileRepository.findByPhone(formattedPhone);
     if (existingPhone) throw Object.assign(new Error("Số điện thoại đã được sử dụng"), { statusCode: 409 });
 
     const existingEmail = await profileRepository.findByEmail(email);
     if (existingEmail) throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 });
 
-    // 2. Đăng ký qua Supabase
+    // 3. Đăng ký qua Supabase
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, phone, role: "PATIENT" },
+        data: { full_name: fullName, phone: formattedPhone, role: "PATIENT" },
       },
     });
 

@@ -8,7 +8,17 @@ export const userService = {
   },
 
   getUsersForAdmin: async (filters) => {
-    return await userRepository.findAllForAdmin(filters);
+    const { page = 1, limit = 30 } = filters;
+    const { users, total } = await userRepository.findAllForAdmin(filters);
+    return {
+      items: users,
+      pagination: {
+        page,
+        limit,
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   getAllUsers: async (requesterRole, page = 1, limit = 10) => {

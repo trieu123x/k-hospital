@@ -1,4 +1,5 @@
 import { prisma, Prisma } from "../configs/prisma-config.js"
+import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const diseaseRepository = {
     countAll: async () => {
@@ -32,15 +33,7 @@ export const diseaseRepository = {
         })
     },
 
-    updateEmbedding: async (id, vector) => { // Đầu vào của vector nhớ là phải để list
-        const vectorString = `[${vector.join(',')}]`
-        
-        return await prisma.$executeRaw`
-            UPDATE diseases
-            SET embedding = ${vectorString}::vector
-            WHERE id = ${id}::uuid
-        `
-    },
+
 
     createChunks: async (diseaseId, chunks) => {
         // Xóa các chunk cũ nếu có (trong trường hợp update)
@@ -57,8 +50,8 @@ export const diseaseRepository = {
     },
 
     findWithFilter: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
-        const searchPattern = name ? `%${name.toLowerCase()}%` : null
-        const nameLower = name ? name.toLowerCase() : null
+        const cleanNameLower = name ? removeVietnameseTones(name) : null
+        const searchPattern = cleanNameLower ? `%${cleanNameLower}%` : null
         const offset = (page - 1) * limit
 
         const filterConditions = Prisma.sql`
@@ -68,7 +61,7 @@ export const diseaseRepository = {
             ${name ? Prisma.sql`
                 AND (
                     name_clean LIKE ${searchPattern} 
-                    OR name_clean % ${nameLower}
+                    OR name_clean % ${cleanNameLower}
                 )` : Prisma.empty}
         `
 
@@ -89,7 +82,7 @@ export const diseaseRepository = {
             FROM diseases
             WHERE ${filterConditions}
             ORDER BY 
-                ${name ? Prisma.sql`similarity(name_clean, ${nameLower}) DESC,` : Prisma.empty} 
+                ${name ? Prisma.sql`similarity(name_clean, ${cleanNameLower}) DESC,` : Prisma.empty} 
                 id ASC
             LIMIT ${limit}
             OFFSET ${offset}
@@ -106,13 +99,29 @@ export const diseaseRepository = {
         }
     },
 
-    findAllForAdmin: async ({ categoryId, specialtyId, name, lastId, limit = 30 }) => {
-        const searchPattern = name ? `%${name.toLowerCase()}%` : null
-        const nameLower = name ? name.toLowerCase() : null
+    findAllForAdmin: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
+        const cleanNameLower = name ? removeVietnameseTones(name) : null
+        const searchPattern = cleanNameLower ? `%${cleanNameLower}%` : null
+        const offset = (page - 1) * limit
 
-        const cursorCondition = lastId 
-            ? Prisma.sql`AND d.id > ${lastId}::uuid` 
-            : Prisma.empty
+        const filterConditions = Prisma.sql`
+            1=1
+            ${categoryId ? Prisma.sql`AND d.category_id = ${categoryId}::uuid` : Prisma.empty}
+            ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
+            ${name ? Prisma.sql`
+                AND (
+                    d.name_clean LIKE ${searchPattern} 
+                    OR d.name_clean % ${cleanNameLower}
+                )` : Prisma.empty}
+        `
+
+        // Query total count
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM diseases d
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
 
         const diseases = await prisma.$queryRaw`
             SELECT 
@@ -127,31 +136,26 @@ export const diseaseRepository = {
             FROM diseases d
             LEFT JOIN specialties s ON d.specialty_id = s.id
             LEFT JOIN disease_categories dc ON d.category_id = dc.id
-            WHERE 1=1
-                ${categoryId ? Prisma.sql`AND d.category_id = ${categoryId}::uuid` : Prisma.empty}
-                ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
-                ${cursorCondition}
-                ${name ? Prisma.sql`
-                    AND (
-                        d.name_clean LIKE ${searchPattern} 
-                        OR d.name_clean % ${nameLower}
-                    )` : Prisma.empty}
+            WHERE ${filterConditions}
             ORDER BY 
-                ${name ? Prisma.sql`similarity(d.name_clean, ${nameLower}) DESC,` : Prisma.empty} 
+                ${name ? Prisma.sql`similarity(d.name_clean, ${cleanNameLower}) DESC,` : Prisma.empty} 
                 d.id ASC
-            LIMIT ${limit}
+            LIMIT ${limit} OFFSET ${offset}
         `
 
-        return diseases.map(disease => ({
-            id: disease.id,
-            name: disease.name,
-            imageUrl: disease.imageUrl,
-            description: disease.description,
-            symptoms: disease.symptoms,
-            homeTreatment: disease.homeTreatment,
-            specialtyName: disease.specialtyName,
-            categoryName: disease.categoryName
-        }))
+        return {
+            items: diseases.map(disease => ({
+                id: disease.id,
+                name: disease.name,
+                imageUrl: disease.imageUrl,
+                description: disease.description,
+                symptoms: disease.symptoms,
+                homeTreatment: disease.homeTreatment,
+                specialtyName: disease.specialtyName,
+                categoryName: disease.categoryName
+            })),
+            total
+        }
     },
 
     findById: async (id) => {
@@ -196,16 +200,16 @@ export const diseaseRepository = {
         const vectorString = `[${inputVector.join(',')}]`
 
         return await prisma.$queryRaw`
-            SELECT 
-                id, 
-                name, 
-                symptoms, 
-                description,
-                image_url AS "imageUrl",
-                (1 - (embedding <=> ${vectorString}::vector)) AS "similarityScore"
-            FROM diseases
-            WHERE embedding IS NOT NULL
-            ORDER BY embedding <=> ${vectorString}::vector
+            SELECT DISTINCT ON (d.id)
+                d.id, 
+                d.name, 
+                d.symptoms, 
+                d.description,
+                d.image_url AS "imageUrl",
+                (1 - (dc.embedding <=> ${vectorString}::vector)) AS "similarityScore"
+            FROM diseases d
+            JOIN disease_chunks dc ON d.id = dc.disease_id
+            ORDER BY d.id, (dc.embedding <=> ${vectorString}::vector)
             LIMIT ${limit}
         `
     },

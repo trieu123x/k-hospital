@@ -6,10 +6,12 @@ import { SearchInput } from "@/components/ui/SearchInput"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { getNewsForAdmin, deleteNews, getTotalNews } from "@/routers/news-api"
+import { getNewsForAdmin, deleteNews } from "@/routers/news-api"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/helper/time-format"
 import { format } from "date-fns"
+import { Pagination } from "@/components/ui/Pagination"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
 
@@ -22,62 +24,55 @@ const TABLE_COLUMNS = [
 
 export default function News() {
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedDate, setSelectedDate] = useState(null)
 
-  // Data State
   const [newsList, setNewsList] = useState([])
   const [totalCount, setTotalCount] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-
-  // Refs
-  const tableRef = useRef(null)
-  const isFetching = useRef(false)
-
-  useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const res = await getTotalNews()
-        if (res.data) setTotalCount(res.data.total)
-      } catch (error) {
-        console.error("Lỗi lấy tổng số tin tức:", error)
-      }
-    }
-    fetchCount()
-  }, [])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  const buildParams = useCallback((lastId = undefined) => {
+  const buildParams = useCallback(() => {
     return {
       limit: PAGE_SIZE,
+      page,
       title: debouncedSearch || undefined,
       date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
-      lastId
     }
-  }, [debouncedSearch, selectedDate])
+  }, [debouncedSearch, selectedDate, page])
 
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true)
-      isFetching.current = true
 
       try {
         const params = buildParams()
         const res = await getNewsForAdmin(params)
-        if (res.data) {
+
+        if (res.success && res.data) {
           setNewsList(res.data.map(n => ({
             ...n,
             release: formatDate(n.createdAt)
           })))
-          setHasMore(res.data.length >= PAGE_SIZE)
+          setTotalPages(res.pagination?.totalPages || 1)
+          setTotalCount(res.pagination?.totalItems || 0)
+        } else if (Array.isArray(res)) {
+          setNewsList(res.map(n => ({
+            ...n,
+            release: formatDate(n.createdAt)
+          })))
+          setTotalPages(1)
+          setTotalCount(res.length)
         } else {
           setNewsList([])
         }
@@ -85,61 +80,19 @@ export default function News() {
         console.error("Lỗi tải danh sách tin tức:", error)
       } finally {
         setLoading(false)
-        isFetching.current = false
       }
     }
 
     fetchInitialData()
   }, [buildParams])
 
-  const loadMore = useCallback(async () => {
-    if (isFetching.current || !hasMore || newsList.length === 0) return
-
-    const lastId = newsList[newsList.length - 1].id
-
-    isFetching.current = true
-    setLoading(true)
-
-    try {
-      const params = buildParams(lastId)
-      const res = await getNewsForAdmin(params)
-
-      if (res.data) {
-        const mapped = res.data.map(n => ({
-          ...n,
-          release: formatDate(n.createdAt)
-        }))
-        setNewsList(prev => {
-          const combined = [...prev, ...mapped]
-          return Array.from(new Map(combined.map(item => [item.id, item])).values())
-        })
-        setHasMore(res.data.length >= PAGE_SIZE)
-      }
-    } catch (error) {
-      console.error("Lỗi tải thêm tin tức:", error)
-    } finally {
-      setLoading(false)
-      isFetching.current = false
-    }
-  }, [hasMore, newsList, buildParams])
-
   useEffect(() => {
-    const tableEl = tableRef.current
-    if (!tableEl) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = tableEl
-      if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isFetching.current) {
-        loadMore()
-      }
-    }
-
-    tableEl.addEventListener("scroll", handleScroll)
-    return () => tableEl.removeEventListener("scroll", handleScroll)
-  }, [loadMore, hasMore])
+    setPage(1)
+  }, [selectedDate, debouncedSearch])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tin tức này không?")) return
+    showLoading("Đang xóa tin tức...")
     try {
       const res = await deleteNews(row.id)
       if (res.success) {
@@ -149,6 +102,8 @@ export default function News() {
     } catch (error) {
       console.error("Lỗi xóa tin tức:", error)
       alert("Xóa thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 
@@ -181,22 +136,31 @@ export default function News() {
         </div>
       </div>
 
-      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden">
+      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
-          ref={tableRef}
           isLoading={loading}
           columns={TABLE_COLUMNS}
           data={newsList}
-          className="max-h-[calc(100vh-250px)]"
+          className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
           onRowClick={(row) => router.push(`/admin/news/detail?id=${row.id}`)}
         />
 
-        <div className="flex pt-4">
-          <span className="font-bold italic text-[#1100CD] text-[12px]">
-            Tổng số {totalCount}
-          </span>
+        <div className="relative flex items-center justify-center mt-4">
+          <div className="absolute left-0">
+            <span className="font-bold italic text-[#1100CD] text-[12px]">
+              Tổng số {totalCount}
+            </span>
+          </div>
+
+          {!loading && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       </div>
     </div>

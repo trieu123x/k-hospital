@@ -9,10 +9,12 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { getDiseaseById, createDisease, updateDisease } from "@/routers/disease-api"
 import { getSpecialties } from "@/routers/specialty-api"
 import { getAllDiseaseCategories } from "@/routers/categorize-api"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 function DetailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   const id = searchParams.get("id")
   const isEditMode = !!id
@@ -110,6 +112,7 @@ function DetailContent() {
   const showSubmitButton = !isEditMode || hasChanges()
 
   const handleSubmit = async () => {
+    showLoading("Đang xử lý yêu cầu...")
     try {
       const selectedSpec = specialtyList.find(s => s.name === specialty)
       const selectedCat = categoryList.find(c => c.name === diseaseGroup)
@@ -143,6 +146,8 @@ function DetailContent() {
     } catch (error) {
       console.error("Lỗi lưu thay đổi:", error)
       alert("Lưu thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 

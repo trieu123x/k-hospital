@@ -22,11 +22,11 @@ export const doctorSchema = {
             password: z.string().min(6, "Mật khẩu phải từ 6 ký tự trở lên"),
             fullName: z.string().min(2, "Họ tên quá ngắn"),
             phone: z.string().regex(/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/, "Số điện thoại không hợp lệ"),
-            specialtyId: z.string().uuid("Chuyên khoa không hợp lệ").optional(),
-            degree: z.string().optional(),
-            experience: z.string().optional(),
-            education: z.string().optional(),
-            achievements: z.string().optional()
+            specialtyId: z.string().uuid("Chuyên khoa không hợp lệ").optional().nullable(),
+            degreeId: z.string().uuid("Bằng cấp không hợp lệ").optional().nullable(),
+            experience: z.string().optional().nullable(),
+            education: z.string().optional().nullable(),
+            achievements: z.string().optional().nullable()
         })
     },
 
@@ -35,11 +35,11 @@ export const doctorSchema = {
             id: z.string().uuid({ message: "ID bác sĩ không hợp lệ" })
         }),
         body: z.object({
-            specialtyId: z.string().uuid("Chuyên khoa không hợp lệ").optional(),
-            degree: z.string().optional(),
-            experience: z.string().optional(),
-            education: z.string().optional(),
-            achievements: z.string().optional(),
+            specialtyId: z.string().uuid("Chuyên khoa không hợp lệ").optional().nullable(),
+            degreeId: z.string().uuid("Bằng cấp không hợp lệ").optional().nullable(),
+            experience: z.string().optional().nullable(),
+            education: z.string().optional().nullable(),
+            achievements: z.string().optional().nullable(),
             // Profile fields that might be updated indirectly or via admin
             fullName: z.string().min(2).optional(),
             phone: z.string().regex(/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/).optional(),

@@ -12,13 +12,13 @@ const newsRouter = express.Router();
 // PUBLIC ROUTES
 // ================================
 newsRouter.get('/', validate({ query: newsSchema.query }), getNewsList);
-newsRouter.get('/:newsId', validate({ params: newsSchema.params }), getNewsDetail);
 
 // ================================
 // ADMIN ROUTES
 // ================================
 newsRouter.get('/admin', authenticate, authorizeAdmin, validate({ query: newsSchema.query }), getNewsForAdmin);
 newsRouter.get('/count', authenticate, authorizeAdmin, getTotalNews);
+newsRouter.get('/:newsId', validate({ params: newsSchema.params }), getNewsDetail);
 newsRouter.post('/create', authenticate, authorizeAdmin, upload.single('image'), createNews);
 newsRouter.put('/update/:newsId', authenticate, authorizeAdmin, upload.single('image'), validate({ params: newsSchema.params, body: newsSchema.updateBody }), updateNews);
 newsRouter.delete('/delete/:newsId', authenticate, authorizeAdmin, validate({ params: newsSchema.params }), deleteNews);

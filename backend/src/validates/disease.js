@@ -10,6 +10,7 @@ export const diseaseSchema = {
     specialtyId: z.string().uuid().optional(),
     name: z.string().optional(),
     lastId: z.string().uuid().optional(),
+    page: z.string().regex(/^\d+$/).transform(Number).optional().default("1"),
     limit: z
       .string()
       .optional()

@@ -1,5 +1,6 @@
 import { doctorRepository } from "../repositories/doctor.js"
 import axios from "axios"
+import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const doctorService = {
     getAllDoctors: async (page = 1, limit = 10, { name, specialtyId } = {}) => {
@@ -8,7 +9,7 @@ export const doctorService = {
         const filters = {}
         if (name) {
             filters.profile = {
-                fullName: { contains: name, mode: 'insensitive' }
+                fullNameClean: { contains: removeVietnameseTones(name), mode: 'insensitive' }
             }
         }
         if (specialtyId) {
@@ -66,8 +67,33 @@ export const doctorService = {
         return updatedDoctor
     },
 
+    updateDoctorInfoAdmin: async (doctorId, updateData) => {
+        // Filter out fields that shouldn't be updated here directly
+        const { id, profile, specialty, ...allowedData } = updateData;
+
+        const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
+
+        try {
+            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
+            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
+                name: updatedDoctor.profile?.fullName || "",
+                specialty: updatedDoctor.specialty?.name || "",
+                experience: updatedDoctor.experience || "",
+                education: updatedDoctor.education || ""
+            })
+            const chunks = res.data?.chunks
+            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
+                await doctorRepository.createChunks(doctorId, chunks)
+            }
+        } catch (error) {
+            console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ (Admin):", error.message)
+        }
+
+        return updatedDoctor
+    },
+
     createDoctor: async (data) => {
-        const { email, password, fullName, phone, specialtyId, degree, experience, education, achievements } = data;
+        const { email, password, fullName, phone, specialtyId, degreeId, experience, education, achievements } = data;
 
         let userId;
 
@@ -110,7 +136,7 @@ export const doctorService = {
                 data: {
                     id: userId,
                     specialtyId,
-                    degree,
+                    degreeId,
                     experience,
                     education,
                     achievements
@@ -139,31 +165,5 @@ export const doctorService = {
         }
 
         return newDoctor;
-    },
-
-    updateDoctorByAdmin: async (doctorId, updateData) => {
-        // Full access without self check
-        const { id, profile, specialty, ...allowedData } = updateData;
-
-        // Attempt to find or bypass (since Prisma throws if not found sometimes, but let repository handle it)
-        const updatedDoctor = await doctorRepository.updateDoctorInfo(doctorId, allowedData)
-
-        try {
-            const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
-            const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
-                name: updatedDoctor.profile.fullName,
-                specialty: updatedDoctor.specialty?.name || "",
-                experience: updatedDoctor.experience || "",
-                education: updatedDoctor.education || ""
-            })
-            const chunks = res.data?.chunks
-            if (chunks && Array.isArray(chunks) && chunks.length > 0) {
-                await doctorRepository.createChunks(doctorId, chunks)
-            }
-        } catch (error) {
-            console.error("Lỗi cập nhật Embedding Chunks cho Bác sĩ (Admin):", error.message)
-        }
-
-        return updatedDoctor
     }
 }

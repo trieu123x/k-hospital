@@ -8,6 +8,8 @@ import { Filter } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { getUsersForAdmin, deleteUser, toggleBlockUser, getTotalUsers } from "@/routers/user-api"
 import { useRouter } from "next/navigation"
+import { Pagination } from "@/components/ui/Pagination"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
 
@@ -22,6 +24,7 @@ const TABLE_COLUMNS = [
 
 export default function User() {
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
   const [option, setOption] = useState("Tất cả")
@@ -31,12 +34,9 @@ export default function User() {
   // Data State
   const [users, setUsers] = useState([])
   const [totalCount, setTotalCount] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-
-  // Refs
-  const tableRef = useRef(null)
-  const isFetching = useRef(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -61,90 +61,47 @@ export default function User() {
     isBlocked: !user.isActive
   })
 
-  const buildParams = useCallback((lastId = undefined) => {
+  const buildParams = useCallback(() => {
     return {
       limit: PAGE_SIZE,
+      page,
       role: option !== "Tất cả" ? option : undefined,
       name: debouncedSearch || undefined,
-      lastId
     }
-  }, [option, debouncedSearch])
+  }, [option, debouncedSearch, page])
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      isFetching.current = true
+    const fetchData = async () => {
+      setLoading(true)
 
       try {
         const params = buildParams()
         const res = await getUsersForAdmin(params)
-        console.log("Res Loading: ", res)
-        console.log("Has more: ", res.data.length >= PAGE_SIZE)
-        if (res.data) {
+        
+        if (res.success && res.data) {
           setUsers(res.data.map(mapUserData))
-          setHasMore(res.data.length >= PAGE_SIZE)
+          setTotalPages(res.pagination?.totalPages || 1)
+        } else if (Array.isArray(res)) {
+          setUsers(res.map(mapUserData))
+          setTotalPages(1)
         }
       } catch (error) {
         console.error("Lỗi tải danh sách người dùng:", error)
       } finally {
         setLoading(false)
-        isFetching.current = false
       }
     }
 
-    fetchInitialData()
+    fetchData()
   }, [buildParams])
 
-  const loadMore = useCallback(async () => {
-    if (isFetching.current || !hasMore || users.length === 0) return
-
-    const lastId = users[users.length - 1].id
-
-    console.log("LastId: ", lastId)
-
-    isFetching.current = true
-    setLoading(true)
-
-    try {
-      const params = buildParams(lastId)
-      const res = await getUsersForAdmin(params)
-
-      console.log("Res Loading: ", res)
-
-      if (res.data) {
-        const mapped = res.data.map(mapUserData)
-        setUsers(prev => {
-          const combined = [...prev, ...mapped]
-          return Array.from(new Map(combined.map(item => [item.id, item])).values())
-        })
-        setHasMore(res.data.length >= PAGE_SIZE)
-      }
-    } catch (error) {
-      console.error("Lỗi tải thêm người dùng:", error)
-    } finally {
-      setLoading(false)
-      isFetching.current = false
-    }
-  }, [hasMore, users, buildParams])
-
   useEffect(() => {
-    const tableEl = tableRef.current
-    if (!tableEl) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = tableEl
-      console.log("Scroll")
-      if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isFetching.current) {
-        console.log("Load more")
-        loadMore()
-      }
-    }
-
-    tableEl.addEventListener("scroll", handleScroll)
-    return () => tableEl.removeEventListener("scroll", handleScroll)
-  }, [loadMore, hasMore])
+    setPage(1)
+  }, [option, debouncedSearch])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này không?")) return
+    showLoading("Đang xóa người dùng...")
     try {
       const res = await deleteUser(row.id)
       if (res.success) {
@@ -154,10 +111,13 @@ export default function User() {
     } catch (error) {
       console.error("Lỗi xóa người dùng:", error)
       alert("Xóa thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 
   const handleTick = async (isChecked, row) => {
+    showLoading("Đang cập nhật trạng thái...")
     try {
       const res = await toggleBlockUser(row.id, !isChecked)
       if (res.data) {
@@ -168,6 +128,8 @@ export default function User() {
     } catch (error) {
       console.error("Lỗi chặn/mở chặn người dùng:", error)
       alert("Thao tác thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 
@@ -201,23 +163,33 @@ export default function User() {
         </div>
       </div>
 
-      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden">
+      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
-          ref={tableRef}
           isLoading={loading}
           columns={TABLE_COLUMNS}
           data={users}
-          className="max-h-[calc(100vh-250px)]"
+          className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
           onTick={handleTick}
           onRowClick={(row) => router.push(`/admin/users/detail?id=${row.id}`)}
         />
 
-        <div className="flex pt-4">
-          <span className="font-bold italic text-[#1100CD] text-[12px]">
-            Tổng số {totalCount}
-          </span>
+        <div className="relative flex items-center justify-center mt-4">
+          <div className="absolute left-0">
+            <span className="font-bold italic text-[#1100CD] text-[12px]">
+              Tổng số {totalCount}
+            </span>
+          </div>
+          
+          {/* Pagination Controls */}
+          {!loading && (
+            <Pagination 
+              currentPage={page} 
+              totalPages={totalPages} 
+              onPageChange={setPage} 
+            />
+          )}
         </div>
       </div>
     </div>

@@ -8,10 +8,6 @@ export const getDiseasesForAdmin = async (params = {}) => {
   return await axiosInstance.get('/disease/admin', { params })
 }
 
-export const getTotalDiseases = async () => {
-  return await axiosInstance.get('/disease/count')
-}
-
 export const getDiseaseById = async (diseaseId) => {
   return await axiosInstance.get(`/disease/${diseaseId}`)
 }

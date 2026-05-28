@@ -7,7 +7,17 @@ export const newsService = {
     },
 
     getNewsForAdmin: async (filters) => {
-        return await newsRespository.findAllForAdmin(filters)
+        const { page = 1, limit = 30 } = filters
+        const { items, total } = await newsRespository.findAllForAdmin(filters)
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     },
 
     createNews: async (data, file) => {
@@ -38,8 +48,18 @@ export const newsService = {
         return await newsRespository.update(id, data);
     },
 
-    getNewsList: async (filter) => {
-        return await newsRespository.findWithFilter(filter)
+    getNewsList: async (filters) => {
+        const { page = 1, limit = 30 } = filters
+        const { items, total } = await newsRespository.findWithFilter(filters)
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     },
 
     getNewsDetail: async (id) => {

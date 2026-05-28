@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Filter } from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
-import { useAuthStore } from "@/stores/auth"; 
+import { useAuthStore } from "@/stores/auth";
+import { useGlobalLoading } from "@/stores/globalLoading";
 
 const TABLE_COLUMNS = [
   { key: "name", label: "Tên bệnh nhân", width: "20%" },
@@ -17,7 +18,7 @@ const TABLE_COLUMNS = [
 
 export default function Appointments() {
   const { user, isDoctor } = useAuthStore();
-  const doctorId = user?.id; 
+  const doctorId = user?.id;
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +31,7 @@ export default function Appointments() {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     try {
       const res = await appointmentApi.getDoctorSchedule(doctorId);
@@ -48,14 +49,14 @@ export default function Appointments() {
 
   useEffect(() => {
     fetchPendingAppointments();
-  }, [doctorId, isDoctor]); 
+  }, [doctorId, isDoctor]);
 
   const uniqueDates = [...new Set(records.map(r => r.date))];
   const uniqueShifts = [...new Set(records.map(r => r.shift))].sort((a, b) => a - b);
 
   const displayedData = useMemo(() => {
     let filtered = records;
-    
+
     if (dateFilter) filtered = filtered.filter(r => r.date === dateFilter);
     if (shiftFilter) filtered = filtered.filter(r => r.shift.toString() === shiftFilter.toString());
 
@@ -69,21 +70,24 @@ export default function Appointments() {
         Shift: `Ca ${app.shift}`,
         reason: app.reason || "Không có lý do",
         Status: false, // Luôn false vì đây là PENDING
-        originalData: app 
+        originalData: app
       };
     });
   }, [records, dateFilter, shiftFilter]);
+
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const handleTick = async (isChecked, rowData) => {
     if (!isChecked || !rowData?.id) return;
 
     const confirmMsg = `Xác nhận lịch khám ${rowData.Shift} ngày ${rowData.Day} cho bệnh nhân ${rowData.name}?`;
     if (!window.confirm(confirmMsg)) {
-      // Rerender để reset checkbox về false
-      fetchPendingAppointments();
+      // Ép Component render lại cục bộ để reset checkbox về false (do Status luôn là false)
+      setRecords(prev => [...prev]);
       return;
     }
 
+    showLoading("Đang xử lý yêu cầu...");
     try {
       await appointmentApi.updateAppointmentStatus(rowData.id, { status: "CONFIRMED" });
       // Xóa khỏi danh sách PENDING ngay lập tức → chuyển sang "Yêu cầu chưa hoàn tất"
@@ -94,6 +98,8 @@ export default function Appointments() {
       const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi xác nhận lịch khám.";
       alert(`Xác nhận thất bại: ${errorMessage}`);
       fetchPendingAppointments();
+    } finally {
+      hideLoading();
     }
   };
 
@@ -104,6 +110,7 @@ export default function Appointments() {
     }
     if (!window.confirm(`Xác nhận TẤT CẢ ${displayedData.length} lịch khám đang hiển thị?`)) return;
 
+    showLoading("Đang xử lý yêu cầu...");
     try {
       await Promise.all(
         displayedData.map(app =>
@@ -116,15 +123,17 @@ export default function Appointments() {
       console.error("Lỗi xác nhận hàng loạt:", error);
       alert("Đã có lỗi xảy ra. Một số lịch có thể chưa được xác nhận.");
       fetchPendingAppointments();
+    } finally {
+      hideLoading();
     }
   };
 
   if (!doctorId && !loading) {
-     return (
-       <div className="flex items-center justify-center min-h-screen bg-gray-50 text-gray-500">
-         Vui lòng đăng nhập với tài khoản bác sĩ để xem lịch trình.
-       </div>
-     );
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 text-gray-500">
+        Vui lòng đăng nhập với tài khoản bác sĩ để xem lịch trình.
+      </div>
+    );
   }
 
   if (!isDoctor && !loading) {
@@ -137,15 +146,15 @@ export default function Appointments() {
   }
 
   return (
-    <div className="grow flex flex-col rasa-font bg-white min-h-screen">
-      
-      <div className="flex h-[80px] px-10 items-center justify-between border-b border-gray-100">
-        
+    <div className="grow flex flex-col rasa-font bg-white">
+
+      <div className="flex h-[80px] px-10 items-center justify-between">
+
         <div className="flex items-center gap-3">
           <Filter className="w-5 h-5 flex-none text-gray-700" />
           <h1 className="mr-2 text-[18px] font-bold flex-none">Bộ lọc:</h1>
-          
-          <select 
+
+          <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
             className="border border-gray-300 rounded px-3 py-1.5 outline-none text-[14px] bg-white text-gray-700 cursor-pointer"
@@ -158,7 +167,7 @@ export default function Appointments() {
             ))}
           </select>
 
-          <select 
+          <select
             value={shiftFilter}
             onChange={(e) => setShiftFilter(e.target.value)}
             className="border border-gray-300 rounded px-3 py-1.5 outline-none text-[14px] bg-white text-gray-700 cursor-pointer"
@@ -174,26 +183,23 @@ export default function Appointments() {
 
         <button
           onClick={handleConfirmAll}
-          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full text-[14px] font-medium transition-colors disabled:opacity-50"
+          className="bg-[#070575] hover:bg-[#08069b] text-white px-5 py-2 rounded-full text-[14px] font-medium transition-colors disabled:opacity-50"
           disabled={displayedData.length === 0}
         >
           Xác nhận tất cả
         </button>
       </div>
 
-      <div className="px-10 pt-6 pb-4 flex-1">
-        {loading ? (
-          <div className="text-center py-10 italic text-gray-500">Đang tải danh sách yêu cầu thăm khám...</div>
-        ) : (
-          <Table 
-            columns={TABLE_COLUMNS} 
-            data={displayedData}
-            onTick={handleTick}
-            className="max-h-[600px] border border-gray-200"
-            headerClassName="bg-[#4066FF]"
-            rowClassName="even:bg-[#F9F9F9] odd:bg-white" 
-          />
-        )}
+      <div className="px-10 flex-1">
+        <Table
+          isLoading={loading}
+          columns={TABLE_COLUMNS}
+          data={displayedData}
+          onTick={handleTick}
+          className="max-h-[600px] border border-gray-200"
+          headerClassName="bg-[#4066FF]"
+          rowClassName="even:bg-[#F9F9F9] odd:bg-white"
+        />
       </div>
 
     </div>

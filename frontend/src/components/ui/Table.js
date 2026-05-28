@@ -9,6 +9,7 @@ export function Table({
   className = "",
   headerClassName = "",
   rowClassName = "",
+  isLoading = false,
   onRowClick = (rowData) => { },
   onTick = (isChecked, rowData) => { },
   onDelete = (rowData) => { },
@@ -38,7 +39,18 @@ export function Table({
         </thead>
 
         <tbody>
-          {data.length === 0 ? (
+          {isLoading ? (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="px-4 py-10 text-center bg-white"
+              >
+                <div className="flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4066FF]"></div>
+                </div>
+              </td>
+            </tr>
+          ) : data.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}

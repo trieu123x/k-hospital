@@ -52,8 +52,7 @@ export const userController = {
     updateUser: async (req, res, next) => {
         try {
             const { id } = req.params
-            const requesterRole = req.user.role
-            const requesterId = requesterRole === 'admin' || requesterRole === 'ADMIN' ? id : req.user.id
+            const requesterId = req.user.id
             const updateData = req.body
             const updatedUser = await userService.updateUser(id, requesterId, updateData, req.file)
 
@@ -101,16 +100,17 @@ export const userController = {
 }
 
 export const getUsersForAdmin = catchError(async (req, res) => {
-    const { role, name, lastId, limit } = req.query
+    const { role, name, page, limit } = req.query
     const data = await userService.getUsersForAdmin({
         role,
         name,
-        lastId,
+        page: page ? parseInt(page) : 1,
         limit: limit ? parseInt(limit) : 30
     })
     res.status(200).json({
         success: true,
         message: "Lấy danh sách người dùng cho admin thành công",
-        data
+        data: data.items,
+        pagination: data.pagination
     })
 })

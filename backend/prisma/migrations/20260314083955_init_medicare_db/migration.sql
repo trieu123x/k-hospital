@@ -73,7 +73,6 @@ CREATE TABLE "diseases" (
     "description" TEXT,
     "symptoms" TEXT NOT NULL,
     "home_treatment" TEXT,
-    "embedding" TEXT,
 
     CONSTRAINT "diseases_pkey" PRIMARY KEY ("id")
 );

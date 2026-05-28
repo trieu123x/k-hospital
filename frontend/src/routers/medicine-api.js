@@ -4,10 +4,6 @@ export const getMedicinesForAdmin = async (params = {}) => {
   return await axiosInstance.get('/medicines/admin', { params })
 }
 
-export const getTotalMedicines = async () => {
-  return await axiosInstance.get('/medicines/count')
-}
-
 export const getMedicineById = async (id) => {
   return await axiosInstance.get(`/medicines/${id}`)
 }

@@ -51,6 +51,23 @@ export const doctorController = {
         }
     },
 
+    updateDoctorInfoAdmin: async (req, res, next) => {
+        try {
+            const { id } = req.params
+            const updateData = req.body
+            
+            const updatedDoctor = await doctorService.updateDoctorInfoAdmin(id, updateData)
+            
+            res.status(200).json({
+                success: true,
+                message: "Admin cập nhật thông tin bác sĩ thành công",
+                data: updatedDoctor
+            })
+        } catch (error) {
+            next(error)
+        }
+    },
+
     createDoctor: async (req, res, next) => {
         try {
             const doctorData = req.body
@@ -59,23 +76,6 @@ export const doctorController = {
                 success: true,
                 message: "Tạo tài khoản bác sĩ thành công",
                 data: newDoctor
-            })
-        } catch (error) {
-            next(error)
-        }
-    },
-
-    updateDoctorByAdmin: async (req, res, next) => {
-        try {
-            const { id } = req.params
-            const updateData = req.body
-            
-            const updatedDoctor = await doctorService.updateDoctorByAdmin(id, updateData)
-            
-            res.status(200).json({
-                success: true,
-                message: "Cập nhật thông tin bác sĩ (bởi Admin) thành công",
-                data: updatedDoctor
             })
         } catch (error) {
             next(error)

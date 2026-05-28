@@ -37,7 +37,7 @@ export const createDoctorAccount = async (data) => {
 }
 
 export const updateUser = async (id, data) => {
-  return await axiosInstance.put(`/users/${id}`, data, {
+  return await axiosInstance.patch(`/users/${id}`, data, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

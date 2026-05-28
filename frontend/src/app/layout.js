@@ -22,6 +22,7 @@ import { SideBar } from "@/components/layout/SideBar";
 import { OptionBar } from "@/components/layout/OptionBar";
 import { ChatForm } from "@/components/chat/form";
 import { useRouter, usePathname } from "next/navigation";
+import { useGlobalLoading } from "@/stores/globalLoading";
 
 export default function RootLayout({ children }) {
 
@@ -33,6 +34,9 @@ export default function RootLayout({ children }) {
 
   const fetchUser = useAuthStore(state => state.fetchUser)
   const user = useAuthStore(state => state.user)
+  
+  const isLoadingGlobal = useGlobalLoading(state => state.isLoading)
+  const loadingMessage = useGlobalLoading(state => state.message)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -84,6 +88,13 @@ export default function RootLayout({ children }) {
             }
 
             <ChatForm />
+
+            {isLoadingGlobal && (
+              <div className="fixed inset-0 bg-black/60 z-[9999] flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-300">
+                <div className="animate-spin rounded-full h-14 w-14 border-4 border-white border-b-transparent mb-4 shadow-lg"></div>
+                {loadingMessage && <p className="text-white text-lg font-medium drop-shadow-md">{loadingMessage}</p>}
+              </div>
+            )}
           </>
         )}
       </body>

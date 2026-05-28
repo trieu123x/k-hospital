@@ -6,6 +6,7 @@ import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { specialtyApi } from "@/routers/speciality/specialityRouter";
 import { ChevronDown } from "lucide-react";
 import { ROUTES } from "@/routers";
+import { useGlobalLoading } from "@/stores/globalLoading";
 import axiosInstance from "@/utils/axios";
 
 export function BookingForm({ patientId, onConfirm, onChangeData }) {
@@ -19,6 +20,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     specialtyName: "",
     doctorId: urlDoctorId || "",
     doctorName: "",
+    doctorAvatar: "",
     date: "",
     shift: "",
     reason: ""
@@ -67,7 +69,8 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       if (found) {
         setFormData(prev => ({
           ...prev,
-          doctorName: `${found.degree ? `${found.degree} - ` : ""}${found.profile?.fullName}`
+          doctorName: `${found.degree ? `${found.degree} - ` : ""}${found.profile?.fullName}`,
+          doctorAvatar: found.profile?.avatarUrl || ""
         }));
       }
     }
@@ -138,6 +141,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       specialtyName: selectedSpec ? selectedSpec.name : "",
       doctorId: "",
       doctorName: "",
+      doctorAvatar: "",
       shift: ""
     }));
   };
@@ -149,9 +153,12 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       ...prev,
       doctorId: selectedId,
       doctorName: selectedDoc ? `${selectedDoc.degree ? `${selectedDoc.degree} - ` : ""}${selectedDoc.profile?.fullName}` : "",
+      doctorAvatar: selectedDoc?.profile?.avatarUrl || "",
       shift: ""
     }));
   };
+
+  const { showLoading, hideLoading } = useGlobalLoading();
 
   const handleSubmit = async () => {
     if (!formData.doctorId || !formData.date || !formData.shift || !formData.reason) {
@@ -165,6 +172,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
     }
 
     setLoading(true);
+    showLoading("Đang xử lý yêu cầu...");
     try {
       const payload = {
         patientId: patientId,
@@ -198,6 +206,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       alert("Đã có lỗi xảy ra từ máy chủ.");
     } finally {
       setLoading(false);
+      hideLoading();
     }
   };
 

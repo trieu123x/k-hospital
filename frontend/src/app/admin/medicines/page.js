@@ -6,9 +6,11 @@ import { SelectBox } from "@/components/ui/SelectBox"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { getMedicinesForAdmin, deleteMedicine, getTotalMedicines } from "@/routers/medicine-api"
+import { getMedicinesForAdmin, deleteMedicine } from "@/routers/medicine-api"
 import { getAllMedicineTypes } from "@/routers/medicine-type-api"
 import { useRouter } from "next/navigation"
+import { Pagination } from "@/components/ui/Pagination"
+import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
 
@@ -24,6 +26,7 @@ const TABLE_COLUMNS = [
 
 export default function Medicines() {
   const router = useRouter()
+  const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
   const [option, setOption] = useState("Tất cả")
@@ -34,21 +37,14 @@ export default function Medicines() {
   // Data State
   const [medicines, setMedicines] = useState([])
   const [totalCount, setTotalCount] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-
-  // Refs
-  const tableRef = useRef(null)
-  const isFetching = useRef(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [countRes, typesRes] = await Promise.all([
-          getTotalMedicines(),
-          getAllMedicineTypes()
-        ])
-        if (countRes.data) setTotalCount(countRes.data.total)
+        const typesRes = await getAllMedicineTypes()
         if (typesRes.data) setMedicineTypes(typesRes.data)
       } catch (error) {
         console.error("Lỗi lấy dữ liệu khởi tạo:", error)
@@ -62,30 +58,40 @@ export default function Medicines() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const buildParams = useCallback((lastId = undefined) => {
-    const selectedType = medicineTypes.find(t => t.name === option)
+  const medicineTypesRef = useRef([])
+  useEffect(() => {
+    medicineTypesRef.current = medicineTypes
+  }, [medicineTypes])
+
+  const buildParams = useCallback(() => {
+    const selectedType = medicineTypesRef.current.find(t => t.name === option)
 
     return {
       limit: PAGE_SIZE,
+      page,
       typeId: selectedType?.id || undefined,
       name: debouncedSearch || undefined,
-      lastId: lastId
     }
-  }, [option, debouncedSearch, medicineTypes])
+  }, [option, debouncedSearch, page])
 
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true)
-      isFetching.current = true
 
       try {
         const params = buildParams()
         const res = await getMedicinesForAdmin(params)
 
-        if (res.data) {
+        if (res.success && res.data) {
           const mappedData = res.data.map(m => ({ ...m, medicineTypeName: m.medicineType?.name }))
           setMedicines(mappedData)
-          setHasMore(res.data.length >= PAGE_SIZE)
+          setTotalPages(res.pagination?.totalPages || 1)
+          setTotalCount(res.pagination?.totalItems || 0)
+        } else if (Array.isArray(res)) {
+          const mappedData = res.map(m => ({ ...m, medicineTypeName: m.medicineType?.name }))
+          setMedicines(mappedData)
+          setTotalPages(1)
+          setTotalCount(res.length)
         } else {
           setMedicines([])
         }
@@ -93,58 +99,19 @@ export default function Medicines() {
         console.error("Lỗi tải danh sách thuốc:", error)
       } finally {
         setLoading(false)
-        isFetching.current = false
       }
     }
 
     fetchInitialData()
   }, [buildParams])
 
-  const loadMore = useCallback(async () => {
-    if (isFetching.current || !hasMore || medicines.length === 0) return
-
-    const lastId = medicines[medicines.length - 1].id
-
-    isFetching.current = true
-    setLoading(true)
-
-    try {
-      const params = buildParams(lastId)
-      const res = await getMedicinesForAdmin(params)
-
-      if (res.data) {
-        const mappedData = res.data.map(m => ({ ...m, medicineTypeName: m.medicineType?.name }))
-        setMedicines(prev => {
-          const combined = [...prev, ...mappedData]
-          return Array.from(new Map(combined.map(item => [item.id, item])).values())
-        })
-        setHasMore(res.data.length >= PAGE_SIZE)
-      }
-    } catch (error) {
-      console.error("Lỗi tải thêm thuốc:", error)
-    } finally {
-      setLoading(false)
-      isFetching.current = false
-    }
-  }, [hasMore, medicines, buildParams])
-
   useEffect(() => {
-    const tableEl = tableRef.current
-    if (!tableEl) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = tableEl
-      if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isFetching.current) {
-        loadMore()
-      }
-    }
-
-    tableEl.addEventListener("scroll", handleScroll)
-    return () => tableEl.removeEventListener("scroll", handleScroll)
-  }, [loadMore, hasMore])
+    setPage(1)
+  }, [option, debouncedSearch])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa thuốc này không?")) return
+    showLoading("Đang xóa thuốc...")
     try {
       const res = await deleteMedicine(row.id)
       if (res.success) {
@@ -154,6 +121,8 @@ export default function Medicines() {
     } catch (error) {
       console.error("Lỗi xóa thuốc:", error)
       alert("Xóa thất bại!")
+    } finally {
+      hideLoading()
     }
   }
 
@@ -187,21 +156,30 @@ export default function Medicines() {
         </div>
       </div>
 
-      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden">
+      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
-          ref={tableRef}
           isLoading={loading}
           columns={TABLE_COLUMNS}
           data={medicines}
-          className="max-h-[calc(100vh-250px)]"
+          className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
           onRowClick={(row) => router.push(`/admin/medicines/detail?id=${row.id}`)}
         />
-        <div className="flex pt-4">
-          <span className="font-bold italic text-[#1100CD] text-[12px]">
-            Tổng số {totalCount}
-          </span>
+        <div className="relative flex items-center justify-center mt-4">
+          <div className="absolute left-0">
+            <span className="font-bold italic text-[#1100CD] text-[12px]">
+              Tổng số {totalCount}
+            </span>
+          </div>
+          
+          {!loading && (
+            <Pagination 
+              currentPage={page} 
+              totalPages={totalPages} 
+              onPageChange={setPage} 
+            />
+          )}
         </div>
       </div>
     </div>

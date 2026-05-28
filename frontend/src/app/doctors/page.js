@@ -47,8 +47,9 @@ export default function DoctorsPage() {
         let url = "/doctors";
         const params = new URLSearchParams();
 
-        if (selectedSpecialty && selectedSpecialty !== "") {
-          params.append("specialtyId", selectedSpecialty);
+        if (selectedSpecialty && selectedSpecialty !== "Tất cả chuyên khoa") {
+          const spec = specialties.find(s => s.name === selectedSpecialty);
+          if (spec) params.append("specialtyId", spec.id);
         }
         if (searchQuery && searchQuery.trim() !== "") {
           params.append("name", searchQuery.trim());
