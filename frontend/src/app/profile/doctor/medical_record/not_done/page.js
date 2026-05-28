@@ -109,8 +109,11 @@ export default function DoctorRecordNotDonePage() {
 
       let timeStatus = "normal";
       
-      if (now >= appDate) {
+      const shiftEndTime = new Date(appDate.getTime() + 60 * 60 * 1000);
+      if (now >= appDate && now < shiftEndTime) {
         timeStatus = "ongoing"; 
+      } else if (now >= shiftEndTime) {
+        timeStatus = "pending_completion";
       }
 
       return {

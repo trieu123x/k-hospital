@@ -20,5 +20,6 @@ export const ROUTES = {
   ADMIN_NEWS: '/admin/news',
   ADMIN_AGGREGATE: '/admin/aggregate',
   MEDICAL_RECORD: '/profile/patient/medical_record',
-  MEDICAL_RECORD_UPCOMING: '/profile/patient/medical_record/upcoming'
+  MEDICAL_RECORD_UPCOMING: '/profile/patient/medical_record/upcoming',
+  MEDICAL_RECORD_PENDING: '/profile/patient/medical_record/pending'
 };

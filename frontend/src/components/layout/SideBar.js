@@ -100,8 +100,13 @@ export function SideBar({ setSidebarClose = () => { } }) {
 
           <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            Yêu cầu đã hoàn tất
+            {isDoctor ? "Yêu cầu đã hoàn tất" : "Lịch khám sắp tới"}
           </LinkButton>
+
+          {!isDoctor && <LinkButton onClick={setSidebarClose} href={ROUTES.MEDICAL_RECORD_PENDING}
+            className="hover:bg-[#050355] justify-start rounded-none pl-10">
+            Yêu cầu chờ phản hồi
+          </LinkButton>}
 
           {isDoctor && <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
             className="hover:bg-[#050355] justify-start rounded-none pl-10">

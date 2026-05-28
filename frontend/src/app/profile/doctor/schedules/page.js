@@ -46,7 +46,7 @@ export default function DoctorScheduleConfigPage() {
         const dailyApps = appRes.data.filter(app => {
           const appDateObj = new Date(app.date);
           const appDateString = formatLocalDate(appDateObj);
-          return appDateString === dateString && app.status !== "CANCELLED";
+          return appDateString === dateString && app.status === "CONFIRMED";
         });
         setAppointments(dailyApps);
       }

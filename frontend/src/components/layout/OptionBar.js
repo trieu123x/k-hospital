@@ -116,6 +116,9 @@ function PatientOption() {
       <LinkButton href="/profile/patient/medical_record/upcoming" className="hover:bg-[#050355] justify-start rounded-none">
         Lịch thăm khám sắp tới
       </LinkButton>
+      <LinkButton href="/profile/patient/medical_record/pending" className="hover:bg-[#050355] justify-start rounded-none">
+        Yêu cầu chờ phản hồi
+      </LinkButton>
     </>
   );
 }

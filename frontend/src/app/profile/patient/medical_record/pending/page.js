@@ -9,7 +9,7 @@ import { ConfirmModal } from "@/components/ui/Modal";
 import { useAuthStore } from "@/stores/auth";
 import axiosInstance from "@/utils/axios";
 
-export default function UpcomingAppointmentsPage() {
+export default function PendingAppointmentsPage() {
   const { user, isDoctor, isAdmin } = useAuthStore();
   const userId = user?.id; 
 
@@ -39,13 +39,20 @@ export default function UpcomingAppointmentsPage() {
         const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         const upcomingApps = res.data.filter((app) => {
-          return app.status === "CONFIRMED";
+          const isPending = app.status === "PENDING";
+          
+          const appDateObj = new Date(app.date);
+          const appDateAtMidnight = new Date(appDateObj.getFullYear(), appDateObj.getMonth(), appDateObj.getDate());
+          
+          const isFutureOrToday = appDateAtMidnight >= todayAtMidnight;
+
+          return isPending && isFutureOrToday;
         });
 
         setAppointments(upcomingApps);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy lịch sắp tới:", error);
+      console.error("Lỗi khi lấy lịch chờ xác nhận:", error);
     } finally {
       setLoading(false);
     }
@@ -119,8 +126,6 @@ export default function UpcomingAppointmentsPage() {
 
       if (now >= appDate && now < new Date(appDate.getTime() + 60 * 60 * 1000)) {
         timeStatus = "ongoing";
-      } else if (now >= new Date(appDate.getTime() + 60 * 60 * 1000)) {
-        timeStatus = "passed";
       } else if (diffHours > 0 && diffHours <= 24) {
         timeStatus = "urgent";
       }
@@ -152,7 +157,7 @@ export default function UpcomingAppointmentsPage() {
   if (!userId && !loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FBFBFB] text-gray-500 rasa-font">
-        <p className="text-lg italic">Vui lòng đăng nhập để xem danh sách lịch khám sắp tới.</p>
+        <p className="text-lg italic">Vui lòng đăng nhập để xem danh sách yêu cầu chờ xác nhận.</p>
       </div>
     );
   }
@@ -188,7 +193,7 @@ export default function UpcomingAppointmentsPage() {
         <div className="w-full max-h-[750px] overflow-y-auto pr-2 custom-scrollbar">
           {loading ? (
             <div className="text-center py-10 text-gray-500 italic rasa-font">
-              Đang tải lịch hẹn...
+              Đang tải danh sách yêu cầu...
             </div>
           ) : displayedRecords.length > 0 ? (
             displayedRecords.map((record) => (
@@ -200,7 +205,7 @@ export default function UpcomingAppointmentsPage() {
             ))
           ) : (
             <div className="text-center py-10 text-gray-500 italic rasa-font">
-              Không có lịch hẹn sắp tới nào.
+              Không có yêu cầu chờ xác nhận nào.
             </div>
           )}
         </div>

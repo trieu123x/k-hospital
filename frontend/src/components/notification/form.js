@@ -8,9 +8,14 @@ import { clearReadNotificationsApi, deleteNotificationApi, getNotifications, mar
 import { formatTime } from "@/helper/time-format"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/utils/supabase"
+import { useRouter } from "next/navigation"
+import { useAuthStore } from "@/stores/auth"
+import { ROUTES } from "@/routers"
 
-export function NotificationForm({ currentUserId = "74d74b54-51c4-44cf-9fe7-0b70c2864776", isOpen = true }) {
+export function NotificationForm({ isOpen = true }) {
   const { notifications, setNotifications, clearRead, addNotification } = useNotificationStore(state => state)
+  const { user } = useAuthStore(state => state)
+  const currentUserId = user?.id
 
   const [isLoading, setIsLoading] = useState(false)
   const [isFetchingMore, setIsFetchingMore] = useState(false)
@@ -46,6 +51,7 @@ export function NotificationForm({ currentUserId = "74d74b54-51c4-44cf-9fe7-0b70
 
     const uniqueChannelName = `realtime-notifications-${currentUserId}-${Math.random()}`
 
+    console.log("CURRENTID: ", currentUserId)
     const channel = supabase
       .channel(uniqueChannelName)
       .on(
@@ -176,15 +182,27 @@ export function NotificationForm({ currentUserId = "74d74b54-51c4-44cf-9fe7-0b70
   </div>
 }
 
-function NotificationCard({ data }) {
+function NotificationCard({ data, setSidebarClose }) {
   const { markAsRead, removeNotification } = useNotificationStore(state => state)
   const isRead = data.isRead
+
+  const { isDoctor } = useAuthStore(state => state)
+  const router = useRouter()
 
   const doctor = data.appointment?.doctor
   const senderName = doctor?.fullName || "Medicare"
   const senderAvatar = doctor?.avatarUrl || "/images/Avartar.jpg"
 
   const handleCardClick = async () => {
+    if (setSidebarClose) setSidebarClose();
+
+    // Đóng popup hoặc chuyển hướng
+    if (isDoctor) {
+      router.push("/profile/doctor/appointment");
+    } else {
+      router.push(ROUTES.MEDICAL_RECORD_UPCOMING);
+    }
+
     if (isRead) return;
     try {
       markAsRead(data.id)

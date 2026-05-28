@@ -2,7 +2,7 @@ import { appointmentService } from "../services/appointment.js"
 import { catchError } from "../helpers/catch-error.js"
 
 export const bookAppointment = catchError(async (req, res) => {
-    const { patientId, doctorId, date, shift, reason } = req.body
+    const { patientId, doctorId, date, shift, reason, overwrite } = req.body
     const requesterId = patientId
     const requesterRole = 'patient'
 
@@ -15,7 +15,8 @@ export const bookAppointment = catchError(async (req, res) => {
         doctorId,
         date,
         shift,
-        reason
+        reason,
+        overwrite
     })
 
     res.status(201).json({

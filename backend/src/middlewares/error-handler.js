@@ -8,6 +8,7 @@ export const globalErrorHandler = (err, req, res, next) => {
         success: false,
         status: err.status,
         message: err.message || "Lỗi hệ thống nội bộ",
+        currentStatus: err.currentStatus, // Pass custom property
         ...(process.env.NODE_ENV === "development" && { stack: err.stack })
     })
 }

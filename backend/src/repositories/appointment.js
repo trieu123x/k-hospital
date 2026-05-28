@@ -31,20 +31,6 @@ export const appointmentRepository = {
         const appointmentDate = new Date(date)
         
         return await prisma.$transaction(async (tx) => {
-            const existingPatientAppointment = await tx.appointment.findFirst({
-                where: {
-                    patientId: patientId,
-                    date: toVNDateRange(date),
-                    status: {
-                        not:  'CANCELLED'
-                    }
-                }
-            })
-
-            if (existingPatientAppointment) {
-                throw Object.assign(new Error("Bạn đã đặt một lịch khám trong ngày này rồi. Mỗi ngày chỉ được phép đặt tối đa 1 ca!"), { statusCode: 409 })
-            }
-
             const doctorLeave = await tx.doctorLeave.findFirst({
                 where: {
                     doctorId,
@@ -60,7 +46,7 @@ export const appointmentRepository = {
                 throw Object.assign(new Error("Bác sĩ đã báo bận/nghỉ ca khám này, vui lòng chọn ca khác!"), { statusCode: 409 })
             }
 
-            const existingAppointment = await tx.appointment.findFirst({
+            const shiftCount = await tx.appointment.count({
                 where: { 
                     doctorId,
                     date: toVNDateRange(date),
@@ -71,8 +57,8 @@ export const appointmentRepository = {
                 }
             })
 
-            if (existingAppointment) {
-                throw Object.assign(new Error("Khung giờ này vừa có người đặt, vui lòng chọn ca khác!"), { statusCode: 409 })
+            if (shiftCount >= 10) {
+                throw Object.assign(new Error("Ca khám này đã đạt giới hạn 10 yêu cầu, vui lòng chọn ca khác!"), { statusCode: 409 })
             }
 
             return await tx.appointment.create({
@@ -274,13 +260,30 @@ export const appointmentRepository = {
     },
 
     updateStatus: async (id, status) => {
-        if (status === "cancelled" || status === "canceled") {
-            return await prisma.appointment.delete({
+        if (status === "cancelled" || status === "canceled" || status === "CANCELLED") {
+            const currentApp = await prisma.appointment.findUnique({ where: { id }, select: { status: true } });
+            
+            if (currentApp && currentApp.status === "PENDING") {
+                // Hard delete nếu chưa được confirm
+                return await prisma.appointment.delete({
+                    where: { id },
+                    select: { 
+                        id: true,
+                        date: true,
+                        shift: true
+                    }
+                })
+            }
+            
+            // Soft delete (CANCELLED) nếu đã confirm
+            return await prisma.appointment.update({
                 where: { id },
+                data: { status: "CANCELLED" },
                 select: { 
-                    id: true,
+                    id: true, 
+                    status: true,
                     date: true,
-                    shift: true
+                    shift: true 
                 }
             })
         }
@@ -364,6 +367,21 @@ export const appointmentRepository = {
         return await prisma.profile.findMany({
             where: { role: 'DOCTOR', isActive: true },
             select: { id: true }
+        });
+    },
+
+    /**
+     * Kiểm tra xem bệnh nhân đã có yêu cầu/lịch khám nào chưa hoàn thành (PENDING/CONFIRMED) với bác sĩ này chưa.
+     */
+    findActivePatientAppointmentWithDoctor: async (patientId, doctorId) => {
+        return await prisma.appointment.findFirst({
+            where: {
+                patientId,
+                doctorId,
+                status: {
+                    in: ['PENDING', 'CONFIRMED']
+                }
+            }
         });
     }
 }

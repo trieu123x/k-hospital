@@ -10,9 +10,9 @@ export function UpcomingAppointmentItem({ data, onCancel }) {
 
       <div className="w-full lg:w-1/2 flex flex-col gap-1 lg:border-r border-gray-200 pr-6 relative">
         
-        {data.status === "ongoing" && (
-          <div className="absolute top-0 right-6 text-[#5F97FF] rasa-font font-bold italic text-[24px]">
-            Đang diễn ra!
+        {(data.status === "ongoing" || data.status === "passed") && (
+          <div className={`absolute top-0 right-6 rasa-font font-bold italic text-[24px] ${data.status === "ongoing" ? "text-[#5F97FF]" : "text-gray-400"}`}>
+            {data.status === "ongoing" ? "Đang diễn ra!" : "Đã kết thúc!"}
           </div>
         )}
 
@@ -34,7 +34,7 @@ export function UpcomingAppointmentItem({ data, onCancel }) {
         <div className="text-gray-800">
           Chẩn đoán:{" "}
           <span className="text-gray-500 italic">
-            {data.status === "ongoing" ? "Chờ bác sĩ ghi nhận" : "chưa có"}
+            {(data.status === "ongoing" || data.status === "passed") ? "Chờ bác sĩ ghi nhận" : "chưa có"}
           </span>
         </div>
 

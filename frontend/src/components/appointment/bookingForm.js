@@ -7,7 +7,13 @@ import { specialtyApi } from "@/routers/speciality/specialityRouter";
 import { ChevronDown } from "lucide-react";
 import { ROUTES } from "@/routers";
 import { useGlobalLoading } from "@/stores/globalLoading";
+import { useAuthStore } from "@/stores/auth";
 import axiosInstance from "@/utils/axios";
+
+const getShiftStartHour = (shiftNum) => {
+  const s = parseInt(shiftNum);
+  return s <= 5 ? 6 + s : 7 + s;
+};
 
 export function BookingForm({ patientId, onConfirm, onChangeData }) {
   const router = useRouter();
@@ -112,7 +118,19 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         });
 
         if (res && res.success) {
-          setAvailableShifts(res.data);
+          let shifts = res.data;
+
+          const selectedDate = new Date(formData.date);
+          const today = new Date();
+
+          if (selectedDate.toDateString() === today.toDateString()) {
+            const currentHour = today.getHours();
+            shifts = shifts.filter(shiftObj => {
+              const startHour = getShiftStartHour(shiftObj.shift);
+              return startHour > currentHour;
+            });
+          }
+          setAvailableShifts(shifts);
         } else {
           setAvailableShifts([]);
         }
@@ -160,7 +178,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
   const { showLoading, hideLoading } = useGlobalLoading();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (overwrite = false) => {
     if (!formData.doctorId || !formData.date || !formData.shift || !formData.reason) {
       alert("Vui lòng điền đầy đủ các thông tin bắt buộc!");
       return;
@@ -179,7 +197,8 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         doctorId: formData.doctorId,
         date: formData.date,
         shift: parseInt(formData.shift),
-        reason: formData.reason
+        reason: formData.reason,
+        overwrite // Tham số ghi đè
       };
 
       const res = await appointmentApi.bookAppointment(payload);
@@ -198,12 +217,35 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         }
 
         onConfirm();
-        router.push(ROUTES.MEDICAL_RECORD_UPCOMING);
+        router.push(ROUTES.MEDICAL_RECORD_PENDING);
       } else {
         alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
       }
     } catch (error) {
-      alert("Đã có lỗi xảy ra từ máy chủ.");
+      // Bắt lỗi HTTP 409 từ backend (REQUIRE_CONFIRMATION)
+      console.log("error: ", error)
+      if (error.response?.status === 409 && error.response?.data?.message === "REQUIRE_CONFIRMATION") {
+        hideLoading();
+        setLoading(false);
+        const currentStatus = error.response.data.currentStatus;
+
+        let confirmMsg = "";
+        if (currentStatus === "PENDING") {
+          confirmMsg = "Bạn đang có 1 yêu cầu chờ phản hồi với bác sĩ này. Bạn có muốn cập nhật lại thành yêu cầu mới này không?";
+        } else if (currentStatus === "CONFIRMED") {
+          confirmMsg = "Bạn đã có 1 lịch hẹn đã được xác nhận với bác sĩ này. Nếu tiếp tục, lịch hẹn cũ sẽ bị hủy. Bạn có chắc chắn không?";
+        }
+
+        if (confirmMsg && window.confirm(confirmMsg)) {
+          // Await để finally chờ lệnh thực thi lại
+          await handleSubmit(true);
+          return;
+        }
+        return;
+      }
+
+      const errorMsg = error.response?.data?.message || "Đã có lỗi xảy ra từ máy chủ.";
+      alert(errorMsg);
     } finally {
       setLoading(false);
       hideLoading();
@@ -211,7 +253,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
   };
 
   const formatShiftTime = (shiftNum) => {
-    const startHour = 6 + parseInt(shiftNum);
+    const startHour = getShiftStartHour(shiftNum);
     return `Ca ${shiftNum} (${startHour}:00 - ${startHour + 1}:00)`;
   };
 
@@ -313,7 +355,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
 
       <div className="mt-4 flex justify-end">
         <button
-          onClick={handleSubmit}
+          onClick={() => handleSubmit(false)}
           disabled={loading}
           className={`flex items-center justify-center gap-2 text-white rasa-font px-8 py-1.5 rounded-[20px] text-[15px] transition-colors duration-200 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0B1460] hover:bg-[#152085]'
             }`}

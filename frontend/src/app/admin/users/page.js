@@ -19,7 +19,6 @@ const TABLE_COLUMNS = [
   { key: "email", label: "Email" },
   { key: "role", label: "Vai trò", width: "150px" },
   { key: "isBlocked", label: "Chặn tài khoản", mode: "tick", width: "130px" },
-  { key: "action", label: "Xóa tài khoản", mode: "del", width: "120px" },
 ]
 
 export default function User() {
@@ -99,22 +98,7 @@ export default function User() {
     setPage(1)
   }, [option, debouncedSearch])
 
-  const handleDelete = async (row) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này không?")) return
-    showLoading("Đang xóa người dùng...")
-    try {
-      const res = await deleteUser(row.id)
-      if (res.success) {
-        setUsers(prev => prev.filter(u => u.id !== row.id))
-        setTotalCount(prev => prev - 1)
-      }
-    } catch (error) {
-      console.error("Lỗi xóa người dùng:", error)
-      alert("Xóa thất bại!")
-    } finally {
-      hideLoading()
-    }
-  }
+
 
   const handleTick = async (isChecked, row) => {
     showLoading("Đang cập nhật trạng thái...")
@@ -170,7 +154,6 @@ export default function User() {
           data={users}
           className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
-          onDelete={handleDelete}
           onTick={handleTick}
           onRowClick={(row) => router.push(`/admin/users/detail?id=${row.id}`)}
         />

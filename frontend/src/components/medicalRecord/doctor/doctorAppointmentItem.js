@@ -6,7 +6,7 @@ export function DoctorAppointmentItem({ data, onCompleteAppointment, onCancelApp
   const [note, setNote] = useState("");
 
   let borderColor = "border-gray-300"; 
-  if (data.status === "ongoing") borderColor = "border-[#7DA7FF]"; 
+  if (data.status === "ongoing" || data.status === "pending_completion") borderColor = "border-[#7DA7FF]"; 
   if (data.status === "urgent") borderColor = "border-[#FF7F8E]"; 
 
   const handleConfirm = () => {
@@ -24,14 +24,20 @@ export function DoctorAppointmentItem({ data, onCompleteAppointment, onCancelApp
     onCompleteAppointment(data.id, medicalRecordData);
   };
 
+  const handlePatientNoShow = () => {
+    setDiagnosis("Người bệnh không đến khám");
+    setPrescription("");
+    setNote("Bệnh nhân không xuất hiện trong thời gian ca khám diễn ra.");
+  };
+
   return (
     <div className={`w-full border ${borderColor} bg-white p-5 flex flex-col lg:flex-row mb-4 rasa-font text-[16px]`}>
       
       <div className="w-full lg:w-1/2 flex flex-col gap-1 lg:border-r border-gray-200 pr-6 relative">
         
-        {data.status === "ongoing" && (
+        {(data.status === "ongoing" || data.status === "pending_completion") && (
           <div className="absolute top-0 right-6 text-[#5A95FF] font-bold italic text-[20px]">
-            Đang diễn ra!
+            {data.status === "ongoing" ? "Đang diễn ra!" : "Đang chờ hoàn tất!"}
           </div>
         )}
 
@@ -55,13 +61,23 @@ export function DoctorAppointmentItem({ data, onCompleteAppointment, onCancelApp
             <span />
           )}
 
-          {data.status === "ongoing" && (
-            <button 
-              onClick={handleConfirm}
-              className="border border-[#7DA7FF] text-[#5A95FF] text-[13px] px-6 py-1 rounded-full hover:bg-blue-50 transition-colors font-bold"
-            >
-              Xác nhận hoàn tất
-            </button>
+          {(data.status === "ongoing" || data.status === "pending_completion") && (
+            <div className="flex gap-2">
+              {data.status === "pending_completion" && (
+                <button 
+                  onClick={handlePatientNoShow}
+                  className="border border-[#FF7F8E] text-[#FF7F8E] text-[13px] px-3 py-1 rounded-full hover:bg-red-50 transition-colors font-bold"
+                >
+                  Bệnh nhân vắng mặt
+                </button>
+              )}
+              <button 
+                onClick={handleConfirm}
+                className="border border-[#7DA7FF] text-[#5A95FF] text-[13px] px-6 py-1 rounded-full hover:bg-blue-50 transition-colors font-bold"
+              >
+                Xác nhận hoàn tất
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -74,7 +90,7 @@ export function DoctorAppointmentItem({ data, onCompleteAppointment, onCancelApp
           </div>
         )}
 
-        {data.status === "ongoing" ? (
+        {(data.status === "ongoing" || data.status === "pending_completion") ? (
           <div className="flex flex-col gap-3 w-full">
             <div>
               <label className="font-bold text-gray-800 text-[15px]">Chẩn đoán <span className="text-red-500">*</span>:</label>
