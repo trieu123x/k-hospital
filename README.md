@@ -11,13 +11,6 @@
 
 Hệ thống kết nối trực tiếp Bệnh nhân và Bác sĩ thông qua một quy trình khám chữa bệnh tinh gọn, từ khâu tư vấn ban đầu (qua AI), đặt lịch, đến quản lý bệnh án điện tử.
 
-> [!NOTE]
-> **Live Demo:** 
-> - Frontend: [https://k-hospital.vercel.app](https://k-hospital.vercel.app)
-> - Backend API: [https://k-hospital.up.railway.app/api-docs](https://k-hospital.up.railway.app/api-docs)
-
----
-
 ## 2. Tính năng chi tiết
 
 Hệ thống được thiết kế linh hoạt, bảo mật và phân quyền rõ ràng phục vụ cho 3 nhóm đối tượng chính (Role-Based Access Control - RBAC):
