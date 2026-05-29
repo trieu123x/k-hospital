@@ -12,13 +12,16 @@ async function reindex() {
   const diseases = await prisma.disease.findMany();
   console.log(`Tìm thấy ${diseases.length} bệnh.`);
   
-  for (const disease of diseases) {
-    try {
-      console.log(`Processing disease: ${disease.name}`);
-      const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
-        content: disease.symptoms + " " + (disease.description || "")
-      });
-      const chunks = res.data?.chunks;
+    const delay = (ms) => new Promise(res => setTimeout(res, ms));
+    
+    for (const disease of diseases) {
+      try {
+        console.log(`Processing disease: ${disease.name}`);
+        const res = await axios.post(`${AI_SERVICE_URL}/ai/disease`, {
+          content: disease.symptoms + " " + (disease.description || "")
+        });
+        await delay(2000);
+        const chunks = res.data?.chunks;
       if (chunks && Array.isArray(chunks)) {
         // Clear old chunks
         await prisma.$executeRaw`DELETE FROM disease_chunks WHERE disease_id = ${disease.id}::uuid`;
@@ -52,6 +55,7 @@ async function reindex() {
         usage: med.usageInstruction || "",
         side_effects: med.sideEffects || ""
       });
+      await delay(2000);
       const chunks = res.data?.chunks;
       if (chunks && Array.isArray(chunks)) {
         await prisma.$executeRaw`DELETE FROM medicine_chunks WHERE medicine_id = ${med.id}::uuid`;
@@ -89,6 +93,7 @@ async function reindex() {
         experience: doc.experience || "",
         education: doc.education || ""
       });
+      await delay(2000);
       const chunks = res.data?.chunks;
       if (chunks && Array.isArray(chunks)) {
         await prisma.$executeRaw`DELETE FROM doctor_chunks WHERE doctor_id = ${doc.id}::uuid`;

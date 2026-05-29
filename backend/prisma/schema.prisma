@@ -112,7 +112,7 @@ model DoctorChunk {
   id        String                      @id @default(uuid()) @db.Uuid
   doctorId  String                      @map("doctor_id") @db.Uuid
   content   String                      @db.Text
-  embedding Unsupported("vector(768)")?
+  embedding  Unsupported("vector(3072)")?
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
@@ -151,7 +151,7 @@ model DiseaseChunk {
   id        String                      @id @default(uuid()) @db.Uuid
   diseaseId String                      @map("disease_id") @db.Uuid
   content   String                      @db.Text
-  embedding Unsupported("vector(768)")?
+  embedding  Unsupported("vector(3072)")?
 
   disease Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
 
@@ -183,7 +183,7 @@ model MedicineChunk {
   id         String                      @id @default(uuid()) @db.Uuid
   medicineId String                      @map("medicine_id") @db.Uuid
   content    String                      @db.Text
-  embedding  Unsupported("vector(768)")?
+  embedding  Unsupported("vector(3072)")?
 
   medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
 
