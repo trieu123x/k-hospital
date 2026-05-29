@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="w-full grow rasa-font max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
@@ -15,9 +17,11 @@ export default function Home() {
         </p>
 
         <div className="">
-          <button className="bg-[#070575] text-white px-12 py-2 rounded-full font-medium hover:bg-[#150a8b] cursor-pointer transition-all duration-200 shadow-md">
-            Đặt lịch ngay
-          </button>
+          <Link href="/appointment">
+            <button className="bg-[#070575] text-white px-12 py-2 rounded-full font-medium hover:bg-[#150a8b] cursor-pointer transition-all duration-200 shadow-md">
+              Đặt lịch ngay
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -31,9 +35,11 @@ export default function Home() {
             Đội ngũ bác sĩ giàu kinh nghiệm, điều trị trực tiếp với phác đồ chuẩn quốc tế
           </p>
           <div className="flex justify-end mt-2">
-            <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#424cb8] transition-colors">
-              Xem ngay
-            </button>
+            <Link href="/doctors">
+              <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#424cb8] transition-colors">
+                Xem ngay
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -44,9 +50,11 @@ export default function Home() {
             Luôn cập nhật các tin tức mới nhất về y tế
           </p>
           <div className="flex justify-end mt-2">
-            <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#5ea5ff] transition-colors">
-              Xem ngay
-            </button>
+            <Link href="/news">
+              <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#5ea5ff] transition-colors">
+                Xem ngay
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -57,9 +65,11 @@ export default function Home() {
             Cung cấp từ điển khổng lồ về thông tin của các loại bệnh và các loại thuốc
           </p>
           <div className="flex justify-end mt-2">
-            <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#6c7bfa] transition-colors">
-              Tra cứu ngay
-            </button>
+            <Link href="/medicines">
+              <button className="text-[12px] cursor-pointer px-3 py-0.5 rounded-full border border-white hover:bg-white hover:text-[#6c7bfa] transition-colors">
+                Tra cứu ngay
+              </button>
+            </Link>
           </div>
         </div>
 
