@@ -1,8 +1,29 @@
-from sentence_transformers import SentenceTransformer
+from google import genai
+from app.config.config import settings
 
 class EmbeddingService:
     def __init__(self):
-        self.model = SentenceTransformer('keepitreal/vietnamese-sbert')
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.model_name = "gemini-embedding-001"
+
+    async def _get_embedding(self, text: str) -> list[float]:
+        import asyncio
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = await self.client.aio.models.embed_content(
+                    model=self.model_name,
+                    contents=text
+                )
+                return response.embeddings[0].values
+            except Exception as e:
+                print(f"[EMBEDDING ERROR] Gemini API error: {str(e)[:50]}")
+                if "429" in str(e) or "quota" in str(e).lower() or attempt < max_retries - 1:
+                    print("Retrying after 5 seconds...")
+                    await asyncio.sleep(5)
+                else:
+                    raise e
+        return [0.0] * 3072
 
     # Vector data bệnh (có áp dụng chunking)
     async def embed_disease_data(self, disease_name: str, description: str, symptoms: str) -> list[dict]:
@@ -12,11 +33,11 @@ class EmbeddingService:
         
         results = []
         for i, chunk in enumerate(chunks):
-            vector = self.model.encode(chunk)
+            vector = await self._get_embedding(chunk)
             results.append({
                 "chunk_index": i,
                 "content": chunk,
-                "vector": vector.tolist()
+                "vector": vector
             })
         return results
 
@@ -28,11 +49,11 @@ class EmbeddingService:
         
         results = []
         for i, chunk in enumerate(chunks):
-            vector = self.model.encode(chunk)
+            vector = await self._get_embedding(chunk)
             results.append({
                 "chunk_index": i,
                 "content": chunk,
-                "vector": vector.tolist()
+                "vector": vector
             })
         return results
 
@@ -44,17 +65,16 @@ class EmbeddingService:
         
         results = []
         for i, chunk in enumerate(chunks):
-            vector = self.model.encode(chunk)
+            vector = await self._get_embedding(chunk)
             results.append({
                 "chunk_index": i,
                 "content": chunk,
-                "vector": vector.tolist()
+                "vector": vector
             })
         return results
 
     # Vector data của đoạn chat
     async def embed_user_query(self, user_message_content: str) -> list[float]:
-        vector = self.model.encode(user_message_content)
-        return vector.tolist()
+        return await self._get_embedding(user_message_content)
 
 embedding_service = EmbeddingService()
