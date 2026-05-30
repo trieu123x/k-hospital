@@ -14,6 +14,10 @@ Hệ thống kết nối trực tiếp Bệnh nhân và Bác sĩ thông qua mộ
 > [!NOTE]
 > **Live Demo:** 
 > - [https://k-hospital.vercel.app](https://k-hospital.vercel.app)
+>
+> **Tài khoản Admin (Demo):**
+> - Email: `tiendung123h@gmail.com`
+> - Mật khẩu: `admin123`
 
 ---
 
