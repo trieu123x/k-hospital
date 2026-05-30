@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
 
   const fetchUser = useAuthStore(state => state.fetchUser)
   const user = useAuthStore(state => state.user)
-  
+
   const isLoadingGlobal = useGlobalLoading(state => state.isLoading)
   const loadingMessage = useGlobalLoading(state => state.message)
 
