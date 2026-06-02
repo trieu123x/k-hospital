@@ -11,14 +11,16 @@ vi.mock('@/repositories/appointment.js', () => ({
     findByDoctorId: vi.fn(),
     getUnavailableSlots: vi.fn(),
     create: vi.fn(),
-    updateStatus: vi.fn()
+    updateStatus: vi.fn(),
+    findActivePatientAppointmentWithDoctor: vi.fn().mockResolvedValue(null)
   }
 }))
 
 vi.mock('@/configs/prisma-config.js', () => ({
   prisma: {
     profile: {
-      findMany: vi.fn()
+      findMany: vi.fn(),
+      findUnique: vi.fn().mockResolvedValue(null)
     }
   }
 }))

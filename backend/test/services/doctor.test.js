@@ -55,7 +55,7 @@ describe('doctorService', () => {
       const result = await doctorService.getAllDoctors(1, 10, { name: 'nguyễn' })
       expect(result.doctors).toHaveLength(1)
       expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith(
-        { profile: { fullName: { contains: 'nguyễn', mode: 'insensitive' } } },
+        { profile: { fullNameClean: { contains: 'nguyen', mode: 'insensitive' } } },
         0,
         10
       )
@@ -80,7 +80,7 @@ describe('doctorService', () => {
       expect(result.doctors).toHaveLength(1)
       expect(doctorRepository.findAllDoctors).toHaveBeenCalledWith(
         {
-          profile: { fullName: { contains: 'an', mode: 'insensitive' } },
+          profile: { fullNameClean: { contains: 'an', mode: 'insensitive' } },
           specialtyId: specId
         },
         0,

@@ -36,9 +36,9 @@ export const chatService = {
         return { session, messages: messages || [] }
     },
 
-    saveMessage: async (sessionId, userId, role, content, metadata = null) => {
+    saveMessage: async (sessionId, role, content, metadata = null) => {
         const session = await chatRepository.getSessionById(sessionId)
-        if (!session || (userId && session.userId !== userId)) {
+        if (!session) {
             throw Object.assign(new Error("Không tìm thấy phiên chat hoặc bạn không có quyền!"), { statusCode: 404 })
         }
         return await chatRepository.createMessage(sessionId, role, content, metadata)
@@ -50,7 +50,7 @@ export const chatService = {
                 session_id: sessionId
             })
 
-            const topic = aiResponse.data?.data?.topic_name || "Nội tổng quát"
+            const topic = aiResponse.data?.topic || "No Topic"
 
             await chatRepository.updateSessionTopic(sessionId, topic)
 

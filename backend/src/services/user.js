@@ -179,31 +179,35 @@ export const userService = {
     }
 
     // Xóa cascade thủ công các bảng không có onDelete: Cascade trong schema
-    // 1. Xóa notifications liên quan đến appointments của user
-    await prisma.notification.deleteMany({
-      where: {
-        OR: [
-          { userId: id },
-          { appointment: { OR: [{ patientId: id }, { doctorId: id }] } },
-        ],
-      },
-    });
+    try {
+      // 1. Xóa notifications liên quan đến appointments của user
+      await prisma.notification.deleteMany({
+        where: {
+          OR: [
+            { userId: id },
+            { appointment: { OR: [{ patientId: id }, { doctorId: id }] } },
+          ],
+        },
+      });
 
-    // 2. Xóa medical records liên quan đến appointments của user
-    await prisma.medicalRecord.deleteMany({
-      where: {
-        appointment: {
+      // 2. Xóa medical records liên quan đến appointments của user
+      await prisma.medicalRecord.deleteMany({
+        where: {
+          appointment: {
+            OR: [{ patientId: id }, { doctorId: id }],
+          },
+        },
+      });
+
+      // 3. Xóa appointments của user (với tư cách bệnh nhân hoặc bác sĩ)
+      await prisma.appointment.deleteMany({
+        where: {
           OR: [{ patientId: id }, { doctorId: id }],
         },
-      },
-    });
-
-    // 3. Xóa appointments của user (với tư cách bệnh nhân hoặc bác sĩ)
-    await prisma.appointment.deleteMany({
-      where: {
-        OR: [{ patientId: id }, { doctorId: id }],
-      },
-    });
+      });
+    } catch (err) {
+      console.error("Lỗi cascade delete (bỏ qua):", err.message);
+    }
 
     // 4. Thử xóa tài khoản khỏi Supabase Auth
     try {

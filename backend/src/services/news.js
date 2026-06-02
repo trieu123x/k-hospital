@@ -49,17 +49,7 @@ export const newsService = {
     },
 
     getNewsList: async (filters) => {
-        const { page = 1, limit = 30 } = filters
-        const { items, total } = await newsRespository.findWithFilter(filters)
-        return {
-            items,
-            pagination: {
-                page,
-                limit,
-                totalItems: total,
-                totalPages: Math.ceil(total / limit)
-            }
-        }
+        return await newsRespository.findWithFilter(filters)
     },
 
     getNewsDetail: async (id) => {

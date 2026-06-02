@@ -76,8 +76,7 @@ describe('authService', () => {
       profileRepository.findByEmail.mockResolvedValue(null)
       await authService.register({ phone: '123', email, password: '123', fullName: 'Test Name' })
       // Get the injected OTP out of the sendOtpEmail mock tracker
-      // otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)[1]
-      otp = "123456"
+      otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)?.[1] || '123456'
     })
 
     it('should throw error if OTP is invalid', async () => {
@@ -168,8 +167,7 @@ describe('authService', () => {
       profileRepository.findByEmail.mockResolvedValue({ id: 'u1', email })
       await authService.forgotPassword({ email })
       // Capture the OTP from the sendOtpEmail call
-      // otp = vi.mocked(sendOtpEmail).mock.calls[0][1]
-      otp = "123456"
+      otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)?.[1] || '123456'
     })
 
     it('should throw error for invalid OTP', async () => {

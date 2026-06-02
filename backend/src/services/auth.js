@@ -3,6 +3,10 @@ import { profileRepository } from "../repositories/auth.js";
 import { uploadHelper } from "../helpers/storage-helper.js";
 import { formatPhoneE164 } from "../helpers/string-format.js";
 
+// In-memory OTP stores (module-level, shared across calls in same process)
+export const registerOtpStore = {};
+export const forgotPasswordOtpStore = {};
+
 export const authService = {
   registerDoctor: async ({ email, fullName, phone, file, avatarCropData }) => {
     // 1. Phòng thủ trùng lặp Email & Số điện thoại
@@ -73,7 +77,7 @@ export const authService = {
   },
 
   /**
-   * Bệnh nhân tự đăng ký tài khoản mới 
+   * Bệnh nhân tự đăng ký tài khoản mới - lưu tạm, gửi OTP qua email
    */
   register: async ({ email, password, fullName, phone }) => {
     // 1. Kiểm tra trùng lặp thông tin
@@ -84,20 +88,63 @@ export const authService = {
     const existingEmail = await profileRepository.findByEmail(email);
     if (existingEmail) throw Object.assign(new Error("Email đã được sử dụng"), { statusCode: 409 });
 
-    // 3. Đăng ký qua Supabase
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone: formattedPhone, role: "PATIENT" },
-      },
-    });
+    // 2. Tạo OTP và lưu tạm thông tin đăng ký
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    registerOtpStore[email] = { otp, password, fullName, phone: formattedPhone, expiresAt: Date.now() + 10 * 60 * 1000 };
 
-    if (error) throw Object.assign(new Error(`Lỗi đăng ký: ${error.message}`), { statusCode: 400 });
+    // 3. Gửi OTP qua email
+    try {
+      const { sendOtpEmail } = await import('./mail.js');
+      await sendOtpEmail(email, otp);
+    } catch (_) { /* ignore if mail not configured */ }
 
     return {
       email,
       message: "Vui lòng kiểm tra hộp thư email và bấm vào link để kích hoạt tài khoản."
+    };
+  },
+
+  /**
+   * Xác thực OTP và hoàn tất đăng ký
+   */
+  verifyRegister: async ({ email, otp }) => {
+    const record = registerOtpStore[email];
+    if (!record || record.otp !== otp) {
+      throw Object.assign(new Error("OTP không đúng"), { statusCode: 400 });
+    }
+    if (Date.now() > record.expiresAt) {
+      delete registerOtpStore[email];
+      throw Object.assign(new Error("OTP đã hết hạn"), { statusCode: 400 });
+    }
+
+    const { password, fullName, phone } = record;
+    delete registerOtpStore[email];
+
+    // Đăng ký qua Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName, phone, role: "PATIENT" },
+      },
+    });
+
+    if (error) throw Object.assign(new Error(error.message), { statusCode: 400 });
+
+    const userId = data.user?.id;
+    const profile = await profileRepository.create({
+      id: userId,
+      fullName,
+      email,
+      phone,
+      role: 'PATIENT'
+    });
+
+    return {
+      userId: profile.id,
+      fullName: profile.fullName,
+      phone: profile.phone,
+      role: profile.role
     };
   },
 
@@ -111,13 +158,13 @@ export const authService = {
     const userId = authData.user?.id;
     const profile = await profileRepository.findById(userId);
 
-    if (!profile) throw Object.assign(new Error("Tài khoản không tồn tại trên hệ thống"), { statusCode: 404 });
+    if (!profile) throw Object.assign(new Error("Tài khoản không tồn tại trong hệ thống"), { statusCode: 404 });
     if (profile.isActive === false) throw Object.assign(new Error("Tài khoản của bạn đã bị khóa."), { statusCode: 403 });
 
     return {
       accessToken: authData.session.access_token,
       refreshToken: authData.session.refresh_token,
-      expiresIn: authData.session.expires_in,
+      expiresIn: authData.session.refresh_token ? authData.session.expires_in : undefined,
       user: {
         userId: profile.id,
         fullName: profile.fullName,
@@ -141,20 +188,57 @@ export const authService = {
     return profile;
   },
 
+  /**
+   * Quên mật khẩu - kiểm tra email tồn tại, gửi OTP
+   */
   forgotPassword: async ({ email }) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) throw Object.assign(new Error(`Không thể gửi yêu cầu: ${error.message}`), { statusCode: 400 });
-    return { message: "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi đến bạn." };
+    const existingUser = await profileRepository.findByEmail(email);
+    if (!existingUser) {
+      throw Object.assign(new Error("Email không tồn tại trong hệ thống"), { statusCode: 404 });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    forgotPasswordOtpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
+
+    try {
+      const { sendOtpEmail } = await import('./mail.js');
+      await sendOtpEmail(email, otp);
+    } catch (_) { /* ignore if mail not configured */ }
+
+    return { message: "OTP đã được gửi đến email của bạn" };
   },
 
+  /**
+   * Đặt lại mật khẩu bằng OTP
+   */
   resetPassword: async ({ email, otp, newPassword }) => {
-    const { error: verifyError } = await supabase.auth.verifyOtp({ email, token: otp, type: 'recovery' });
-    if (verifyError) throw Object.assign(new Error("Mã OTP không hợp lệ hoặc đã hết hạn"), { statusCode: 400 });
+    const record = forgotPasswordOtpStore[email];
+    if (!record) {
+      throw Object.assign(new Error("OTP không hợp lệ hoặc chưa được yêu cầu"), { statusCode: 400 });
+    }
+    if (record.otp !== otp) {
+      throw Object.assign(new Error("OTP không đúng"), { statusCode: 400 });
+    }
+    if (Date.now() > record.expiresAt) {
+      delete forgotPasswordOtpStore[email];
+      throw Object.assign(new Error("OTP đã hết hạn"), { statusCode: 400 });
+    }
 
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-    if (updateError) throw Object.assign(new Error(`Lỗi cập nhật: ${updateError.message}`), { statusCode: 400 });
+    // Consume OTP
+    delete forgotPasswordOtpStore[email];
 
-    await supabase.auth.signOut();
-    return { message: "Đặt lại mật khẩu thành công!" };
+    const { supabaseAdmin: admin } = await import('../configs/supabase-config.js');
+    if (!admin) throw Object.assign(new Error("Cần cấu hình SUPABASE_SERVICE_ROLE_KEY"), { statusCode: 500 });
+
+    const { data: listData, error: listError } = await admin.auth.admin.listUsers();
+    if (listError) throw Object.assign(new Error(listError.message), { statusCode: 500 });
+
+    const user = listData.users.find(u => u.email === email);
+    if (!user) throw Object.assign(new Error("Không tìm thấy người dùng"), { statusCode: 404 });
+
+    const { error: updateError } = await admin.auth.admin.updateUserById(user.id, { password: newPassword });
+    if (updateError) throw Object.assign(new Error(updateError.message), { statusCode: 400 });
+
+    return { message: "Đặt lại mật khẩu thành công" };
   },
 };

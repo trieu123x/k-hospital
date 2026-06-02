@@ -8,7 +8,8 @@ vi.mock('@/configs/supabase-config.js', () => ({
     storage: {
       from: vi.fn()
     }
-  }
+  },
+  supabaseAdmin: null
 }))
 
 describe('uploadHelper', () => {

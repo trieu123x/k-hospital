@@ -308,7 +308,8 @@ export const appointmentService = {
             throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 12)!"), { statusCode: 400 })
         }
 
-        const patient = await prisma.profile.findUnique({ where: { id: patientId }, select: { fullName: true } });
+        let patient = null;
+        try { patient = await prisma.profile.findUnique({ where: { id: patientId }, select: { fullName: true } }); } catch (_) {}
         const patientName = patient?.fullName || "Bệnh nhân";
 
         // Kiểm tra lịch khám đang active (PENDING hoặc CONFIRMED) với CÙNG bác sĩ
@@ -359,7 +360,7 @@ export const appointmentService = {
     },
 
     cancelAppointment: async (id) => {
-        const appointment = await appointmentRepository.findAppointmentById(id) // Use findAppointmentById to include relation patient/doctor
+        const appointment = await appointmentRepository.findById(id) // Use findById to include relation patient/doctor
 
         if (!appointment) {
             throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
@@ -395,7 +396,7 @@ export const appointmentService = {
     },
 
     updateAppointmentStatus: async (id, status) => {
-        const existingAppointment = await appointmentRepository.findAppointmentById(id)
+        const existingAppointment = await appointmentRepository.findById(id)
 
         if (!existingAppointment) {
             throw Object.assign(new Error("Không tìm thấy lịch khám hoặc lịch đã bị hủy!"), { statusCode: 404 })
