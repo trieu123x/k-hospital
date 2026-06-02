@@ -47,6 +47,10 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+app.get('/ping', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'MediCare Backend is alive!' });
+});
+
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/doctors", doctorRouter);
