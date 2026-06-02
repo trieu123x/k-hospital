@@ -1,37 +1,54 @@
 import asyncio
 import logging
 from google import genai
+from google.genai import types
 from app.config.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Config cho các tác vụ phân loại/viết lại query (output ngắn, không cần stream)
+SHORT_TASK_CONFIG = types.GenerateContentConfig(
+    max_output_tokens=128,
+    temperature=0.0,        # Deterministic — phân loại cần chính xác
+    top_p=0.9,
+)
+
+# Config cho stream chat chính 
+CHAT_STREAM_CONFIG = types.GenerateContentConfig(
+    max_output_tokens=1024, # ~700-800 từ, đủ cho câu trả lời y tế đầy đủ
+    temperature=0.7,
+    top_p=0.95,
+    system_instruction=(
+        "Bạn là MediAssist — trợ lý y tế AI chuyên nghiệp. "
+        "Trả lời bằng tiếng Việt, ngắn gọn, chính xác, có cấu trúc rõ ràng. "
+        "Không bịa thông tin y tế. Ưu tiên an toàn người dùng."
+    ),
+)
 
 class AIProvider:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.fallback_models = [
-            'gemini-3.5-flash',
-            'gemini-2.5-flash', 
-            'gemini-2.0-flash', 
-            'gemini-1.5-flash', 
-            'gemini-1.5-pro'
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
         ]
 
     async def generate_chat(self, prompt: str):
         """
-        - Hàm nhận vào prompt hoàn chỉnh để ai xử lý và trả về response
-        - Trả về liên tục từng chuỗi ký nhỏ lẻ(gen ra chuỗi nào thì trả về luôn chuỗi đó) 
-        thay vì trả 1 lần cho chân thật 
-        (Dùng cho chat là hợp lý)
+        Stream từng chunk nhỏ cho chat chính.
+        Dùng CHAT_STREAM_CONFIG với max_output_tokens để tránh stream > 100s.
         """
         last_exception = None
         for model in self.fallback_models:
             try:
                 response = await self.client.aio.models.generate_content_stream(
                     model=model,
-                    contents=prompt
+                    contents=prompt,
+                    config=CHAT_STREAM_CONFIG,
                 )
-                
-                # Try to fetch the first chunk to catch immediate API errors like 503
+
                 iterator = response.__aiter__()
                 try:
                     first_chunk = await iterator.__anext__()
@@ -40,35 +57,54 @@ class AIProvider:
                 except StopAsyncIteration:
                     return
 
-                # If the first chunk succeeds, stream the rest
                 async for texts in iterator:
                     if texts.text:
                         yield texts.text
-                
-                return # success
+
+                return  # success
             except asyncio.CancelledError:
                 print("[CẢNH BÁO] User đã ngắt kết nối. Đã hủy tiến trình tạo chữ của AI!")
                 raise
             except Exception as e:
                 print(f"[AI MODEL FALLBACK] Model {model} thất bại: {e}")
                 last_exception = e
-                continue # try next model
-        
+                continue
+
         raise last_exception or Exception("Tất cả các model đều thất bại hoặc quá tải.")
 
-    async def generate_full_text(self, prompt: str) -> str:
+    async def generate_short(self, prompt: str) -> str:
         """
-        - Hàm trả về toàn bộ kết quả ngay lập tức phục vụ cho trường hợp cần trả về toàn bộ
-        (Ví dụ như generate topic chẳng hạn)
+        Sinh text ngắn (phân loại intent, viết lại query…).
+        Dùng SHORT_TASK_CONFIG — không stream, không cần system_instruction phức tạp.
         """
         last_exception = None
         for model in self.fallback_models:
             try:
                 response = await self.client.aio.models.generate_content(
                     model=model,
-                    contents=prompt
+                    contents=prompt,
+                    config=SHORT_TASK_CONFIG,
                 )
-                return response.text            
+                return response.text or ""
+            except Exception as e:
+                print(f"[AI MODEL FALLBACK SHORT] Model {model} thất bại: {e}")
+                last_exception = e
+                continue
+        raise last_exception or Exception("Tất cả các model đều thất bại hoặc quá tải.")
+
+    async def generate_full_text(self, prompt: str) -> str:
+        """
+        Trả về toàn bộ kết quả ngay lập tức (dùng cho generate topic, summary…).
+        """
+        last_exception = None
+        for model in self.fallback_models:
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=CHAT_STREAM_CONFIG,
+                )
+                return response.text
             except Exception as e:
                 print(f"[AI MODEL FALLBACK] Model {model} thất bại: {e}")
                 last_exception = e
@@ -76,7 +112,8 @@ class AIProvider:
         raise last_exception or Exception("Tất cả các model đều thất bại hoặc quá tải.")
 
     async def generate_text(self, prompt: str) -> str:
-        """Sinh ra text phản hồi trong 1 lần"""
+        """Alias cho generate_full_text."""
         return await self.generate_full_text(prompt)
+
 
 ai_provider = AIProvider()

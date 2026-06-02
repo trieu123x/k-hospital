@@ -1,10 +1,11 @@
 from app.config.ai_model import ai_provider
 from app.config.database import db
-from google.genai import errors
 from app.services.embedding_vector_service import embedding_service
 from enum import Enum
+import asyncio
 import json
 import uuid
+import time
 
 class Intent(str, Enum):
     SYMPTOM_INQUIRY = "symptom_inquiry"
@@ -27,20 +28,13 @@ class RAGService:
         if not history_text:
             return user_input
             
-        prompt = f"""
-        Dựa trên lịch sử trò chuyện và câu hỏi mới nhất của người dùng, hãy viết lại câu hỏi đó thành một câu truy vấn độc lập, đầy đủ ý nghĩa để tìm kiếm trong cơ sở dữ liệu y khoa.
-        
-        Lịch sử:
-        {history_text}
-        
-        Câu hỏi mới: {user_input}
-        
-        Chỉ trả về câu truy vấn đã viết lại, không thêm bất kỳ giải thích nào khác.
-        """
+        prompt = (
+            f"Lịch sử:\n{history_text}\n\n"
+            f"Câu hỏi mới: {user_input}\n\n"
+            "Viết lại câu hỏi thành câu truy vấn y khoa độc lập, đầy đủ nghĩa. Chỉ trả về câu truy vấn, không giải thích."
+        )
         try:
-            rewritten = ""
-            async for chunk in ai_provider.generate_chat(prompt):
-                rewritten += chunk
+            rewritten = await ai_provider.generate_short(prompt)
             return rewritten.strip() if rewritten else user_input
         except Exception:
             return user_input
@@ -49,31 +43,16 @@ class RAGService:
         """
         Phân loại ý định của người dùng trước khi truy xuất dữ liệu.
         """
-        prompt = f"""
-        Bạn là bộ phân loại intent cho chatbot y tế.
-
-        Hãy phân loại câu hỏi của người dùng vào đúng một trong các nhãn sau:
-        - symptom_inquiry: hỏi về triệu chứng, nguyên nhân bệnh
-        - medicine_inquiry: hỏi về thuốc, cách dùng, tác dụng phụ
-        - doctor_search: tìm bác sĩ hoặc chuyên khoa phù hợp
-        - appointment_booking: đặt lịch khám, hẹn bác sĩ
-        - general_health: tư vấn sức khỏe chung
-        - emergency: tình huống khẩn cấp, triệu chứng nguy hiểm
-
-        Lịch sử hội thoại:
-        {history_text}
-
-        Câu hỏi người dùng:
-        {user_input}
-
-        Chỉ trả về duy nhất tên nhãn, không giải thích.
-        """
+        labels = ", ".join(e.value for e in Intent)
+        prompt = (
+            f"Phân loại intent câu hỏi y tế sau vào đúng một nhãn: {labels}\n"
+            f"Lịch sử:\n{history_text}\n"
+            f"Câu hỏi: {user_input}\n"
+            "Chỉ trả về tên nhãn, không giải thích."
+        )
 
         try:
-            result = ""
-            async for chunk in ai_provider.generate_chat(prompt):
-                result += chunk
-
+            result = await ai_provider.generate_short(prompt)
             intent = result.strip().lower()
             if intent in [e.value for e in Intent]:
                 return Intent(intent)
@@ -83,6 +62,8 @@ class RAGService:
         return Intent.GENERAL_HEALTH
 
     async def build_and_stream(self, session_id: str, user_input: str):
+        t_start = time.time()
+
         # 1. Lấy lịch sử chat
         history_query = """
             SELECT role, content
@@ -91,21 +72,36 @@ class RAGService:
             ORDER BY created_at DESC
             LIMIT 6
         """
-        history_rows = await db.fetch(history_query, session_id)
+        try:
+            history_rows = await db.fetch(history_query, session_id)
+        except Exception as e:
+            print(f"[RAG] ⚠️ Không lấy được lịch sử chat: {e}, tiếp tục với lịch sử rỗng")
+            history_rows = []
         history = list(reversed(history_rows))
+        role_label = {"USER": "Người dùng", "AI": "Trợ lý"}
         history_text = "\n".join(
-            f"{row['role']}: {row['content']}"
+            f"{role_label.get(row['role'], row['role'])}: {row['content'][:400]}"
             for row in history
         )
 
-        # 2. Viết lại câu hỏi và tạo embedding
-        standalone_query = await self.rewrite_query(history_text, user_input)
-        query_vector = await embedding_service.embed_user_query(standalone_query)
-        vector_str = f"[{','.join(map(str, query_vector))}]"
+        # 2. Rewrite query + classify intent SONG SONG (cả hai dùng generate_short)
+        t_parallel = time.time()
+        rewrite_result, intent_result = await asyncio.gather(
+            self.rewrite_query(history_text, user_input),
+            self.classify_intent(history_text, user_input),
+            return_exceptions=True
+        )
+        rewritten_query = rewrite_result if not isinstance(rewrite_result, Exception) else user_input
+        intent = intent_result if not isinstance(intent_result, Exception) else Intent.GENERAL_HEALTH
+        print(f"[RAG] Intent: {intent} | Rewritten: {rewritten_query!r} | prep: {time.time()-t_parallel:.2f}s")
 
-        # 3. Xác định intent
-        intent = await self.classify_intent(history_text, user_input)
-        print(f"[RAG] Intent: {intent}")
+        # 3. Embed câu đã rewrite (ngữ nghĩa đầy đủ hơn user_input gốc)
+        try:
+            query_vector = await embedding_service.embed_user_query(rewritten_query)
+        except Exception:
+            query_vector = [0.0] * 3072
+        vector_str = f"[{','.join(map(str, query_vector))}]"
+        print(f"[RAG] Intent: {intent} | parallel prep: {time.time()-t_parallel:.2f}s")
 
         # 4. Định nghĩa các truy vấn vector
         disease_query = """
@@ -149,31 +145,46 @@ class RAGService:
             LIMIT 3
         """
 
-        # 5. Truy xuất dữ liệu theo intent
-        diseases, medicines, doctor_chunks = [], [], []
+        # 5. Truy xuất dữ liệu theo intent — tất cả queries chạy SONG SONG
+        t_db = time.time()
 
-        try:
+        async def _fetch_diseases():
             if intent in [Intent.SYMPTOM_INQUIRY, Intent.GENERAL_HEALTH, Intent.EMERGENCY]:
-                diseases = await db.fetch(disease_query, vector_str, standalone_query)
+                try:
+                    return await db.fetch(disease_query, vector_str, user_input)
+                except Exception as e:
+                    print(f"[RAG] Lỗi tra cứu disease: {e}")
+            return []
 
+        async def _fetch_medicines():
             if intent == Intent.MEDICINE_INQUIRY:
-                medicines = await db.fetch(medicine_query, vector_str, standalone_query)
+                try:
+                    return await db.fetch(medicine_query, vector_str, user_input)
+                except Exception as e:
+                    print(f"[RAG] Lỗi tra cứu medicine: {e}")
+            return []
 
+        async def _fetch_doctors():
             if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING, Intent.EMERGENCY]:
-                doctor_chunks = await db.fetch(doctor_chunks_query, vector_str, standalone_query)
+                try:
+                    return await db.fetch(doctor_chunks_query, vector_str, user_input)
+                except Exception as e:
+                    print(f"[RAG] Lỗi tra cứu doctor: {e}")
+            return []
 
-        except Exception as e:
-            print(f"[RAG] Lỗi tra cứu vector: {e}")
-            diseases, medicines, doctor_chunks = [], [], []
+        async def _fetch_etl():
+            if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING]:
+                try:
+                    etl_q = "SELECT report_name, reports FROM etl_reports WHERE report_name = 'top_doctors' ORDER BY created_at DESC LIMIT 1"
+                    return await db.fetch(etl_q)
+                except Exception as e:
+                    print(f"[RAG] Lỗi truy vấn etl_reports: {e}")
+            return []
 
-        # 6. Thu thập dữ liệu từ ETL_REPORTS cho gợi ý (Chiến lược: Chỉ gửi khuyến nghị khi intent liên quan)
-        etl_reports_data = []
-        if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING]:
-            try:
-                etl_query = "SELECT report_name, reports FROM etl_reports WHERE report_name = 'top_doctors' ORDER BY created_at DESC LIMIT 1"
-                etl_reports_data = await db.fetch(etl_query)
-            except Exception as e:
-                print(f"[RAG] Lỗi truy vấn etl_reports: {e}")
+        diseases, medicines, doctor_chunks, etl_reports_data = await asyncio.gather(
+            _fetch_diseases(), _fetch_medicines(), _fetch_doctors(), _fetch_etl()
+        )
+        print(f"[RAG] DB queries: {time.time()-t_db:.2f}s")
 
         context = []
 
@@ -199,41 +210,53 @@ class RAGService:
 
         context_text = "\n\n".join(context)
 
-        prompt = f"""
-        Bạn là trợ lý y tế AI (MediAssist).
+        doctor_card_rule = (
+            'Nếu nhắc đến bác sĩ từ ngữ cảnh, BẮT BUỘC thêm thẻ: '
+            '[DOCTOR_CARD id="<id>" name="<name>" specialty="<specialty>" avatar="<avatar_url>"] '
+            'ngay sau tên bác sĩ. Thay thế bằng dữ liệu thật, avatar="None" nếu không có.'
+        )
 
-        Ngữ cảnh tham khảo (bao gồm thông tin vector và gợi ý từ hệ thống):
-        {context_text}
-
-        Lịch sử hội thoại:
-        {history_text}
-
-        Câu hỏi hiện tại:
-        {user_input}
-
-        Yêu cầu: 
-        - Hãy trả lời ngắn gọn, chính xác, và hữu ích.
-        - Không cần chào
-        - Nếu người dùng tìm bác sĩ hoặc đặt lịch, hãy ưu tiên dùng danh sách 'Bác sĩ (Phù hợp)' trước. Nếu có 'Gợi ý hệ thống (Top Bác sĩ)', có thể dùng để khuyến nghị thêm các lựa chọn uy tín nếu phù hợp.
-        - QUAN TRỌNG: Nếu bạn gợi ý hoặc nhắc đến một bác sĩ từ Ngữ cảnh tham khảo, BẮT BUỘC phải đính kèm một thẻ thông tin bác sĩ vào cuối phần mô tả về bác sĩ đó theo định dạng sau:
-          [DOCTOR_CARD id="<id>" name="<name>" specialty="<specialty>" avatar="<avatar_url>"]
-          Hãy chắc chắn thay thế <id>, <name>, <specialty>, <avatar_url> bằng dữ liệu thật trong ngữ cảnh. Nếu không có avatar, để avatar="None".
-        """
+        prompt = (
+            f"## Ngữ cảnh\n{context_text}\n\n"
+            f"## Lịch sử hội thoại\n{history_text}\n\n"
+            f"## Câu hỏi\n{user_input}\n\n"
+            f"## Yêu cầu\n"
+            f"- Trả lời ngắn gọn, chính xác, hữu ích.\n"
+            f"- Ưu tiên 'Bác sĩ (Phù hợp)' khi tìm bác sĩ/đặt lịch; dùng 'Gợi ý hệ thống' để bổ sung nếu cần.\n"
+            f"- {doctor_card_rule}"
+        )
 
         full_response = ""
+        t_stream = time.time()
+        print(f"[RAG] Generating response... (total prep: {t_stream-t_start:.2f}s)")
 
         try:
+            first_token_time = None
+
             async for chunk in ai_provider.generate_chat(prompt):
+                if first_token_time is None:
+                    first_token_time = time.time()
+                    print(
+                        f"[RAG] First token latency: "
+                        f"{first_token_time - t_stream:.2f}s"
+                    )
+
                 full_response += chunk
                 yield chunk
 
-        except Exception as e:
-            error_message = "Xin lỗi, hệ thống AI hiện đang quá tải hoặc đã hết hạn mức sử dụng. Vui lòng thử lại sau."
+        except asyncio.CancelledError:
+            print("[RAG] User ngắt kết nối, hủy stream")
+            raise
 
+        except Exception as e:
+            import traceback
+            error_message = "Xin lỗi, hệ thống AI hiện đang quá tải hoặc đã hết hạn mức sử dụng. Vui lòng thử lại sau."
             full_response = error_message
             yield error_message
+            print(f"[RAG] ❌ Gemini API error: {type(e).__name__}: {e}")
+            traceback.print_exc()
 
-            print(f"[RAG] Gemini API error: {e}")
+        print(f"[RAG] ✅ stream: {time.time()-t_stream:.2f}s | TOTAL: {time.time()-t_start:.2f}s")
 
         await db.execute(
             """
