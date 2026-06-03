@@ -84,20 +84,26 @@ class RAGService:
             for row in history
         )
 
-        # 2. Rewrite query + classify intent SONG SONG (cả hai dùng generate_short)
+        # 2. Rewrite query + classify intent + pre-embed user_input gốc SONG SONG
+        # Pre-embed user_input gốc ngay lập tức để cache có thể hit ở lần sau
         t_parallel = time.time()
-        rewrite_result, intent_result = await asyncio.gather(
+        rewrite_result, intent_result, prefetch_vector = await asyncio.gather(
             self.rewrite_query(history_text, user_input),
             self.classify_intent(history_text, user_input),
+            embedding_service.embed_user_query(user_input),  # Cache user_input gốc
             return_exceptions=True
         )
         rewritten_query = rewrite_result if not isinstance(rewrite_result, Exception) else user_input
         intent = intent_result if not isinstance(intent_result, Exception) else Intent.GENERAL_HEALTH
         print(f"[RAG] Intent: {intent} | Rewritten: {rewritten_query!r} | prep: {time.time()-t_parallel:.2f}s")
 
-        # 3. Embed câu đã rewrite (ngữ nghĩa đầy đủ hơn user_input gốc)
+        # 3. Embed rewritten_query — nếu giống user_input thì cache đã có sẵn (HIT)
         try:
-            query_vector = await embedding_service.embed_user_query(rewritten_query)
+            if rewritten_query == user_input and not isinstance(prefetch_vector, Exception):
+                # Rewrite không thay đổi gì → dùng vector đã fetch ở bước 2 (cache hit)
+                query_vector = prefetch_vector
+            else:
+                query_vector = await embedding_service.embed_user_query(rewritten_query)
         except Exception:
             query_vector = [0.0] * 3072
         vector_str = f"[{','.join(map(str, query_vector))}]"
