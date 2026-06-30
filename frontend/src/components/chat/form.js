@@ -42,6 +42,75 @@ export function ChatForm() {
   const hasNewMessagesRef = useRef(false);
   const prevSessionRef = useRef(session);
 
+  // DRAG & DROP FOR CHATBOT ICON VIA HOVER HANDLE WHEN CLOSED
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const offset = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    offset.current = { x: position.x, y: position.y };
+    setIsDragging(true);
+  };
+
+  const handleTouchStart = (e) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    dragStart.current = { x: touch.clientX, y: touch.clientY };
+    offset.current = { x: position.x, y: position.y };
+    setIsDragging(true);
+  };
+
+  // Dragging event listeners attachment based on isDragging state
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onMouseMove = (e) => {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      setPosition({
+        x: offset.current.x + dx,
+        y: offset.current.y + dy
+      });
+    };
+
+    const onMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const onTouchMove = (e) => {
+      if (e.cancelable) e.preventDefault();
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragStart.current.x;
+      const dy = touch.clientY - dragStart.current.y;
+      setPosition({
+        x: offset.current.x + dx,
+        y: offset.current.y + dy
+      });
+    };
+
+    const onTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isDragging]);
+
+
   useEffect(() => {
     if (prevSessionRef.current && prevSessionRef.current !== session) {
       if (hasNewMessagesRef.current) {
@@ -343,7 +412,11 @@ export function ChatForm() {
         )}
 
         <div
-          className={`flex flex-col gap-1 ${!isOpen && "mb-12 mr-7"} text-white`}
+          style={isOpen ? {} : {
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            transition: 'none',
+          }}
+          className={`flex flex-col gap-1 ${!isOpen && "mb-12 mr-7"} text-white relative group select-none`}
         >
           <ChatIcon onClick={toggleChat}>
             <Image
@@ -354,6 +427,23 @@ export function ChatForm() {
               className="mb-1"
             />
           </ChatIcon>
+
+          {!isOpen && (
+            <div
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+              className={`w-6 h-6 bg-white border border-blue-200 rounded-full flex items-center justify-center absolute -top-1.5 -left-1.5 cursor-grab active:cursor-grabbing text-gray-500 hover:bg-gray-100 shadow-md z-30 transition-opacity duration-200 opacity-0 group-hover:opacity-100 ${isDragging ? 'opacity-100' : ''}`}
+            >
+              <svg className="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="5" r="1.5"></circle>
+                <circle cx="9" cy="12" r="1.5"></circle>
+                <circle cx="9" cy="19" r="1.5"></circle>
+                <circle cx="15" cy="5" r="1.5"></circle>
+                <circle cx="15" cy="12" r="1.5"></circle>
+                <circle cx="15" cy="19" r="1.5"></circle>
+              </svg>
+            </div>
+          )}
 
           {isOpen && isLogin && (
             <>
