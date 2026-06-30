@@ -70,7 +70,7 @@ export default function RootLayout({ children }) {
         ) : (
           <>
             <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
-            <main className="mt-15 grow w-full flex flex-col">
+            <main className="mt-15 grow w-full flex flex-col min-h-[calc(100vh-3.75rem)]">
               <div className="w-full grow flex flex-col bg-white">
                 {children}
               </div>

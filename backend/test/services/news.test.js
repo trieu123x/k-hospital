@@ -66,9 +66,10 @@ describe('newsService', () => {
 
   describe('getNewsList', () => {
     it('should return list', async () => {
-      newsRespository.findWithFilter.mockResolvedValue([{ id: 1 }])
+      newsRespository.findWithFilter.mockResolvedValue({ items: [{ id: 1 }], total: 1 })
       const res = await newsService.getNewsList({})
-      expect(res).toHaveLength(1)
+      expect(res.items).toHaveLength(1)
+      expect(res.pagination).toBeDefined()
     })
   })
 

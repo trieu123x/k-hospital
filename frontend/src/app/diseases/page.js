@@ -94,118 +94,114 @@ export default function DiseaseLookupPage() {
   }, [selectedSpecialty, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen w-full rasa-font">
-      {/* Top Filter Bar */}
-      <div className="bg-white top-15 z-10">
-        <div className="max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="flex items-center space-x-2 w-full md:w-auto">
-              <Filter className="text-black size-5 hidden md:block" />
-              <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
-              <SelectBox value={selectedSpecialty || "Tất cả chuyên khoa"} options={specialties.map(s => s.name)} onChange={(value) => setSelectedSpecialty(value)} />
-              <SelectBox value={selectedCategory || "Tất cả nhóm bệnh"} options={categories.map(c => c.name)} onChange={(value) => setSelectedCategory(value)} />
-            </div>
-          </div>
+    <div className="min-h-screen w-full rasa-font py-6 px-4 md:px-8 xl:px-12 max-w-[1536px] mx-auto">
+      {/* Top Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        {/* Bộ lọc chuyên khoa & nhóm bệnh */}
+        <div className="flex items-center space-x-2 w-full md:w-auto">
+          <Filter className="text-black size-5 hidden md:block" />
+          <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
+          <SelectBox value={selectedSpecialty || "Tất cả chuyên khoa"} options={specialties.map(s => s.name)} onChange={(value) => setSelectedSpecialty(value)} />
+          <SelectBox value={selectedCategory || "Tất cả nhóm bệnh"} options={categories.map(c => c.name)} onChange={(value) => setSelectedCategory(value)} />
+        </div>
 
-          <div className="relative w-full md:w-100 rounded-[12px]">
-            <SearchInput className="py-1.5 bg-[#ECECEC]" placeholder="Nhập tên bệnh để tìm kiếm"
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          </div>
+        {/* Tìm kiếm */}
+        <div className="relative w-full md:w-100 rounded-[12px]">
+          <SearchInput className="py-1.5 bg-[#ECECEC]" placeholder="Nhập tên bệnh để tìm kiếm"
+            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </div>
 
       {/* Main Content: Disease Grid */}
-      <div className="max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-2">
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : diseases.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
-            {diseases.map((disease) => (
-              <div
-                key={disease.id}
-                className="bg-white cursor-pointer h-38 rounded-md overflow-hidden shadow-[0_0_4px_rgba(144,144,144,0.25)] flex hover:-translate-y-1 transition-all duration-300"
-              >
-                {/* Disease Image */}
-                <div className="relative w-1/3 min-w-[120px] h-full bg-gray-50">
-                  <Image
-                    src={disease.imageUrl || "/images/Diseases.jpg"}
-                    alt={disease.name}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      e.currentTarget.srcset = "";
-                      e.currentTarget.src = "/images/Diseases.jpg";
-                    }}
-                  />
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : diseases.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
+          {diseases.map((disease) => (
+            <div
+              key={disease.id}
+              className="bg-white cursor-pointer h-38 rounded-md overflow-hidden shadow-[0_0_4px_rgba(144,144,144,0.25)] flex hover:-translate-y-1 transition-all duration-300"
+            >
+              {/* Disease Image */}
+              <div className="relative w-1/3 min-w-[120px] h-full bg-gray-50">
+                <Image
+                  src={disease.imageUrl || "/images/Diseases.jpg"}
+                  alt={disease.name}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    e.currentTarget.srcset = "";
+                    e.currentTarget.src = "/images/Diseases.jpg";
+                  }}
+                />
+              </div>
+
+              {/* Disease Info */}
+              <div className="flex-1 py-2 pl-2 pr-4 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-[20px] font-bold text-black line-clamp-1">
+                    {disease.name}
+                  </h3>
+                  <p className="text-black text-sm line-clamp-3">
+                    {disease.description || "Thông tin về bệnh đang được cập nhật. Vui lòng quay lại sau."}
+                  </p>
                 </div>
 
-                {/* Disease Info */}
-                <div className="flex-1 py-2 pl-2 pr-4 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-[20px] font-bold text-black line-clamp-1">
-                      {disease.name}
-                    </h3>
-                    <p className="text-black text-sm line-clamp-3">
-                      {disease.description || "Thông tin về bệnh đang được cập nhật. Vui lòng quay lại sau."}
-                    </p>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Link
-                      href={`/diseases/${disease.id}`}
-                      className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-0.5 italic"
-                    >
-                      Xem chi tiết
-                    </Link>
-                  </div>
+                <div className="flex justify-end">
+                  <Link
+                    href={`/diseases/${disease.id}`}
+                    className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-0.5 italic"
+                  >
+                    Xem chi tiết
+                  </Link>
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Search className="w-16 h-16 mb-4 opacity-20" />
+          <p className="text-lg font-medium">Không tìm thấy bệnh nào phù hợp</p>
+          <p className="text-sm">Vui lòng thử lại với từ khóa khác hoặc xóa bộ lọc</p>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center items-center mt-10 gap-2 mb-6">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
+          >
+            Trước
+          </button>
+          <div className="flex gap-1">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`w-10 h-10 rounded-md border text-sm font-medium transition-colors duration-200 cursor-pointer ${page === i + 1
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
+                  }`}
+              >
+                {i + 1}
+              </button>
             ))}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-            <Search className="w-16 h-16 mb-4 opacity-20" />
-            <p className="text-lg font-medium">Không tìm thấy bệnh nào phù hợp</p>
-            <p className="text-sm">Vui lòng thử lại với từ khóa khác hoặc xóa bộ lọc</p>
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center items-center mt-10 gap-2 mb-6">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
-            >
-              Trước
-            </button>
-            <div className="flex gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`w-10 h-10 rounded-md border text-sm font-medium transition-colors duration-200 cursor-pointer ${page === i + 1
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
-            >
-              Sau
-            </button>
-          </div>
-        )}
-      </div>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 border cursor-pointer border-gray-200 rounded-md bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-sm font-medium transition-colors duration-200"
+          >
+            Sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }
