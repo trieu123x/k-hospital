@@ -4,17 +4,7 @@ import { LinkButton } from "../ui/LinkButton";
 import { useAuthStore } from "@/stores/auth";
 
 export function OptionBar() {
-  const { isDoctor, isAdmin, setUser, logout } = useAuthStore();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Lỗi khi đăng xuất ở server:", error);
-    } finally {
-      setUser(null);
-    }
-  };
+  const { isDoctor, isAdmin } = useAuthStore();
 
   let optionBody;
 
@@ -37,15 +27,6 @@ export function OptionBar() {
       `}
     >
       {optionBody}
-
-      <div className="border-t border-[#0b089e] mt-2 pt-2">
-        <button
-          onClick={handleLogout}
-          className="w-full text-center cursor-pointer xl:text-left px-6 py-3 text-white hover:text-red-200 font-bold transition-colors"
-        >
-          Đăng xuất
-        </button>
-      </div>
     </div>
   );
 }

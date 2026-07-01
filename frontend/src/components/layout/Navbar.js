@@ -183,6 +183,21 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   const user = useAuthStore(state => state.user)
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor)
+  const logout = useAuthStore(state => state.logout)
+  const setUser = useAuthStore(state => state.setUser)
+
+  const [isMenuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
@@ -191,22 +206,86 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   if (isAdmin) profileLink = "/admin/aggregate"
   else if (isDoctor) profileLink = "/profile/doctor/detail"
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất ở server:", error)
+    } finally {
+      setUser(null)
+    }
+  }
+
   return (
-    <div className="hidden xl:flex w-1/5 justify-end items-center gap-2">
+    <div className="hidden xl:flex w-1/5 justify-end items-center gap-2 relative">
       <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
         {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
         <Bell className="size-6" onClick={() => setNotiOpen(prev => !prev)} />
         <NotificationForm isOpen={isNotiOpen} />
       </div>
 
-      <Link href={profileLink} className="size-9 rounded-full overflow-hidden cursor-pointer mr-6 block">
-        {/* SỬ DỤNG COMPONENT CẮT ẢNH TỰ ĐỘNG Ở ĐÂY */}
-        <CroppedAvatar
-          rawAvatarUrl={rawAvatarUrl}
-          cropData={cropData}
-          className="object-cover w-full h-full"
-        />
-      </Link>
+      <div ref={menuRef} className="relative mr-6">
+        <button
+          onClick={() => setMenuOpen(!isMenuOpen)}
+          className="size-9 rounded-full overflow-hidden cursor-pointer block focus:outline-none"
+        >
+          <CroppedAvatar
+            rawAvatarUrl={rawAvatarUrl}
+            cropData={cropData}
+            className="object-cover w-full h-full"
+          />
+        </button>
+
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-[#070575] text-white rounded-lg z-50 text-[16px] flex flex-col font-medium overflow-hidden rasa-font">
+            {/* Header info with logo & name */}
+            <div className="flex items-center gap-2.5 px-4 py-3 bg-[#050355] border-b border-white/10">
+              <div className="size-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                <CroppedAvatar
+                  rawAvatarUrl={rawAvatarUrl}
+                  cropData={cropData}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-[14px] truncate text-white leading-tight">
+                  {user?.profile?.fullName || user?.fullName || "Người dùng"}
+                </span>
+                <span className="text-[10px] text-[#A4C4FF] font-medium mt-0.5">
+                  {isAdmin ? "Quản trị viên" : isDoctor ? "Bác sĩ" : "Bệnh nhân"}
+                </span>
+              </div>
+            </div>
+
+            {/* Menu options */}
+            <div className="flex flex-col py-1">
+              <Link
+                href={profileLink}
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              >
+                Thông tin cá nhân
+              </Link>
+              <Link
+                href="#"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              >
+                Cài đặt
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-left w-full hover:bg-red-700 transition-colors font-bold text-red-200 border-t border-white/10 mt-1 pt-2 cursor-pointer"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -218,6 +297,21 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   const user = useAuthStore(state => state.user)
   const isAdmin = useAuthStore(state => state.isAdmin)
   const isDoctor = useAuthStore(state => state.isDoctor)
+  const logout = useAuthStore(state => state.logout)
+  const setUser = useAuthStore(state => state.setUser)
+
+  const [isMenuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
@@ -226,8 +320,18 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   if (isAdmin) profileLink = "/admin/aggregate"
   else if (isDoctor) profileLink = "/profile/doctor"
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất ở server:", error)
+    } finally {
+      setUser(null)
+    }
+  }
+
   return (
-    <div className="flex xl:hidden items-center gap-3.5 mr-5">
+    <div className="flex xl:hidden items-center gap-3.5 mr-5 relative">
       <div onClick={() => setNotiOpen(prev => !prev)}
         className="relative cursor-pointer hover:bg-[#bdbddf] transition-all duration-300 p-2 ml-2 rounded-full">
         {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
@@ -235,14 +339,68 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
         <NotificationForm isOpen={isNotiOpen} />
       </div>
 
-      <Link href={profileLink} className="size-9 rounded-full overflow-hidden cursor-pointer block">
-        {/* SỬ DỤNG COMPONENT CẮT ẢNH TỰ ĐỘNG Ở ĐÂY */}
-        <CroppedAvatar
-          rawAvatarUrl={rawAvatarUrl}
-          cropData={cropData}
-          className="object-cover w-full h-full"
-        />
-      </Link>
+      <div ref={menuRef} className="relative">
+        <button
+          onClick={() => setMenuOpen(!isMenuOpen)}
+          className="size-9 rounded-full overflow-hidden cursor-pointer block focus:outline-none"
+        >
+          <CroppedAvatar
+            rawAvatarUrl={rawAvatarUrl}
+            cropData={cropData}
+            className="object-cover w-full h-full"
+          />
+        </button>
+
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-[#070575] text-white rounded-lg shadow-lg z-50 text-[16px] flex flex-col font-medium overflow-hidden rasa-font border border-white/10">
+            {/* Header info with logo & name */}
+            <div className="flex items-center gap-2.5 px-4 py-3 bg-[#050355] border-b border-white/10">
+              <div className="size-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                <CroppedAvatar
+                  rawAvatarUrl={rawAvatarUrl}
+                  cropData={cropData}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-[14px] truncate text-white leading-tight">
+                  {user?.profile?.fullName || user?.fullName || "Người dùng"}
+                </span>
+                <span className="text-[10px] text-[#A4C4FF] font-medium mt-0.5">
+                  {isAdmin ? "Quản trị viên" : isDoctor ? "Bác sĩ" : "Bệnh nhân"}
+                </span>
+              </div>
+            </div>
+
+            {/* Menu options */}
+            <div className="flex flex-col py-1">
+              <Link
+                href={profileLink}
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              >
+                Thông tin cá nhân
+              </Link>
+              <Link
+                href="#"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              >
+                Cài đặt
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-left w-full hover:bg-red-700 transition-colors font-bold text-red-200 border-t border-white/10 mt-1 pt-2"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <button id="sidebar-menu-btn" onClick={setSidebarOpen}>
         <Menu className="w-6.5 h-6.5 text-white cursor-pointer" />
