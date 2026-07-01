@@ -101,10 +101,10 @@ export default function MedicineLookupPage() {
           {medicines.map((medicine) => (
             <div
               key={medicine.id}
-              className="bg-white cursor-pointer rounded-sm shadow-[0_0_4px_rgba(144,144,144,0.25)] overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300"
+              className="bg-white cursor-pointer rounded-none shadow-[0_0_4px_rgba(144,144,144,0.25)] overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300"
             >
               {/* Medicine Image */}
-              <div className="relative w-full aspect-square mb-4 bg-white overflow-hidden rounded-md">
+              <div className="relative w-full aspect-square mb-4 bg-white overflow-hidden rounded-none">
                 <Image
                   src={medicine.imageUrl || "/images/Medicines.webp"}
                   alt={medicine.name}

@@ -498,7 +498,7 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
       className={`w-full flex ${role === "USER" && "flex-row-reverse"} gap-2 px-4`}
     >
       <LogoMessage />
-      <div className="flex flex-col gap-2 w-full max-w-75">
+      <div className={`flex flex-col gap-2 max-w-75 ${role === "USER" ? "items-end" : "items-start"}`}>
         {cleanMessage.trim() && <TextMessage message={cleanMessage} />}
         {cards.map((card, idx) => (
           <ObjectMessage key={idx} data={card} />
@@ -510,7 +510,7 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
 
 function TextMessage({ message = "" }) {
   return (
-    <div className="bg-[#8380FF] rounded-2xl px-4 py-2 wrap-break-word text-white">
+    <div className="bg-[#8380FF] rounded-2xl px-4 py-2 wrap-break-word text-white w-fit max-w-full">
       <div className="prose prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 text-white">
         <ReactMarkdown>{message}</ReactMarkdown>
       </div>

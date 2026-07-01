@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { Newsitem } from "@/components/news/newsItem";
 import { newsApi } from "@/routers/news/newsRouter";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { CalendarSelectBox } from "@/components/ui/CalendarSelectBox";
+import { Filter } from "lucide-react";
+import { format } from "date-fns";
 
 export default function NewsPage() {
   const [newsList, setNewsList] = useState([]);
@@ -12,8 +15,10 @@ export default function NewsPage() {
   const [searchTitle, setSearchTitle] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
-  const fetchNews = async (searchQuery = "", currentPage = 1) => {
+  const fetchNews = async (searchQuery = "", currentPage = 1, filterStartDate = null, filterEndDate = null) => {
     setLoading(true);
     setError("");
     try {
@@ -24,6 +29,12 @@ export default function NewsPage() {
       };
       if (cleanQuery) {
         params.title = cleanQuery;
+      }
+      if (filterStartDate) {
+        params.startDate = format(filterStartDate, "yyyy-MM-dd");
+      }
+      if (filterEndDate) {
+        params.endDate = format(filterEndDate, "yyyy-MM-dd");
       }
 
       const result = await newsApi.getNewsList(params);
@@ -52,23 +63,40 @@ export default function NewsPage() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchNews(searchTitle, page);
+      fetchNews(searchTitle, page, startDate, endDate);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTitle, page]);
+  }, [searchTitle, page, startDate, endDate]);
 
   useEffect(() => {
     setPage(1);
-  }, [searchTitle]);
+  }, [searchTitle, startDate, endDate]);
 
   return (
     <div className="min-h-screen w-full rasa-font py-6 px-4 md:px-8 xl:px-12 max-w-[1536px] mx-auto">
       {/* Top Filter and Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        {/* Title */}
+        {/* Bộ lọc theo khoảng thời gian */}
         <div className="flex items-center space-x-2 w-full md:w-auto">
-
+          <Filter className="text-black size-5 hidden md:block" />
+          <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
+          <div className="relative w-fit">
+            <CalendarSelectBox
+              placeholder="Từ ngày"
+              value={startDate}
+              onChange={(date) => setStartDate(date)}
+              disabled={endDate ? { after: endDate } : undefined}
+            />
+          </div>
+          <div className="relative w-fit">
+            <CalendarSelectBox
+              placeholder="Đến ngày"
+              value={endDate}
+              onChange={(date) => setEndDate(date)}
+              disabled={startDate ? { before: startDate } : undefined}
+            />
+          </div>
         </div>
 
         {/* Search */}

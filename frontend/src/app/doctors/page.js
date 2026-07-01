@@ -120,7 +120,7 @@ export default function DoctorsPage() {
           {doctors.map((doctor) => (
             <div
               key={doctor.id}
-              className="bg-white cursor-pointer rounded-sm shadow-[0_0_4px_rgba(144,144,144,0.25)] overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300"
+              className="bg-white cursor-pointer rounded-none shadow-[0_0_4px_rgba(144,144,144,0.25)] overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300"
             >
               {/* Doctor Avatar */}
               <div className="relative w-full aspect-88/100 bg-[#f6f7f9]">

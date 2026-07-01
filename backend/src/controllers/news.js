@@ -10,11 +10,13 @@ export const getTotalNews = catchError(async (req, res) => {
 })
 
 export const getNewsForAdmin = catchError(async (req, res) => {
-    const { title, page, date, limit } = req.query
+    const { title, page, date, startDate, endDate, limit } = req.query
     const data = await newsService.getNewsForAdmin({
         title,
         page: page ? parseInt(page) : 1,
         date,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         limit: limit ? parseInt(limit) : 30
     })
     res.status(200).json({
@@ -38,12 +40,14 @@ export const createNews = catchError(async (req, res) => {
 })
 
 export const getNewsList = catchError(async (req, res) => {
-    const { title, page, date, limit } = req.query;
+    const { title, page, date, startDate, endDate, limit } = req.query;
 
     const filter = {
         title: title || undefined,
         page: page ? parseInt(page, 10) : 1,
         date: date || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         limit: limit ? parseInt(limit, 10) : 30
     };
 

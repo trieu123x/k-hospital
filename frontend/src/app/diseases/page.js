@@ -122,7 +122,7 @@ export default function DiseaseLookupPage() {
           {diseases.map((disease) => (
             <div
               key={disease.id}
-              className="bg-white cursor-pointer h-38 rounded-md overflow-hidden shadow-[0_0_4px_rgba(144,144,144,0.25)] flex hover:-translate-y-1 transition-all duration-300"
+              className="bg-white cursor-pointer h-38 rounded-none overflow-hidden shadow-[0_0_4px_rgba(144,144,144,0.25)] flex hover:-translate-y-1 transition-all duration-300"
             >
               {/* Disease Image */}
               <div className="relative w-1/3 min-w-[120px] h-full bg-gray-50">

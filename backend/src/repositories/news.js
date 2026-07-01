@@ -6,14 +6,21 @@ export const newsRespository = {
         return await prisma.news.count()
     },
 
-    findAllForAdmin: async ({ title, date, page = 1, limit = 30 }) => {
+    findAllForAdmin: async ({ title, date, startDate, endDate, page = 1, limit = 30 }) => {
         const cleanTitle = title ? removeVietnameseTones(title) : null;
         const searchFilter = cleanTitle ? `%${cleanTitle}%` : null
         const offset = (page - 1) * limit
 
-        const dateCondition = date
-            ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
-            : Prisma.empty
+        let dateCondition = Prisma.empty
+        if (startDate && endDate) {
+            dateCondition = Prisma.sql`AND created_at >= ${startDate}::date AND created_at < (${endDate}::date + interval '1 day')`
+        } else if (startDate) {
+            dateCondition = Prisma.sql`AND created_at >= ${startDate}::date`
+        } else if (endDate) {
+            dateCondition = Prisma.sql`AND created_at < (${endDate}::date + interval '1 day')`
+        } else if (date) {
+            dateCondition = Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
+        }
 
         const filterConditions = Prisma.sql`
             1=1
@@ -37,7 +44,7 @@ export const newsRespository = {
                 created_at AS "createdAt"
             FROM news
             WHERE ${filterConditions}
-            ORDER BY id ASC
+            ORDER BY created_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `
 
@@ -95,14 +102,21 @@ export const newsRespository = {
         })
     },
 
-    findWithFilter: async ({ title, date, page = 1, limit = 30 }) => {
+    findWithFilter: async ({ title, date, startDate, endDate, page = 1, limit = 30 }) => {
         const cleanTitle = title ? removeVietnameseTones(title) : null;
         const searchFilter = cleanTitle ? `%${cleanTitle}%` : null
         const offset = (page - 1) * limit
 
-        const dateCondition = date
-            ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
-            : Prisma.empty
+        let dateCondition = Prisma.empty
+        if (startDate && endDate) {
+            dateCondition = Prisma.sql`AND created_at >= ${startDate}::date AND created_at < (${endDate}::date + interval '1 day')`
+        } else if (startDate) {
+            dateCondition = Prisma.sql`AND created_at >= ${startDate}::date`
+        } else if (endDate) {
+            dateCondition = Prisma.sql`AND created_at < (${endDate}::date + interval '1 day')`
+        } else if (date) {
+            dateCondition = Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
+        }
 
         const filterConditions = Prisma.sql`
             1=1
@@ -121,11 +135,12 @@ export const newsRespository = {
             SELECT 
                 id, 
                 title, 
+                content,
                 new_url AS "newUrl", 
                 created_at AS "createdAt"
             FROM news
             WHERE ${filterConditions}
-            ORDER BY id ASC
+            ORDER BY created_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `
 
