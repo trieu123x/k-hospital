@@ -113,7 +113,7 @@ function SessionSelection({
 
   const handleSelectSession = () => {
     if (!selected) {
-      setSession(id, [])
+      setSession(id, [], name)
       setHistoryOpen(false)
     }
   }

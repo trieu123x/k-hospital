@@ -28,6 +28,7 @@ export function ChatForm() {
     resetSession,
     setSession,
     updateLastAIMessage,
+    sessionTitle,
   } = useChatStore((state) => state);
   const { isLogin, user } = useAuthStore((state) => state);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
@@ -157,13 +158,14 @@ export function ChatForm() {
           if (chatSessions.length === 0) {
             const response = await getSessionHistory(session, { limit: 20 });
             const msgs = response.data.messages || [];
+            const title = response.data.session?.title || "MediCare Bot";
             const formattedMsgs = msgs.map((m) => ({
               id: m.id,
               role: m.role,
               message: m.content,
             }));
 
-            setSession(session, formattedMsgs);
+            setSession(session, formattedMsgs, title);
             setHasMore(msgs.length === 20);
           }
         } catch (error) {
@@ -244,13 +246,14 @@ export function ChatForm() {
           content: questionToAsk,
         });
         currentSessionId = newSessionData.data.session.id;
+        const title = newSessionData.data.session?.title || "New Chat";
         setSession(currentSessionId, [
           {
             id: newSessionData.data.message.id,
             role: newSessionData.data.message.role,
             message: newSessionData.data.message.content,
           },
-        ]);
+        ], title);
       } else {
         await saveChatMessage(currentSessionId, {
           role: "USER",
@@ -302,6 +305,11 @@ export function ChatForm() {
       setIsThinking(false);
       setIsTyping(false);
       setInputText(questionToAsk);
+      addChatSession({
+        id: crypto.randomUUID(),
+        role: "AI",
+        message: "Lỗi kết nối hoặc máy chủ không phản hồi. Vui lòng thử lại sau.",
+      });
     }
   };
 
@@ -321,7 +329,7 @@ export function ChatForm() {
         bg-linear-to-b from-[#B1CCFF] to-[#D2E2FF] rounded-tl-3xl`}
           >
             <header className="flex items-center justify-center h-20 text-[28px] font-bold">
-              <span className="w-[85%] text-center truncate">MediCare Bot</span>
+              <span className="w-[85%] text-center truncate">{sessionTitle}</span>
             </header>
 
             <div
@@ -346,7 +354,7 @@ export function ChatForm() {
                     </Link>
                   </div>
                 </div>
-              ) : !session ? (
+              ) : (!session && chatSessions.length === 0) ? (
                 <>
                   <div className="w-full h-full flex items-center transition-all duration-300 px-8">
                     <div className="flex flex-col rasa-font fade-in">

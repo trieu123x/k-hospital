@@ -6,6 +6,8 @@ export const useChatStore = create((set) => ({
   session: null,
   chatSessions: [],
 
+  sessionTitle: "MediCare Bot",
+
   addMessage: (message) => set((state) => ({ 
     messages: [...state.messages, message] 
   })),
@@ -17,12 +19,14 @@ export const useChatStore = create((set) => ({
 
   resetSession: () => set({
     session: null,
-    chatSessions: []
+    chatSessions: [],
+    sessionTitle: "MediCare Bot"
   }),
 
-  setSession: (session, chatSessions) => set({
+  setSession: (session, chatSessions, sessionTitle = "MediCare Bot") => set({
     session: session,
-    chatSessions: chatSessions
+    chatSessions: chatSessions,
+    sessionTitle: sessionTitle || "MediCare Bot"
   }),
 
   addChatSession: (newChatSession) => set((state) => ({
