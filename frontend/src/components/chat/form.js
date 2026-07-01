@@ -8,6 +8,7 @@ import { useChatStore } from "@/stores/chat";
 import { useAuthStore } from "@/stores/auth";
 import Link from "next/link";
 import { ROUTES } from "@/routers";
+import { getToken } from "@/utils/axios";
 import {
   aiChatApi,
   createChatSession,
@@ -125,7 +126,7 @@ export function ChatForm() {
   useEffect(() => {
     const handleUnload = () => {
       if (session && hasNewMessagesRef.current) {
-        const token = localStorage.getItem("access_token") || "";
+        const token = getToken() || "";
         const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
         const url = `${API_URL}/chat/${session}/topic`;
         fetch(url, {

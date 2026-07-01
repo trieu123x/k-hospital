@@ -2,26 +2,23 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
 
-/**
- * Lưu access_token vào localStorage.
- * (Refresh Token đã được Backend tự động lưu vào HttpOnly Cookie)
- */
+let token = '';
+
 const saveToken = (accessToken) => {
   if (accessToken) {
-    localStorage.setItem('access_token', accessToken);
+    token = accessToken;
   }
 };
 
-/**
- * Xóa token khỏi localStorage.
- */
 const clearToken = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-  }
+  token = '';
 };
 
-export { saveToken, clearToken };
+const getToken = () => {
+  return token;
+};
+
+export { saveToken, clearToken, getToken };
 
 // ---------------------------------------------------------------------------
 
@@ -34,9 +31,9 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      const activeToken = getToken();
+      if (activeToken) {
+        config.headers.Authorization = `Bearer ${activeToken}`;
       }
     }
     return config;

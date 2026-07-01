@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import axiosInstance, { clearToken } from '@/utils/axios';
+import axiosInstance, { clearToken, getToken } from '@/utils/axios';
 
 export const useAuthStore = create(
   persist(
@@ -51,9 +51,10 @@ export const useAuthStore = create(
       },
 
       fetchUser: async () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const token = getToken();
+        const wasLoggedIn = get().isLogin;
 
-        if (!token) {
+        if (!token && !wasLoggedIn) {
           set({ isLoading: false, isLogin: false, user: null });
           return;
         }
