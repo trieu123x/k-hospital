@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, Bell, Sun, Moon } from "lucide-react";
+import { ChevronDown, Menu, Bell } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LinkButton } from "../ui/LinkButton";
 import { Button } from "../ui/Button";
@@ -198,7 +198,6 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
 
   const [isMenuOpen, setMenuOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
-  const [theme, setTheme] = useState("light")
 
   const menuRef = useRef(null)
   const notiRef = useRef(null)
@@ -224,22 +223,6 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isNotiOpen, setNotiOpen])
-
-  useEffect(() => {
-    const match = document.cookie.match(/(^| )theme=([^;]+)/)
-    setTheme(match ? match[2] : "light")
-  }, [])
-
-  const handleToggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark"
-    setTheme(newTheme)
-    document.cookie = `theme=${newTheme}; path=/; max-age=31536000`
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }
 
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
@@ -308,13 +291,7 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
               >
                 Trang cá nhân
               </Link>
-              <button
-                onClick={handleToggleTheme}
-                className="px-4 py-2 hover:bg-[#3040A8] transition-colors flex items-center justify-between w-full text-left font-medium cursor-pointer"
-              >
-                <span>Giao diện</span>
-                {theme === "dark" ? <Moon className="size-4 text-yellow-300" /> : <Sun className="size-4 text-yellow-500" />}
-              </button>
+
               <button
                 onClick={() => {
                   setMenuOpen(false)
@@ -355,7 +332,6 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
 
   const [isMenuOpen, setMenuOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
-  const [theme, setTheme] = useState("light")
 
   const menuRef = useRef(null)
   const notiRef = useRef(null)
@@ -381,22 +357,6 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isNotiOpen, setNotiOpen])
-
-  useEffect(() => {
-    const match = document.cookie.match(/(^| )theme=([^;]+)/)
-    setTheme(match ? match[2] : "light")
-  }, [])
-
-  const handleToggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark"
-    setTheme(newTheme)
-    document.cookie = `theme=${newTheme}; path=/; max-age=31536000`
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }
 
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
@@ -466,13 +426,7 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
               >
                 Trang cá nhân
               </Link>
-              <button
-                onClick={handleToggleTheme}
-                className="px-4 py-2 hover:bg-[#3040A8] transition-colors flex items-center justify-between w-full text-left font-medium cursor-pointer"
-              >
-                <span>Giao diện</span>
-                {theme === "dark" ? <Moon className="size-4 text-yellow-300" /> : <Sun className="size-4 text-yellow-500" />}
-              </button>
+
               <button
                 onClick={() => {
                   setMenuOpen(false)
