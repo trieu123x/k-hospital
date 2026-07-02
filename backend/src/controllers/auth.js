@@ -136,3 +136,12 @@ export const resetPassword = catchError(async (req, res) => {
   const data = await authService.resetPassword(req.body);
   res.status(200).json({ success: true, ...data });
 });
+
+export const changePassword = catchError(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id;
+  const email = req.user.email;
+
+  const data = await authService.changePassword({ userId, email, oldPassword, newPassword });
+  res.status(200).json({ success: true, ...data });
+});

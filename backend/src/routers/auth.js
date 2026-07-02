@@ -8,7 +8,8 @@ import {
   forgotPassword,
   resetPassword,
   registerDoctor,
-  refreshToken
+  refreshToken,
+  changePassword
 } from "../controllers/auth.js";
 import { validate } from "../middlewares/validate-handler.js";
 import { authSchema } from "../validates/auth.js";
@@ -33,6 +34,7 @@ router.post("/refresh-token", refreshToken);
 // ================================
 router.post("/logout", authenticate, logout);
 router.get("/me", authenticate, getMe);
+router.post("/change-password", authenticate, validate({ body: authSchema.changePassword }), changePassword);
 
 
 // ================================

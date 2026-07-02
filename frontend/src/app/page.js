@@ -88,19 +88,19 @@ export default function Home() {
   const subEvents = featuredNews.slice(1, 6);
 
   return (
-    <div className="w-full bg-white flex flex-col rasa-font">
+    <div className="w-full bg-white dark:bg-[#121124] flex flex-col rasa-font transition-colors duration-200">
       
       {/* 1. Hero Section: Lý do để khách hàng tin tưởng MediCare? (Kept original UI) */}
       <div className="w-full min-h-[calc(100vh-3.75rem)] max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
         {/* Left Column: Text content */}
         <div className="flex flex-col space-y-8 pr-4 lg:pl-5 lg:-mt-5">
           <h1 className="text-[52px] md:text-5xl lg:text-[52px] font-bold leading-none">
-            <span className="text-black">Lý do để khách hàng</span>
+            <span className="text-black dark:text-white">Lý do để khách hàng</span>
             <br />
-            <span className="text-[#7A78FF]">tin tưởng MediCare?</span>
+            <span className="text-[#7A78FF] dark:text-indigo-400">tin tưởng MediCare?</span>
           </h1>
 
-          <p className="text-gray-700 text-base md:text-[20px] font-medium max-w-130">
+          <p className="text-gray-700 dark:text-slate-300 text-base md:text-[20px] font-medium max-w-130">
             Quy tụ đội ngũ bác sĩ chuyên khoa giàu kinh nghiệm cùng hệ thống trang thiết bị y tế hiện đại nhất, MediCare cam kết mang đến dịch vụ thăm khám chính xác, an toàn và tận tâm. Chúng tôi kết hợp y đức truyền thống với hạ tầng số hóa tiên tiến để bảo vệ sức khỏe của bạn một cách trọn vẹn
           </p>
 
@@ -163,13 +163,13 @@ export default function Home() {
       </div>
 
       {/* 2. Sự kiện nổi bật Section */}
-      <div className="w-full py-16 bg-gray-50">
+      <div className="w-full py-16 bg-gray-50 dark:bg-[#0B0A1A] transition-colors duration-200">
         <div className="w-full max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12">
           <div className="text-left mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#070575]">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#070575] dark:text-blue-400">
               Sự kiện nổi bật
             </h2>
-            <p className="text-gray-600 text-lg mt-2 font-medium">
+            <p className="text-gray-600 dark:text-slate-400 text-lg mt-2 font-medium">
               Cập nhật kiến thức y khoa bổ ích, tin tức hoạt động và sự kiện nổi bật của MediCare.
             </p>
           </div>
@@ -294,6 +294,10 @@ export default function Home() {
                       fill
                       className="object-cover object-top"
                       sizes="220px"
+                      onError={(e) => {
+                        e.currentTarget.srcset = "";
+                        e.currentTarget.src = "/images/Avartar.jpg";
+                      }}
                     />
                   </div>
 

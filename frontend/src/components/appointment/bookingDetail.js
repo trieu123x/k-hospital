@@ -55,7 +55,16 @@ export function BookingDetails({ data, isConfirmed }) {
         <div className="mt-8 flex justify-center w-full">
           <div className="w-55 shadow-[0_0_4px_rgba(144,144,144,0.25)] flex flex-col rounded-md overflow-hidden">
             <div className="h-63 bg-[#F5F5F5] relative w-full">
-              <Image src={data.doctorAvatar || DoctorAvatar} fill className="object-cover" alt="Doctor" />
+              <Image
+                src={data.doctorAvatar || DoctorAvatar}
+                fill
+                className="object-cover"
+                alt="Doctor"
+                onError={(e) => {
+                  e.currentTarget.srcset = "";
+                  e.currentTarget.src = "/images/Avartar.jpg";
+                }}
+              />
             </div>
             <div className="px-3 py-2 flex flex-col">
               <h3 className="rasa-font font-bold text-[20px] leading-none">

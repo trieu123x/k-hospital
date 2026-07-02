@@ -78,43 +78,6 @@ export function SideBar({ setSidebarClose = () => { } }) {
         Đặt lịch khám
       </LinkButton>
 
-      <Button
-        onClick={() => setProfileOpen(prev => !prev)}
-        className={`justify-between py-2 rounded-none ${isProfileOpen ? "bg-[#2E2D86]" : "hover:bg-[#050355]"}`}>
-        <span>Trang cá nhân</span>
-        <ChevronDown className={`size-4 ${isProfileOpen && "rotate-180"}`} />
-      </Button>
-
-      {
-        isProfileOpen &&
-        <>
-          <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
-            className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            Thông tin cá nhân
-          </LinkButton>
-
-          <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
-            className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            {isDoctor ? "Lịch sử khám bệnh" : "Lịch sử thăm khám"}
-          </LinkButton>
-
-          <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
-            className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            {isDoctor ? "Yêu cầu đã hoàn tất" : "Lịch khám sắp tới"}
-          </LinkButton>
-
-          {!isDoctor && <LinkButton onClick={setSidebarClose} href={ROUTES.MEDICAL_RECORD_PENDING}
-            className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            Yêu cầu chờ phản hồi
-          </LinkButton>}
-
-          {isDoctor && <LinkButton onClick={setSidebarClose} href={ROUTES.PROFILE}
-            className="hover:bg-[#050355] justify-start rounded-none pl-10">
-            Lịch khám bệnh
-          </LinkButton>}
-        </>
-      }
-
       {
         isAdmin && <Button
           onClick={() => setAdminOpen(prev => !prev)}

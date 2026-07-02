@@ -39,6 +39,13 @@ export default function RootLayout({ children }) {
   const loadingMessage = useGlobalLoading(state => state.message)
 
   useEffect(() => {
+    const match = document.cookie.match(/(^| )theme=([^;]+)/);
+    const theme = match ? match[2] : 'light';
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsHydrated(true);
   }, []);
@@ -61,17 +68,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} relative antialiased flex flex-col min-h-screen bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} relative antialiased flex flex-col min-h-screen bg-gray-50 dark:bg-[#0B0A1A] text-gray-800 dark:text-slate-200 transition-colors duration-200`}
       >
         {!isHydrated ? (
-          <div className="flex items-center justify-center min-h-screen">
+          <div className="flex items-center justify-center min-h-screen dark:bg-[#0B0A1A]">
             {/* Màn hình chờ nhẹ nhàng khi đang nạp dữ liệu */}
           </div>
         ) : (
           <>
             <Navbar setSidebarOpen={() => setSidebarOpen(prev => !prev)} />
             <main className="mt-15 grow w-full flex flex-col min-h-[calc(100vh-3.75rem)]">
-              <div className="w-full grow flex flex-col bg-white">
+              <div className="w-full grow flex flex-col bg-white dark:bg-[#121124] transition-colors duration-200">
                 {children}
               </div>
             </main>

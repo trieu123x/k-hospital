@@ -157,4 +157,29 @@ export const authService = {
     await supabase.auth.signOut();
     return { message: "Đặt lại mật khẩu thành công!" };
   },
+
+  changePassword: async ({ userId, email, oldPassword, newPassword }) => {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: oldPassword,
+    });
+
+    if (signInError) {
+      throw Object.assign(new Error("Mật khẩu cũ không chính xác"), { statusCode: 400 });
+    }
+
+    if (!supabaseAdmin) {
+      throw Object.assign(new Error("Hệ thống chưa cấu hình quyền Admin để đổi mật khẩu"), { statusCode: 500 });
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+
+    if (updateError) {
+      throw Object.assign(new Error(`Không thể đổi mật khẩu: ${updateError.message}`), { statusCode: 500 });
+    }
+
+    return { message: "Đổi mật khẩu thành công!" };
+  },
 };

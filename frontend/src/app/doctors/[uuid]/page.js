@@ -106,6 +106,10 @@ export default function DoctorDetailPage() {
                   fill
                   className="object-cover object-top"
                   priority
+                  onError={(e) => {
+                    e.currentTarget.srcset = "";
+                    e.currentTarget.src = "/images/Avartar.jpg";
+                  }}
                 />
               </div>
 

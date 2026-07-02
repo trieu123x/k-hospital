@@ -130,6 +130,10 @@ export default function DoctorsPage() {
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
+                  onError={(e) => {
+                    e.currentTarget.srcset = "";
+                    e.currentTarget.src = "/images/Avartar.jpg";
+                  }}
                 />
               </div>
 

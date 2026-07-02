@@ -82,6 +82,10 @@ export default function NewsDetailPage() {
                 height={0}
                 sizes="100vw"
                 className="w-full h-auto"
+                onError={(e) => {
+                  e.currentTarget.srcset = "";
+                  e.currentTarget.src = "/images/News.webp";
+                }}
               />
             </div>
 

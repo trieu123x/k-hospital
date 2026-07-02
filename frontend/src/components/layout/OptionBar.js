@@ -2,6 +2,7 @@
 
 import { LinkButton } from "../ui/LinkButton";
 import { useAuthStore } from "@/stores/auth";
+import { usePathname } from "next/navigation";
 
 export function OptionBar() {
   const { isDoctor, isAdmin } = useAuthStore();
@@ -32,6 +33,17 @@ export function OptionBar() {
 }
 
 function AdminOption() {
+  const pathname = usePathname();
+  const isProfile = pathname?.startsWith("/profile");
+
+  if (isProfile) {
+    return (
+      <LinkButton href="/profile/admin/detail" className="hover:bg-[#050355] justify-start rounded-none">
+        Thông tin cá nhân
+      </LinkButton>
+    );
+  }
+
   return (
     <>
       <LinkButton href="/admin/users" className="hover:bg-[#050355] justify-start rounded-none">

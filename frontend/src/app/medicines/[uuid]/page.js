@@ -70,10 +70,14 @@ export default function MedicineDetailPage() {
             <div className="sticky top-24">
               <div className="relative w-55 aspect-square overflow-hidden mb-2 flex items-center justify-center">
                 <Image
-                  src={medicine.imageUrl || "/images/Diseases.jpg"}
+                  src={medicine.imageUrl || "/images/Medicines.webp"}
                   alt={medicine.name}
                   fill
                   className="object-contain p-4"
+                  onError={(e) => {
+                    e.currentTarget.srcset = "";
+                    e.currentTarget.src = "/images/Medicines.webp";
+                  }}
                 />
               </div>
 

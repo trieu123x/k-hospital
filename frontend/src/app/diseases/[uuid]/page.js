@@ -99,6 +99,10 @@ export default function DiseaseDetailPage() {
                   alt={disease.name}
                   width={200} height={200}
                   className="object-cover group-hover:scale-105 transition-transform"
+                  onError={(e) => {
+                    e.currentTarget.srcset = "";
+                    e.currentTarget.src = "/images/Diseases.jpg";
+                  }}
                 />
               </div>
               <div className="text-black text-sm">
@@ -162,10 +166,14 @@ export default function DiseaseDetailPage() {
                   <div key={med.id} className="w-55 cursor-pointer bg-white shadow-[0_0_4px_rgba(144,144,144,0.25)] hover:-translate-y-1 transition-all group">
                     <div className="relative w-full aspect-square mb-4 bg-gray-50 rounded overflow-hidden">
                       <Image
-                        src={med.imageUrl || "/images/Diseases.jpg"}
+                        src={med.imageUrl || "/images/Medicines.webp"}
                         alt={med.name}
                         fill
                         className="object-contain transition-transform"
+                        onError={(e) => {
+                          e.currentTarget.srcset = "";
+                          e.currentTarget.src = "/images/Medicines.webp";
+                        }}
                       />
                     </div>
                     <h3 className="font-bold line-clamp-2 leading-none px-2">{med.name}</h3>
@@ -211,6 +219,10 @@ export default function DiseaseDetailPage() {
                         alt={doc.profile?.fullName}
                         fill
                         className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.srcset = "";
+                          e.currentTarget.src = "/images/Avartar.jpg";
+                        }}
                       />
                     </div>
                     <h3 className="font-bold line-clamp-2 leading-none px-2">{doc.degree} - {doc.profile?.fullName}</h3>

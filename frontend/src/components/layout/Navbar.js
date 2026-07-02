@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, Bell } from "lucide-react";
+import { ChevronDown, Menu, Bell, Sun, Moon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LinkButton } from "../ui/LinkButton";
 import { Button } from "../ui/Button";
@@ -9,6 +9,7 @@ import { NotificationForm } from "../notification/form";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import { supabase } from "@/utils/supabase";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 // ======================================================================
 // COMPONENT: TỰ CẮT ẢNH BẰNG TRÌNH DUYỆT (CANVAS) DỰA TRÊN CROP-DATA
@@ -81,7 +82,16 @@ function CroppedAvatar({ rawAvatarUrl, cropData, className }) {
     };
   }, [rawAvatarUrl, cropData]);
 
-  return <img src={displayUrl} alt="Avatar" className={className} />;
+  return (
+    <img
+      src={displayUrl}
+      alt="Avatar"
+      className={className}
+      onError={(e) => {
+        e.currentTarget.src = "/images/Avartar.jpg";
+      }}
+    />
+  );
 }
 
 // ======================================================================
@@ -187,7 +197,11 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   const setUser = useAuthStore(state => state.setUser)
 
   const [isMenuOpen, setMenuOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [theme, setTheme] = useState("light")
+
   const menuRef = useRef(null)
+  const notiRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -199,11 +213,39 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notiRef.current && !notiRef.current.contains(event.target)) {
+        setNotiOpen(false)
+      }
+    }
+    if (isNotiOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isNotiOpen, setNotiOpen])
+
+  useEffect(() => {
+    const match = document.cookie.match(/(^| )theme=([^;]+)/)
+    setTheme(match ? match[2] : "light")
+  }, [])
+
+  const handleToggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark"
+    setTheme(newTheme)
+    document.cookie = `theme=${newTheme}; path=/; max-age=31536000`
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }
+
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
 
   let profileLink = "/profile/patient/detail"
-  if (isAdmin) profileLink = "/admin/aggregate"
+  if (isAdmin) profileLink = "/profile/admin/detail"
   else if (isDoctor) profileLink = "/profile/doctor/detail"
 
   const handleLogout = async () => {
@@ -218,7 +260,7 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
 
   return (
     <div className="hidden xl:flex w-1/5 justify-end items-center gap-2 relative">
-      <div className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
+      <div ref={notiRef} className="relative cursor-pointer hover:bg-[#E8E8E8] transition-all duration-300 p-1 rounded-full">
         {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
         <Bell className="size-6" onClick={() => setNotiOpen(prev => !prev)} />
         <NotificationForm isOpen={isNotiOpen} />
@@ -237,7 +279,7 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
         </button>
 
         {isMenuOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-[#070575] text-white rounded-lg z-50 text-[16px] flex flex-col font-medium overflow-hidden rasa-font">
+          <div className="absolute right-0 mt-2 w-56 bg-[#070575] text-white rounded-lg z-50 text-[16px] flex flex-col font-medium overflow-hidden rasa-font border border-white/10">
             {/* Header info with logo & name */}
             <div className="flex items-center gap-2.5 px-4 py-3 bg-[#050355] border-b border-white/10">
               <div className="size-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
@@ -264,15 +306,24 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
                 onClick={() => setMenuOpen(false)}
                 className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
               >
-                Thông tin cá nhân
+                Trang cá nhân
               </Link>
-              <Link
-                href="#"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              <button
+                onClick={handleToggleTheme}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors flex items-center justify-between w-full text-left font-medium cursor-pointer"
               >
-                Cài đặt
-              </Link>
+                <span>Giao diện</span>
+                {theme === "dark" ? <Moon className="size-4 text-yellow-300" /> : <Sun className="size-4 text-yellow-500" />}
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  setIsPasswordModalOpen(true)
+                }}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors text-left w-full font-medium cursor-pointer"
+              >
+                Đổi mật khẩu
+              </button>
               <button
                 onClick={() => {
                   setMenuOpen(false);
@@ -286,6 +337,8 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
           </div>
         )}
       </div>
+
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
     </div>
   )
 }
@@ -301,7 +354,11 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
   const setUser = useAuthStore(state => state.setUser)
 
   const [isMenuOpen, setMenuOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [theme, setTheme] = useState("light")
+
   const menuRef = useRef(null)
+  const notiRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -313,12 +370,40 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notiRef.current && !notiRef.current.contains(event.target)) {
+        setNotiOpen(false)
+      }
+    }
+    if (isNotiOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isNotiOpen, setNotiOpen])
+
+  useEffect(() => {
+    const match = document.cookie.match(/(^| )theme=([^;]+)/)
+    setTheme(match ? match[2] : "light")
+  }, [])
+
+  const handleToggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark"
+    setTheme(newTheme)
+    document.cookie = `theme=${newTheme}; path=/; max-age=31536000`
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }
+
   const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg"
   const cropData = user?.profile?.avatarCropData || user?.avatarCropData
 
-  let profileLink = "/profile/patient"
-  if (isAdmin) profileLink = "/admin/aggregate"
-  else if (isDoctor) profileLink = "/profile/doctor"
+  let profileLink = "/profile/patient/detail"
+  if (isAdmin) profileLink = "/profile/admin/detail"
+  else if (isDoctor) profileLink = "/profile/doctor/detail"
 
   const handleLogout = async () => {
     try {
@@ -332,10 +417,10 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
 
   return (
     <div className="flex xl:hidden items-center gap-3.5 mr-5 relative">
-      <div onClick={() => setNotiOpen(prev => !prev)}
+      <div ref={notiRef}
         className="relative cursor-pointer hover:bg-[#bdbddf] transition-all duration-300 p-2 ml-2 rounded-full">
         {hasUnread && <div className="absolute -top-1 -right-1 size-2.5 bg-red-500 rounded-full border-2 border-white z-10"></div>}
-        <Bell className="size-6" />
+        <Bell className="size-6 text-white" onClick={() => setNotiOpen(prev => !prev)} />
         <NotificationForm isOpen={isNotiOpen} />
       </div>
 
@@ -379,15 +464,24 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
                 onClick={() => setMenuOpen(false)}
                 className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
               >
-                Thông tin cá nhân
+                Trang cá nhân
               </Link>
-              <Link
-                href="#"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-2 hover:bg-[#3040A8] transition-colors"
+              <button
+                onClick={handleToggleTheme}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors flex items-center justify-between w-full text-left font-medium cursor-pointer"
               >
-                Cài đặt
-              </Link>
+                <span>Giao diện</span>
+                {theme === "dark" ? <Moon className="size-4 text-yellow-300" /> : <Sun className="size-4 text-yellow-500" />}
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  setIsPasswordModalOpen(true)
+                }}
+                className="px-4 py-2 hover:bg-[#3040A8] transition-colors text-left w-full font-medium cursor-pointer"
+              >
+                Đổi mật khẩu
+              </button>
               <button
                 onClick={() => {
                   setMenuOpen(false);
@@ -405,6 +499,8 @@ function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
       <button id="sidebar-menu-btn" onClick={setSidebarOpen}>
         <Menu className="w-6.5 h-6.5 text-white cursor-pointer" />
       </button>
+
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
     </div>
   )
 }

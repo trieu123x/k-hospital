@@ -38,4 +38,9 @@ export const authSchema = {
     otp: z.string().min(1, "Vui lòng nhập mã OTP"),
     newPassword: z.string().min(6, "Mật khẩu mới phải từ 6 ký tự trở lên"),
   }),
+
+  changePassword: z.object({
+    oldPassword: z.string().min(1, "Vui lòng nhập mật khẩu cũ"),
+    newPassword: z.string().min(6, "Mật khẩu mới phải từ 6 ký tự trở lên"),
+  }),
 };
