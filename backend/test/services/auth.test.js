@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { authService } from '@/services/auth.js'
-import { supabase } from '@/configs/supabase-config.js'
+import { supabase, supabaseAdmin } from '@/configs/supabase-config.js'
 import { profileRepository } from '@/repositories/auth.js'
 
 vi.mock('@/configs/supabase-config.js', () => ({
@@ -8,6 +8,10 @@ vi.mock('@/configs/supabase-config.js', () => ({
     auth: {
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+      verifyOtp: vi.fn(),
+      updateUser: vi.fn(),
+      signOut: vi.fn(),
       admin: {
         signOut: vi.fn()
       }
@@ -17,7 +21,8 @@ vi.mock('@/configs/supabase-config.js', () => ({
     auth: {
       admin: {
         listUsers: vi.fn(),
-        updateUserById: vi.fn()
+        updateUserById: vi.fn(),
+        deleteUser: vi.fn()
       }
     }
   }
@@ -32,12 +37,6 @@ vi.mock('@/repositories/auth.js', () => ({
   }
 }))
 
-vi.mock('@/services/mail.js', () => ({
-  sendOtpEmail: vi.fn().mockResolvedValue(true)
-}))
-
-import { sendOtpEmail } from '@/services/mail.js'
-
 describe('authService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -49,60 +48,21 @@ describe('authService', () => {
       await expect(authService.register({ phone: '123', email: 'test@a.com' })).rejects.toThrow('Số điện thoại đã được sử dụng')
     })
 
+
     it('should throw error if email already exists', async () => {
       profileRepository.findByPhone.mockResolvedValue(null)
       profileRepository.findByEmail.mockResolvedValue({ id: 1 })
       await expect(authService.register({ phone: '123', email: 'test@a.com' })).rejects.toThrow('Email đã được sử dụng')
     })
 
-    it('should generate OTP and send email', async () => {
+    it('should register user and return instructions', async () => {
       profileRepository.findByPhone.mockResolvedValue(null)
       profileRepository.findByEmail.mockResolvedValue(null)
+      supabase.auth.signUp.mockResolvedValue({ error: null })
       
       const result = await authService.register({ phone: '123', email: 'test@a.com', password: '123', fullName: 'Test Name' })
-      
       expect(result.email).toBe('test@a.com')
-      // expect(sendOtpEmail).toHaveBeenCalledWith('test@a.com', expect.any(String))
-    })
-  })
-
-  describe('verifyRegister', () => {
-    const email = 'test@a.com'
-    let otp = ''
-
-    beforeEach(async () => {
-      // Simulate registering first to populate registerOtpStore
-      profileRepository.findByPhone.mockResolvedValue(null)
-      profileRepository.findByEmail.mockResolvedValue(null)
-      await authService.register({ phone: '123', email, password: '123', fullName: 'Test Name' })
-      // Get the injected OTP out of the sendOtpEmail mock tracker
-      otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)?.[1] || '123456'
-    })
-
-    it('should throw error if OTP is invalid', async () => {
-      await expect(authService.verifyRegister({ email, otp: '000000' })).rejects.toThrow('OTP không đúng')
-    })
-
-    it('should throw error if supabase signup fails', async () => {
-      supabase.auth.signUp.mockResolvedValue({ data: null, error: { message: 'Signup failed' } })
-      await expect(authService.verifyRegister({ email, otp })).rejects.toThrow('Signup failed')
-    })
-
-    it('should create user successfully', async () => {
-      supabase.auth.signUp.mockResolvedValue({ data: { user: { id: 'user-123', email: 'test@a.com' } }, error: null })
-      profileRepository.create.mockResolvedValue({ id: 'user-123', fullName: 'Test Name', phone: '123', role: 'PATIENT' })
-      
-      const result = await authService.verifyRegister({ email, otp })
-      
-      expect(result.userId).toBe('user-123')
-      expect(result.role).toBe('PATIENT')
-      expect(profileRepository.create).toHaveBeenCalledWith({
-        id: 'user-123',
-        fullName: 'Test Name',
-        email: 'test@a.com',
-        phone: '123',
-        role: 'PATIENT'
-      })
+      expect(result.message).toContain('kích hoạt tài khoản')
     })
   })
 
@@ -115,12 +75,12 @@ describe('authService', () => {
     it('should throw error if account not in system DB', async () => {
       supabase.auth.signInWithPassword.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
       profileRepository.findById.mockResolvedValue(null)
-      await expect(authService.login({ email: 'a@a.com', password: '123' })).rejects.toThrow('Tài khoản không tồn tại trong hệ thống')
+      await expect(authService.login({ email: 'a@a.com', password: '123' })).rejects.toThrow('Tài khoản không tồn tại trên hệ thống')
     })
 
     it('should successfully login and return tokens', async () => {
       supabase.auth.signInWithPassword.mockResolvedValue({ 
-        data: { user: { id: 'u1', email: 'a@a.com' }, session: { access_token: 'acc', refresh_token: 'ref' } }, 
+        data: { user: { id: 'u1', email: 'a@a.com' }, session: { access_token: 'acc', refresh_token: 'ref', expires_in: 3600 } }, 
         error: null 
       })
       profileRepository.findById.mockResolvedValue({ id: 'u1', fullName: 'John', role: 'PATIENT' })
@@ -144,57 +104,41 @@ describe('authService', () => {
   })
 
   describe('forgotPassword', () => {
-    it('should throw error if email not found', async () => {
-      profileRepository.findByEmail.mockResolvedValue(null)
-      await expect(authService.forgotPassword({ email: 'wrong@mail.com' })).rejects.toThrow('Email không tồn tại trong hệ thống')
+    it('should return success message if request succeeds', async () => {
+      supabase.auth.resetPasswordForEmail.mockResolvedValue({ error: null })
+      const result = await authService.forgotPassword({ email: 'test@mail.com' })
+      expect(result.message).toContain('hướng dẫn đặt lại mật khẩu')
     })
 
-    it('should generate OTP and call sendOtpEmail', async () => {
-      profileRepository.findByEmail.mockResolvedValue({ id: 'u1', email: 'test@mail.com' })
-      const result = await authService.forgotPassword({ email: 'test@mail.com' })
-      
-      expect(result.message).toBe('OTP đã được gửi đến email của bạn')
-      // expect(sendOtpEmail).toHaveBeenCalledWith('test@mail.com', expect.any(String))
+    it('should throw error if supabase request fails', async () => {
+      supabase.auth.resetPasswordForEmail.mockResolvedValue({ error: { message: 'Some error' } })
+      await expect(authService.forgotPassword({ email: 'test@mail.com' })).rejects.toThrow('Không thể gửi yêu cầu: Some error')
     })
   })
 
   describe('resetPassword', () => {
     const email = 'test@mail.com'
     const newPassword = 'newPassword123'
-    let otp = ''
+    const otp = '123456'
 
-    beforeEach(async () => {
-      profileRepository.findByEmail.mockResolvedValue({ id: 'u1', email })
-      await authService.forgotPassword({ email })
-      // Capture the OTP from the sendOtpEmail call
-      otp = vi.mocked(sendOtpEmail).mock.calls.at(-1)?.[1] || '123456'
+    it('should throw error if verifyOtp fails', async () => {
+      supabase.auth.verifyOtp.mockResolvedValue({ error: { message: 'Invalid OTP' } })
+      await expect(authService.resetPassword({ email, otp, newPassword })).rejects.toThrow('Mã OTP không hợp lệ hoặc đã hết hạn')
     })
 
-    it('should throw error for invalid OTP', async () => {
-      await expect(authService.resetPassword({ email, otp: '000000', newPassword }))
-        .rejects.toThrow('OTP không đúng')
+    it('should throw error if updateUser fails', async () => {
+      supabase.auth.verifyOtp.mockResolvedValue({ error: null })
+      supabase.auth.updateUser.mockResolvedValue({ error: { message: 'Update failed' } })
+      await expect(authService.resetPassword({ email, otp, newPassword })).rejects.toThrow('Lỗi cập nhật: Update failed')
     })
 
-    it('should successfully update password with valid OTP', async () => {
-      const { supabaseAdmin } = await import('@/configs/supabase-config.js')
-      supabaseAdmin.auth.admin.listUsers.mockResolvedValue({ data: { users: [{ id: 'u1', email }] }, error: null })
-      supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ error: null })
-
-      const result = await authService.resetPassword({ email, otp, newPassword })
-      expect(result.message).toBe('Đặt lại mật khẩu thành công')
-      expect(supabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('u1', { password: newPassword })
-    })
-
-    it('should throw error if OTP is consumed once', async () => {
-      const { supabaseAdmin } = await import('@/configs/supabase-config.js')
-      supabaseAdmin.auth.admin.listUsers.mockResolvedValue({ data: { users: [{ id: 'u1', email }] }, error: null })
-      supabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ error: null })
-
-      await authService.resetPassword({ email, otp, newPassword })
+    it('should reset password successfully', async () => {
+      supabase.auth.verifyOtp.mockResolvedValue({ error: null })
+      supabase.auth.updateUser.mockResolvedValue({ error: null })
+      supabase.auth.signOut.mockResolvedValue({ error: null })
       
-      // Try again with same OTP
-      await expect(authService.resetPassword({ email, otp, newPassword }))
-        .rejects.toThrow('OTP không hợp lệ hoặc chưa được yêu cầu')
+      const result = await authService.resetPassword({ email, otp, newPassword })
+      expect(result.message).toBe('Đặt lại mật khẩu thành công!')
     })
   })
 })

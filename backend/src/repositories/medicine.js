@@ -1,4 +1,4 @@
-import { prisma } from "../configs/prisma-config.js"
+import { prisma, Prisma } from "../configs/prisma-config.js"
 import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const medicineRepository = {
@@ -7,46 +7,121 @@ export const medicineRepository = {
     },
 
     findAllForAdmin: async ({ name, typeId, page = 1, limit = 30 }) => {
-        const where = {}
-        if (name) where.nameClean = { contains: removeVietnameseTones(name), mode: 'insensitive' }
-        if (typeId) where.typeId = typeId
+        const cleanName = name ? removeVietnameseTones(name) : null
+        const searchPattern = cleanName ? `%${cleanName}%` : null
+        const offset = (page - 1) * limit
 
-        const skip = (page - 1) * limit
-        const [medicines, total] = await Promise.all([
-            prisma.medicine.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: { id: 'asc' },
-                include: { medicineType: true }
-            }),
-            prisma.medicine.count({ where })
-        ])
-        
-        return { medicines, total }
+        const filterConditions = Prisma.sql`
+            1=1
+            ${typeId ? Prisma.sql`AND m.type_id = ${typeId}::uuid` : Prisma.empty}
+            ${name ? Prisma.sql`AND (m.name_clean LIKE ${searchPattern} OR m.name_clean % ${cleanName})` : Prisma.empty}
+        `
+
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM medicines m
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
+
+        const medicines = await prisma.$queryRaw`
+            SELECT 
+                m.id, 
+                m.name, 
+                m.image_url AS "imageUrl", 
+                m.type_id AS "typeId", 
+                m.ingredients, 
+                m.dosage, 
+                m.usage_instruction AS "usageInstruction", 
+                m.side_effects AS "sideEffects",
+                mt.id AS "medicineType.id",
+                mt.name AS "medicineType.name",
+                mt.description AS "medicineType.description"
+            FROM medicines m
+            LEFT JOIN medicine_types mt ON m.type_id = mt.id
+            WHERE ${filterConditions}
+            ORDER BY 
+                ${name ? Prisma.sql`similarity(m.name_clean, ${cleanName}) DESC,` : Prisma.empty} 
+                m.id ASC
+            LIMIT ${limit} OFFSET ${offset}
+        `
+
+        const mappedMedicines = medicines.map(m => ({
+            id: m.id,
+            name: m.name,
+            imageUrl: m.imageUrl,
+            typeId: m.typeId,
+            ingredients: m.ingredients,
+            dosage: m.dosage,
+            usageInstruction: m.usageInstruction,
+            sideEffects: m.sideEffects,
+            medicineType: m["medicineType.id"] ? {
+                id: m["medicineType.id"],
+                name: m["medicineType.name"],
+                description: m["medicineType.description"]
+            } : null
+        }))
+
+        return { medicines: mappedMedicines, total }
     },
 
     findAll: async (filters = {}, skip = 0, limit = 10) => {
-        const where = {}
+        const { name, typeId } = filters
+        const cleanName = name ? removeVietnameseTones(name) : null
+        const searchPattern = cleanName ? `%${cleanName}%` : null
 
-        if (filters.name) {
-            where.nameClean = { contains: removeVietnameseTones(filters.name), mode: 'insensitive' }
-        }
-        if (filters.typeId) {
-            where.typeId = filters.typeId
-        }
+        const filterConditions = Prisma.sql`
+            1=1
+            ${typeId ? Prisma.sql`AND m.type_id = ${typeId}::uuid` : Prisma.empty}
+            ${name ? Prisma.sql`AND (m.name_clean LIKE ${searchPattern} OR m.name_clean % ${cleanName})` : Prisma.empty}
+        `
 
-        const [medicines, total] = await Promise.all([
-            prisma.medicine.findMany({
-                where,
-                skip,
-                take: limit,
-                include: { medicineType: true }
-            }),
-            prisma.medicine.count({ where })
-        ])
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM medicines m
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
 
-        return { medicines, total }
+        const medicines = await prisma.$queryRaw`
+            SELECT 
+                m.id, 
+                m.name, 
+                m.image_url AS "imageUrl", 
+                m.type_id AS "typeId", 
+                m.ingredients, 
+                m.dosage, 
+                m.usage_instruction AS "usageInstruction", 
+                m.side_effects AS "sideEffects",
+                mt.id AS "medicineType.id",
+                mt.name AS "medicineType.name",
+                mt.description AS "medicineType.description"
+            FROM medicines m
+            LEFT JOIN medicine_types mt ON m.type_id = mt.id
+            WHERE ${filterConditions}
+            ORDER BY 
+                ${name ? Prisma.sql`similarity(m.name_clean, ${cleanName}) DESC,` : Prisma.empty} 
+                m.id ASC
+            LIMIT ${limit} OFFSET ${skip}
+        `
+
+        const mappedMedicines = medicines.map(m => ({
+            id: m.id,
+            name: m.name,
+            imageUrl: m.imageUrl,
+            typeId: m.typeId,
+            ingredients: m.ingredients,
+            dosage: m.dosage,
+            usageInstruction: m.usageInstruction,
+            sideEffects: m.sideEffects,
+            medicineType: m["medicineType.id"] ? {
+                id: m["medicineType.id"],
+                name: m["medicineType.name"],
+                description: m["medicineType.description"]
+            } : null
+        }))
+
+        return { medicines: mappedMedicines, total }
     },
 
     findById: async (id) => {

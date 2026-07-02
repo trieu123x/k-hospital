@@ -1,4 +1,4 @@
-import { prisma } from "../configs/prisma-config.js"
+import { prisma, Prisma } from "../configs/prisma-config.js"
 import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const userRepository = {
@@ -7,29 +7,39 @@ export const userRepository = {
     },
 
     findAllForAdmin: async ({ role, name, page = 1, limit = 30 }) => {
-        const where = {}
-        if (role) where.role = role
-        if (name) where.fullNameClean = { contains: removeVietnameseTones(name), mode: 'insensitive' }
+        const cleanName = name ? removeVietnameseTones(name) : null
+        const searchPattern = cleanName ? `%${cleanName}%` : null
+        const offset = (page - 1) * limit
 
-        const skip = (page - 1) * limit
-        const [users, total] = await Promise.all([
-            prisma.profile.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: { id: 'asc' },
-                select: {
-                    id: true,
-                    fullName: true,
-                    phone: true,
-                    email: true,
-                    role: true,
-                    isActive: true,
-                    avatarCropData: true
-                }
-            }),
-            prisma.profile.count({ where })
-        ])
+        const filterConditions = Prisma.sql`
+            1=1
+            ${role ? Prisma.sql`AND role = ${role}::"UserRole"` : Prisma.empty}
+            ${name ? Prisma.sql`AND (full_name_clean LIKE ${searchPattern} OR full_name_clean % ${cleanName})` : Prisma.empty}
+        `
+
+        const totalCountParams = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count
+            FROM profiles
+            WHERE ${filterConditions}
+        `
+        const total = totalCountParams[0]?.count || 0
+
+        const users = await prisma.$queryRaw`
+            SELECT 
+                id, 
+                full_name AS "fullName", 
+                phone, 
+                email, 
+                role, 
+                is_active AS "isActive", 
+                avatar_crop_data AS "avatarCropData"
+            FROM profiles
+            WHERE ${filterConditions}
+            ORDER BY 
+                ${name ? Prisma.sql`similarity(full_name_clean, ${cleanName}) DESC,` : Prisma.empty} 
+                id ASC
+            LIMIT ${limit} OFFSET ${offset}
+        `
 
         return { users, total }
     },
