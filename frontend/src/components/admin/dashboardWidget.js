@@ -40,7 +40,13 @@ export function VerticalBarChart({ data = [] }) {
     return () => clearTimeout(timer)
   }, [])
 
-  if (!data || data.length === 0) return null
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-gray-500 italic text-[15px]">
+        Chưa có nội dung để hiển thị
+      </div>
+    )
+  }
   const maxValue = Math.max(...data.map(d => d.value))
 
   const getBarColor = (percent) => {
@@ -86,7 +92,13 @@ export function HorizontalBarChart({ data = [] }) {
     return () => clearTimeout(timer)
   }, [])
 
-  if (!data || data.length === 0) return null
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-gray-500 italic text-[15px]">
+        Chưa có nội dung để hiển thị
+      </div>
+    )
+  }
   const maxValue = Math.max(...data.map(d => d.value))
 
   const getBarColor = (percent) => {

@@ -46,21 +46,6 @@ export const appointmentRepository = {
                 throw Object.assign(new Error("Bác sĩ đã báo bận/nghỉ ca khám này, vui lòng chọn ca khác!"), { statusCode: 409 })
             }
 
-            const shiftCount = await tx.appointment.count({
-                where: { 
-                    doctorId,
-                    date: toVNDateRange(date),
-                    shift,
-                    status: {
-                        not:  'CANCELLED'
-                    }
-                }
-            })
-
-            if (shiftCount >= 10) {
-                throw Object.assign(new Error("Ca khám này đã đạt giới hạn 10 yêu cầu, vui lòng chọn ca khác!"), { statusCode: 409 })
-            }
-
             return await tx.appointment.create({
                 data: {
                     patientId,

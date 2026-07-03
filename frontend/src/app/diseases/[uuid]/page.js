@@ -93,7 +93,7 @@ export default function DiseaseDetailPage() {
           {/* Left: Image and Meta */}
           <div className="w-full md:w-fit">
             <div className="sticky top-24">
-              <div className="w-50 h-50 overflow-hidden mb-2">
+              <div className="w-[200px] h-[200px] overflow-hidden mb-2">
                 <Image
                   src={disease.imageUrl || "/images/Diseases.jpg"}
                   alt={disease.name}
@@ -163,7 +163,7 @@ export default function DiseaseDetailPage() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {displayedMedicines.map((med) => (
-                  <div key={med.id} className="w-55 cursor-pointer bg-white shadow-[0_0_4px_rgba(144,144,144,0.25)] hover:-translate-y-1 transition-all group">
+                  <div key={med.id} className="w-full cursor-pointer bg-white shadow-[0_0_4px_rgba(144,144,144,0.25)] hover:-translate-y-1 transition-all group">
                     <div className="relative w-full aspect-square mb-4 bg-gray-50 rounded overflow-hidden">
                       <Image
                         src={med.imageUrl || "/images/Medicines.webp"}
@@ -212,8 +212,8 @@ export default function DiseaseDetailPage() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {displayedDoctors.map((doc) => (
-                  <div key={doc.id} className="w-55 cursor-pointer bg-white shadow-sm hover:shadow-md transition-all">
-                    <div className="relative w-full h-63 mb-3 overflow-hidden">
+                  <div key={doc.id} className="w-full cursor-pointer bg-white shadow-sm hover:shadow-md transition-all">
+                    <div className="relative w-full h-[252px] mb-3 overflow-hidden">
                       <Image
                         src={doc.profile?.avatarUrl || "/images/Avartar.jpg"}
                         alt={doc.profile?.fullName}

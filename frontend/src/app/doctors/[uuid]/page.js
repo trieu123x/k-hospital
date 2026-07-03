@@ -97,9 +97,9 @@ export default function DoctorDetailPage() {
 
         <div className="flex flex-col lg:flex-row gap-16 grow">
           {/* Left Column: Profile Card */}
-          <div className="relative flex flex-col items-center min-w-55 h-full">
+          <div className="relative flex flex-col items-center min-w-[220px] h-full">
             <div className="w-full sticky top-24">
-              <div className="relative w-full h-63 mb-2">
+              <div className="relative w-full h-[252px] mb-2">
                 <Image
                   src={profile?.avatarUrl || "/images/Avartar.jpg"}
                   alt={profile?.fullName || "Doctor"}
@@ -113,7 +113,7 @@ export default function DoctorDetailPage() {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-55 text-[18px]">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-[220px] text-[18px]">
                 <span>Chuyên khoa: <strong className="font-bold">{specialty?.name || "Đa khoa"}</strong></span>
 
                 <span className="">Bằng cấp: <strong className="font-bold">{degree?.name || "Bác sĩ"}</strong></span>

@@ -58,7 +58,6 @@ export default function Aggregate() {
       else if (rep?.previewData) rows = [...rows, ...rep.previewData]
       else if (rep?.data?.previewData) rows = [...rows, ...rep.data.previewData]
     })
-    setLoading(false)
 
     console.log("rows: ", rows)
     return rows
@@ -145,6 +144,13 @@ export default function Aggregate() {
 
       } catch (error) {
         console.error("Lỗi lấy báo cáo:", error)
+        setKpis({ events: 0, visits: 0, chats: 0 })
+        setPeakShifts([])
+        setChatTopics([])
+        setTopDoctors([])
+        setTopDiseases([])
+      } finally {
+        setLoading(false)
       }
     }
 

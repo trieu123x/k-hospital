@@ -53,8 +53,8 @@ export function BookingDetails({ data, isConfirmed }) {
 
       {data.doctorId && (
         <div className="mt-8 flex justify-center w-full">
-          <div className="w-55 shadow-[0_0_4px_rgba(144,144,144,0.25)] flex flex-col rounded-md overflow-hidden">
-            <div className="h-63 bg-[#F5F5F5] relative w-full">
+          <div className="w-[220px] shadow-[0_0_4px_rgba(144,144,144,0.25)] flex flex-col rounded-md overflow-hidden">
+            <div className="h-[252px] bg-[#F5F5F5] relative w-full">
               <Image
                 src={data.doctorAvatar || DoctorAvatar}
                 fill

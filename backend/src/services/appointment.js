@@ -180,12 +180,6 @@ export const appointmentService = {
             }
         })
 
-        unavailable.bookedShifts.forEach(app => {
-            if (doctorBusyMap[app.doctorId]) {
-                doctorBusyMap[app.doctorId].add(app.shift)
-            }
-        })
-
         const result = []
 
         ALL_SHIFTS.forEach(shift => {

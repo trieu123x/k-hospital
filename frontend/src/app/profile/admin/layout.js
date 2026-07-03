@@ -9,7 +9,7 @@ export default function AdminProfileLayout({ children }) {
   return (
     <div className="w-full flex">
       {isOptionbarOpen && <OptionBar />}
-      <div className="hidden xl:block w-55 flex-none"></div>
+      <div className="hidden xl:block w-[220px] flex-none"></div>
       {children}
     </div>
   )

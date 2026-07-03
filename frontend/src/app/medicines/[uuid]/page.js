@@ -68,7 +68,7 @@ export default function MedicineDetailPage() {
           {/* Left Column: Image and Metadata */}
           <div className="w-full md:w-fit">
             <div className="sticky top-24">
-              <div className="relative w-55 aspect-square overflow-hidden mb-2 flex items-center justify-center">
+              <div className="relative w-[220px] aspect-square overflow-hidden mb-2 flex items-center justify-center">
                 <Image
                   src={medicine.imageUrl || "/images/Medicines.webp"}
                   alt={medicine.name}
@@ -81,7 +81,7 @@ export default function MedicineDetailPage() {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-55 text-[18px]">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-[220px] text-[18px]">
                 <span>Nhóm bệnh: <strong className="font-bold">{categoryDisplay}</strong></span>
 
                 <span className="">Chuyên khoa: <strong className="font-bold">{specialtyDisplay}</strong></span>

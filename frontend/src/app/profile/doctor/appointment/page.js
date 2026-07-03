@@ -21,6 +21,7 @@ export default function Appointments() {
   const doctorId = user?.id;
 
   const [records, setRecords] = useState([]);
+  const [allAppointments, setAllAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [dateFilter, setDateFilter] = useState("");
@@ -36,6 +37,7 @@ export default function Appointments() {
     try {
       const res = await appointmentApi.getDoctorSchedule(doctorId);
       if (res && res.success) {
+        setAllAppointments(res.data);
         // Chỉ lấy lịch PENDING — chờ bác sĩ xác nhận
         const pendingApps = res.data.filter(app => app.status === "PENDING");
         setRecords(pendingApps);
@@ -80,8 +82,27 @@ export default function Appointments() {
   const handleTick = async (isChecked, rowData) => {
     if (!isChecked || !rowData?.id) return;
 
-    const confirmMsg = `Xác nhận lịch khám ${rowData.Shift} ngày ${rowData.Day} cho bệnh nhân ${rowData.name}?`;
-    if (!window.confirm(confirmMsg)) {
+    // 1. Tính tổng số ca khám cùng ngày và cùng ca khám (shift) đã được xác nhận (CONFIRMED)
+    const targetDateString = new Date(rowData.originalData.date).toDateString();
+    const confirmedCount = allAppointments.filter(app => 
+      app.status === "CONFIRMED" && 
+      new Date(app.date).toDateString() === targetDateString && 
+      app.shift === rowData.originalData.shift
+    ).length;
+
+    const totalAfterConfirm = confirmedCount + 1;
+
+    let proceed = false;
+    if (totalAfterConfirm >= 5) {
+      proceed = window.confirm(
+        `Cảnh báo: Hiện bạn đang có ${confirmedCount} ca khám đã xác nhận trước đó ở Ca ${rowData.originalData.shift} ngày ${rowData.Day}. Nếu xác nhận thêm ca khám này nữa thì có thể sẽ quá tải. Bạn có chắc chắn muốn xác nhận không?`
+      );
+    } else {
+      const confirmMsg = `Xác nhận lịch khám ${rowData.Shift} ngày ${rowData.Day} cho bệnh nhân ${rowData.name}?`;
+      proceed = window.confirm(confirmMsg);
+    }
+
+    if (!proceed) {
       // Ép Component render lại cục bộ để reset checkbox về false (do Status luôn là false)
       setRecords(prev => [...prev]);
       return;
@@ -90,38 +111,22 @@ export default function Appointments() {
     showLoading("Đang xử lý yêu cầu...");
     try {
       await appointmentApi.updateAppointmentStatus(rowData.id, { status: "CONFIRMED" });
-      // Xóa khỏi danh sách PENDING ngay lập tức → chuyển sang "Yêu cầu chưa hoàn tất"
+      
+      // Xóa khỏi danh sách PENDING
       setRecords(prev => prev.filter(r => r.appointmentId !== rowData.id));
+      
+      // Cập nhật trạng thái trong allAppointments
+      setAllAppointments(prev => 
+        prev.map(app => 
+          app.appointmentId === rowData.id ? { ...app, status: "CONFIRMED" } : app
+        )
+      );
+
       alert(`✅ Đã xác nhận lịch khám cho ${rowData.name}! Lịch sẽ xuất hiện trong "Yêu cầu chưa hoàn tất".`);
     } catch (error) {
       console.error("Lỗi khi xác nhận lịch:", error);
       const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi xác nhận lịch khám.";
       alert(`Xác nhận thất bại: ${errorMessage}`);
-      fetchPendingAppointments();
-    } finally {
-      hideLoading();
-    }
-  };
-
-  const handleConfirmAll = async () => {
-    if (displayedData.length === 0) {
-      alert("Không có lịch nào để xác nhận!");
-      return;
-    }
-    if (!window.confirm(`Xác nhận TẤT CẢ ${displayedData.length} lịch khám đang hiển thị?`)) return;
-
-    showLoading("Đang xử lý yêu cầu...");
-    try {
-      await Promise.all(
-        displayedData.map(app =>
-          appointmentApi.updateAppointmentStatus(app.id, { status: "CONFIRMED" })
-        )
-      );
-      alert(`✅ Đã xác nhận ${displayedData.length} lịch khám!`);
-      fetchPendingAppointments();
-    } catch (error) {
-      console.error("Lỗi xác nhận hàng loạt:", error);
-      alert("Đã có lỗi xảy ra. Một số lịch có thể chưa được xác nhận.");
       fetchPendingAppointments();
     } finally {
       hideLoading();
@@ -180,14 +185,6 @@ export default function Appointments() {
             {displayedData.length} yêu cầu chờ xác nhận
           </span>
         </div>
-
-        <button
-          onClick={handleConfirmAll}
-          className="bg-[#070575] hover:bg-[#08069b] text-white px-5 py-2 rounded-full text-[14px] font-medium transition-colors disabled:opacity-50"
-          disabled={displayedData.length === 0}
-        >
-          Xác nhận tất cả
-        </button>
       </div>
 
       <div className="px-10 flex-1">

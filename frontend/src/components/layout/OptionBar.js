@@ -20,7 +20,7 @@ export function OptionBar() {
   return (
     <div
       className={`
-        fixed top-15 bottom-0 w-55 bg-[#070575] 
+        fixed top-[60px] bottom-0 w-[220px] bg-[#070575] 
         text-white rasa-font text-[20px]
         hidden xl:flex flex-col 
         transition-all duration-300 ease-in-out

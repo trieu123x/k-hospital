@@ -13,7 +13,7 @@ export default function AdminLayout({ children }) {
       <OptionBar />
     }
 
-    <div className="hidden xl:block w-55 flex-none"></div>
+    <div className="hidden xl:block w-[220px] flex-none"></div>
     {children}
   </div>
 }

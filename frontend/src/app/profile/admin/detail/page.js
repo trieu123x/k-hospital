@@ -147,12 +147,12 @@ export default function AdminDetail() {
     setNewCropData(backendCropData);
   };
 
-  if (loading) return <div className="grow flex items-center justify-center bg-gray-50 dark:bg-[#121124] min-h-[500px]">Đang tải...</div>;
-  if (!userId) return <div className="grow flex items-center justify-center bg-gray-50 dark:bg-[#121124] min-h-[500px]">Vui lòng đăng nhập...</div>;
-  if (!isAdmin) return <div className="grow flex flex-col items-center justify-center bg-gray-50 dark:bg-[#121124] min-h-[500px]">Truy cập bị từ chối!</div>;
+  if (loading) return <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">Đang tải...</div>;
+  if (!userId) return <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">Vui lòng đăng nhập...</div>;
+  if (!isAdmin) return <div className="grow flex flex-col items-center justify-center bg-gray-50 min-h-[500px]">Truy cập bị từ chối!</div>;
 
   return (
-    <div className="grow flex flex-col rasa-font bg-gray-50 dark:bg-[#121124] transition-colors duration-200">
+    <div className="grow flex flex-col rasa-font bg-gray-50 transition-colors duration-200">
       <div className="relative grow flex px-10 py-8 justify-between gap-35">
         <div className="w-200 flex flex-col flex-none">
           <InputForm label={"Họ và tên"} placeholder={"Nhập tên của bạn"} value={fullName} setValue={setFullName} />

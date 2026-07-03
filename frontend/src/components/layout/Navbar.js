@@ -101,7 +101,6 @@ export default function Navbar({ setSidebarOpen = () => { } }) {
   const isLogin = useAuthStore(state => state.isLogin)
   const isAdmin = useAuthStore(state => state.isAdmin)
   const [isLookUpOpen, setLookUpOpen] = useState(false)
-  const [isNotiOpen, setNotiOpen] = useState(false)
   const lookUpRef = useRef(null)
 
   useEffect(() => {
@@ -148,13 +147,13 @@ export default function Navbar({ setSidebarOpen = () => { } }) {
           </div>
 
           {isLogin ?
-            <LoginOption2 setSidebarOpen={setSidebarOpen} isNotiOpen={isNotiOpen} setNotiOpen={setNotiOpen} /> :
+            <LoginOption2 setSidebarOpen={setSidebarOpen} /> :
             <UnLoginOption2 setSidebarOpen={setSidebarOpen} />
           }
         </div>
 
         {isLogin ?
-          <LoginOption1 isNotiOpen={isNotiOpen} setNotiOpen={setNotiOpen} /> :
+          <LoginOption1 /> :
           <UnLoginOption1 />
         }
       </div>
@@ -186,7 +185,8 @@ function UnLoginOption2({ setSidebarOpen }) {
   )
 }
 
-function LoginOption1({ isNotiOpen, setNotiOpen }) {
+function LoginOption1() {
+  const [isNotiOpen, setNotiOpen] = useState(false)
   const notifications = useNotificationStore(state => state.notifications)
   const hasUnread = notifications?.some(noti => !noti.isRead)
 
@@ -320,7 +320,8 @@ function LoginOption1({ isNotiOpen, setNotiOpen }) {
   )
 }
 
-function LoginOption2({ setSidebarOpen, isNotiOpen, setNotiOpen }) {
+function LoginOption2({ setSidebarOpen }) {
+  const [isNotiOpen, setNotiOpen] = useState(false)
   const notifications = useNotificationStore(state => state.notifications)
   const hasUnread = notifications?.some(noti => !noti.isRead)
 
