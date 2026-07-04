@@ -13,7 +13,7 @@ export const doctorRepository = {
         const searchPattern = cleanName ? `%${cleanName}%` : null
 
         const filterConditions = Prisma.sql`
-            1=1
+            p.is_active = true
             ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
             ${cleanName ? Prisma.sql`AND (p.full_name_clean LIKE ${searchPattern} OR p.full_name_clean % ${cleanName})` : Prisma.empty}
         `
@@ -54,8 +54,8 @@ export const doctorRepository = {
                 deg.rank_weight AS "degree.rankWeight"
             FROM doctors d
             LEFT JOIN profiles p ON d.id = p.id
-            LEFT JOIN specialties s ON d.specialty_id = s.id
-            LEFT JOIN degrees deg ON d.degree_id = deg.id
+            LEFT JOIN specialties s ON d.specialty_id = s.id AND s.deleted_at IS NULL
+            LEFT JOIN degrees deg ON d.degree_id = deg.id AND deg.deleted_at IS NULL
             WHERE ${filterConditions}
             ORDER BY 
                 ${cleanName ? Prisma.sql`similarity(p.full_name_clean, ${cleanName}) DESC,` : Prisma.empty} 

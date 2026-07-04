@@ -2,119 +2,88 @@
 
 import { LinkButton } from "@/components/ui/LinkButton"
 import { SearchInput } from "@/components/ui/SearchInput"
-import { SelectBox } from "@/components/ui/SelectBox"
 import { Table } from "@/components/ui/Table"
-import { Filter } from "lucide-react"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { getDiseasesForAdmin, deleteDisease, restoreDisease } from "@/routers/disease-api"
-import { getSpecialties } from "@/routers/specialty-api"
+import { useState, useEffect, useCallback } from "react"
+import { getMedicineTypesForAdmin, deleteMedicineType, restoreMedicineType } from "@/routers/medicine-type-api"
 import { useRouter } from "next/navigation"
-import { cleanSearchTerm } from "@/helper/string-format"
 import { Pagination } from "@/components/ui/Pagination"
 import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
 
-export default function Diseases() {
+export default function MedicineTypes() {
   const router = useRouter()
   const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
-  const [option, setOption] = useState("Tất cả chuyên khoa")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [isTrashMode, setIsTrashMode] = useState(false)
 
   // Data State
-  const [specialties, setSpecialties] = useState([])
-  const [diseases, setDiseases] = useState([])
+  const [types, setTypes] = useState([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    const fetchSpecialties = async () => {
-      try {
-        const res = await getSpecialties()
-        if (res.data) {
-          setSpecialties([{ id: null, name: "Tất cả chuyên khoa" }, ...res.data])
-        }
-      } catch (error) {
-        console.error("Lỗi lấy chuyên khoa:", error)
-      }
-    }
-    fetchSpecialties()
-  }, [])
-
-  useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  const specialtiesRef = useRef([])
-  useEffect(() => {
-    specialtiesRef.current = specialties
-  }, [specialties])
-
-  // Hàm tạo Params chung
   const buildParams = useCallback(() => {
-    const selectedSpecialty = specialtiesRef.current.find(s => s.name === option)
-
     return {
       limit: PAGE_SIZE,
       page,
-      specialtyId: selectedSpecialty?.id || undefined,
-      name: cleanSearchTerm(debouncedSearch) || undefined,
+      name: debouncedSearch || undefined,
       deleted: isTrashMode
     }
-  }, [option, debouncedSearch, page, isTrashMode])
+  }, [debouncedSearch, page, isTrashMode])
 
-  // Fetch dữ liệu LẦN ĐẦU hoặc KHI FILTER THAY ĐỔI
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchData = async () => {
       setLoading(true)
-
       try {
         const params = buildParams()
-        const res = await getDiseasesForAdmin(params)
+        const res = await getMedicineTypesForAdmin(params)
         
         if (res.success && res.data) {
-          setDiseases(res.data)
+          setTypes(res.data)
           setTotalPages(res.pagination?.totalPages || 1)
           setTotalCount(res.pagination?.totalItems || 0)
         } else if (Array.isArray(res)) {
-          setDiseases(res)
+          setTypes(res)
           setTotalPages(1)
           setTotalCount(res.length)
         } else {
-          setDiseases([])
+          setTypes([])
         }
       } catch (error) {
-        console.error("Lỗi tải danh sách bệnh:", error)
+        console.error("Lỗi tải danh sách loại thuốc:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchInitialData()
+    fetchData()
   }, [buildParams])
 
   useEffect(() => {
     setPage(1)
-  }, [option, debouncedSearch, isTrashMode])
+  }, [debouncedSearch, isTrashMode])
 
   const handleDelete = async (row) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bệnh này không?")) return
-    showLoading("Đang xóa bệnh...")
+    if (!window.confirm("Bạn có chắc chắn muốn xóa loại thuốc này không?")) return
+    showLoading("Đang xóa loại thuốc...")
     try {
-      const res = await deleteDisease(row.id)
+      const res = await deleteMedicineType(row.id)
       if (res.success) {
-        setDiseases(prev => prev.filter(d => d.id !== row.id))
+        setTypes(prev => prev.filter(t => t.id !== row.id))
         setTotalCount(prev => prev - 1)
       }
     } catch (error) {
-      console.error("Lỗi xóa bệnh:", error)
+      console.error("Lỗi xóa loại thuốc:", error)
       alert("Xóa thất bại!")
     } finally {
       hideLoading()
@@ -122,16 +91,16 @@ export default function Diseases() {
   }
 
   const handleRestore = async (row) => {
-    if (!window.confirm("Bạn có chắc chắn muốn khôi phục bệnh này không?")) return
-    showLoading("Đang khôi phục bệnh...")
+    if (!window.confirm("Bạn có chắc chắn muốn khôi phục loại thuốc này không?")) return
+    showLoading("Đang khôi phục loại thuốc...")
     try {
-      const res = await restoreDisease(row.id)
+      const res = await restoreMedicineType(row.id)
       if (res.success) {
-        setDiseases(prev => prev.filter(d => d.id !== row.id))
+        setTypes(prev => prev.filter(t => t.id !== row.id))
         setTotalCount(prev => prev - 1)
       }
     } catch (error) {
-      console.error("Lỗi khôi phục bệnh:", error)
+      console.error("Lỗi khôi phục loại thuốc:", error)
       alert("Khôi phục thất bại!")
     } finally {
       hideLoading()
@@ -139,32 +108,23 @@ export default function Diseases() {
   }
 
   const columns = [
-    { key: "name", label: "Tên", width: "15%" },
-    { key: "specialtyName", label: "Chuyên khoa", width: "150px" },
-    { key: "categoryName", label: "Nhóm bệnh", width: "150px" },
+    { key: "name", label: "Tên loại thuốc", width: "30%" },
     { key: "description", label: "Mô tả" },
-    { key: "symptoms", label: "Triệu chứng", width: "220px" },
-    { key: "homeTreatment", label: "Cách xử lý tại nhà", width: "220px" },
     { 
       key: "action", 
-      label: isTrashMode ? "Khôi phục" : "Xóa bệnh", 
+      label: isTrashMode ? "Khôi phục" : "Xóa loại thuốc", 
       mode: isTrashMode ? "restore" : "del", 
-      width: "120px" 
+      width: "150px" 
     },
   ]
 
   return (
     <div className="grow flex flex-col rasa-font bg-white h-full">
       <div className="flex h-15 px-10 items-end justify-between">
-        <div className="flex items-center gap-1">
-          <Filter className="w-6 h-6 flex-none" />
-          <h1 className="mr-2 text-[20px] flex-none">Bộ lọc:</h1>
-          <SelectBox
-            placeholder="Chuyên khoa"
-            value={option}
-            onChange={setOption}
-            options={specialties.map(s => s.name)}
-          />
+        <div>
+          <h1 className="text-[24px] font-bold text-[#070575]">
+            {isTrashMode ? "Loại thuốc đã xóa tạm thời" : "Quản lý loại thuốc"}
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -180,7 +140,7 @@ export default function Diseases() {
             {isTrashMode ? "Quay lại" : "Thùng rác"}
           </button>
           {!isTrashMode && (
-            <LinkButton href={"/admin/diseases/detail"} className={`
+            <LinkButton href={"/admin/medicine-types/detail"} className={`
               bg-[#070575] hover:bg-[#08069b] text-white 
               rounded-[10px] font-light 
             `}>
@@ -191,7 +151,7 @@ export default function Diseases() {
             className="w-95 py-1"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Nhập tên bệnh..."
+            placeholder="Nhập tên loại thuốc..."
           />
         </div>
       </div>
@@ -200,12 +160,12 @@ export default function Diseases() {
         <Table
           isLoading={loading}
           columns={columns}
-          data={diseases}
+          data={types}
           className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
           onRestore={handleRestore}
-          onRowClick={isTrashMode ? undefined : (row) => router.push(`/admin/diseases/detail?id=${row.id}`)}
+          onRowClick={isTrashMode ? undefined : (row) => router.push(`/admin/medicine-types/detail?id=${row.id}`)}
         />
         <div className="relative flex items-center justify-center mt-4">
           <div className="absolute left-0">
@@ -219,7 +179,7 @@ export default function Diseases() {
               currentPage={page} 
               totalPages={totalPages} 
               onPageChange={setPage} 
-            />
+              />
           )}
         </div>
       </div>

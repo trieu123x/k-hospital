@@ -11,11 +11,13 @@ export const getTotalMedicines = catchError(async (req, res) => {
 
 export const getMedicinesForAdmin = catchError(async (req, res) => {
     const { name, typeId, page, limit } = req.query
+    const deleted = req.query.deleted === 'true'
     const data = await medicineService.getMedicinesForAdmin({
         name,
         typeId,
         page: page ? parseInt(page) : 1,
-        limit: limit ? parseInt(limit) : 30
+        limit: limit ? parseInt(limit) : 30,
+        deleted
     })
     res.status(200).json({
         success: true,
@@ -73,5 +75,14 @@ export const deleteMedicine = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Xóa thuốc thành công"
+    })
+})
+
+export const restoreMedicine = catchError(async (req, res) => {
+    const { id } = req.params
+    await medicineService.restoreMedicine(id)
+    res.status(200).json({
+        success: true,
+        message: "Khôi phục thuốc thành công"
     })
 })  

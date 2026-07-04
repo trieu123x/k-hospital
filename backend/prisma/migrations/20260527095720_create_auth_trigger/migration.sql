@@ -1,6 +1,9 @@
 -- DropIndex
 DROP INDEX "user_events_metadata_idx";
 
+CREATE SCHEMA IF NOT EXISTS "auth";
+CREATE TABLE IF NOT EXISTS "auth"."users" (id uuid NOT NULL PRIMARY KEY);
+
 -- CreateTable
 CREATE TABLE "doctor_chunks" (
     "id" UUID NOT NULL,

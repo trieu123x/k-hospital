@@ -122,5 +122,13 @@ export const diseaseService = {
         }
 
         return await diseaseRepository.delete(id)
+    },
+
+    restoreDisease: async (id) => {
+        const existing = await diseaseRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Thông tin bệnh không tồn tại!"), { statusCode: 404 })
+        }
+        return await diseaseRepository.restore(id)
     }
 }

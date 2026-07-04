@@ -81,5 +81,10 @@ export const newsService = {
         }
 
         return await newsRespository.delete(id);
+    },
+
+    restoreNews: async (id) => {
+        // since findById only finds non-deleted ones, we check by direct repository update
+        return await newsRespository.restore(id);
     }
 }

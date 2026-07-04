@@ -19,6 +19,7 @@ import medicineTypeRouter from "./routers/medicine-type.js";
 import { globalErrorHandler } from "./middlewares/error-handler.js";
 import dotenv from "dotenv";
 import { setupSwagger } from "./configs/swagger-config.js";
+import { setupDeleteCronJob } from "./helpers/delete-helper.js"; // tạm thời chưa chạy
 
 dotenv.config();
 const app = express();

@@ -1,5 +1,5 @@
 import express from "express"
-import { getAllMedicines, getMedicineById, createMedicine, updateMedicine, deleteMedicine, getTotalMedicines, getMedicinesForAdmin } from "../controllers/medicine.js"
+import { getAllMedicines, getMedicineById, createMedicine, updateMedicine, deleteMedicine, restoreMedicine, getTotalMedicines, getMedicinesForAdmin } from "../controllers/medicine.js"
 import { authenticate, authorizeAdmin } from "../middlewares/authenticate.js"
 
 import { validate } from "../middlewares/validate-handler.js"
@@ -23,6 +23,7 @@ router.get("/count", authenticate, authorizeAdmin, getTotalMedicines)
 router.get("/:id", validate(medicineSchema.getById), getMedicineById)
 router.post("/", authenticate, authorizeAdmin, upload.single("image"), validate(medicineSchema.create), createMedicine)
 router.put("/:id", authenticate, authorizeAdmin, upload.single("image"), validate(medicineSchema.update), updateMedicine)
+router.put("/:id/restore", authenticate, authorizeAdmin, validate(medicineSchema.getById), restoreMedicine)
 router.delete("/:id", authenticate, authorizeAdmin, validate(medicineSchema.getById), deleteMedicine)
 
 export default router

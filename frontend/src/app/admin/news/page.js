@@ -5,8 +5,8 @@ import { LinkButton } from "@/components/ui/LinkButton"
 import { SearchInput } from "@/components/ui/SearchInput"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { getNewsForAdmin, deleteNews } from "@/routers/news-api"
+import { useState, useEffect, useCallback } from "react"
+import { getNewsForAdmin, deleteNews, restoreNews } from "@/routers/news-api"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/helper/time-format"
 import { format } from "date-fns"
@@ -14,13 +14,6 @@ import { Pagination } from "@/components/ui/Pagination"
 import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
-
-const TABLE_COLUMNS = [
-  { key: "title", label: "Tiêu đề", width: "30%" },
-  { key: "content", label: "Nội dung" },
-  { key: "release", label: "Ngày xuất bản", width: "120px" },
-  { key: "action", label: "Xóa tin tức", mode: "del", width: "120px" },
-]
 
 export default function News() {
   const router = useRouter()
@@ -30,7 +23,9 @@ export default function News() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedDate, setSelectedDate] = useState(null)
+  const [isTrashMode, setIsTrashMode] = useState(false)
 
+  // Data State
   const [newsList, setNewsList] = useState([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -48,8 +43,9 @@ export default function News() {
       page,
       title: debouncedSearch || undefined,
       date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
+      deleted: isTrashMode
     }
-  }, [debouncedSearch, selectedDate, page])
+  }, [debouncedSearch, selectedDate, page, isTrashMode])
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -88,7 +84,7 @@ export default function News() {
 
   useEffect(() => {
     setPage(1)
-  }, [selectedDate, debouncedSearch])
+  }, [selectedDate, debouncedSearch, isTrashMode])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tin tức này không?")) return
@@ -107,6 +103,35 @@ export default function News() {
     }
   }
 
+  const handleRestore = async (row) => {
+    if (!window.confirm("Bạn có chắc chắn muốn khôi phục tin tức này không?")) return
+    showLoading("Đang khôi phục tin tức...")
+    try {
+      const res = await restoreNews(row.id)
+      if (res.success) {
+        setNewsList(prev => prev.filter(n => n.id !== row.id))
+        setTotalCount(prev => prev - 1)
+      }
+    } catch (error) {
+      console.error("Lỗi khôi phục tin tức:", error)
+      alert("Khôi phục thất bại!")
+    } finally {
+      hideLoading()
+    }
+  }
+
+  const columns = [
+    { key: "title", label: "Tiêu đề", width: "30%" },
+    { key: "content", label: "Nội dung" },
+    { key: "release", label: "Ngày xuất bản", width: "120px" },
+    { 
+      key: "action", 
+      label: isTrashMode ? "Khôi phục" : "Xóa tin tức", 
+      mode: isTrashMode ? "restore" : "del", 
+      width: "120px" 
+    },
+  ]
+
   return (
     <div className="grow flex flex-col rasa-font bg-white h-full">
       <div className="flex h-15 px-10 items-end justify-between">
@@ -121,12 +146,25 @@ export default function News() {
         </div>
 
         <div className="flex items-center gap-2">
-          <LinkButton href={"/admin/news/detail"} className={`
-            bg-[#070575] hover:bg-[#08069b] text-white 
-            rounded-[10px] font-light 
-          `}>
-            Thêm
-          </LinkButton>
+          <button 
+            onClick={() => setIsTrashMode(!isTrashMode)}
+            className={`
+              px-4 py-1 rounded-[10px] font-light cursor-pointer rasa-font
+              transition-all duration-300 ease-in-out
+              flex items-center justify-center text-white
+              ${isTrashMode ? "bg-gray-500 hover:bg-gray-600" : "bg-[#d9534f] hover:bg-[#c9302c]"}
+            `}
+          >
+            {isTrashMode ? "Quay lại" : "Thùng rác"}
+          </button>
+          {!isTrashMode && (
+            <LinkButton href={"/admin/news/detail"} className={`
+              bg-[#070575] hover:bg-[#08069b] text-white 
+              rounded-[10px] font-light 
+            `}>
+              Thêm
+            </LinkButton>
+          )}
           <SearchInput
             className="w-95 py-1"
             value={search}
@@ -139,12 +177,13 @@ export default function News() {
       <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
           isLoading={loading}
-          columns={TABLE_COLUMNS}
+          columns={columns}
           data={newsList}
           className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
-          onRowClick={(row) => router.push(`/admin/news/detail?id=${row.id}`)}
+          onRestore={handleRestore}
+          onRowClick={isTrashMode ? undefined : (row) => router.push(`/admin/news/detail?id=${row.id}`)}
         />
 
         <div className="relative flex items-center justify-center mt-4">

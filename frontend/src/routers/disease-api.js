@@ -32,6 +32,10 @@ export const deleteDisease = async (diseaseId) => {
   return await axiosInstance.delete(`/disease/${diseaseId}`)
 }
 
+export const restoreDisease = async (diseaseId) => {
+  return await axiosInstance.put(`/disease/${diseaseId}/restore`)
+}
+
 export const diagnoseSymptoms = async (data) => {
   return await axiosInstance.post('/disease/diagnose', data)
 }

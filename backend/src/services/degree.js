@@ -29,5 +29,55 @@ export const degreeService = {
             description: degree.description,
             rankWeight: degree.rankWeight
         }
+    },
+
+    createDegree: async (data) => {
+        if (!data.name) {
+            throw Object.assign(new Error("Tên bằng cấp không được để trống!"), { statusCode: 400 })
+        }
+        if (data.rankWeight !== undefined && data.rankWeight !== null) {
+            data.rankWeight = parseInt(data.rankWeight)
+        }
+        return await degreeRepository.create(data)
+    },
+
+    updateDegree: async (id, data) => {
+        const existing = await degreeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Bằng cấp không tồn tại!"), { statusCode: 404 })
+        }
+        if (data.rankWeight !== undefined && data.rankWeight !== null) {
+            data.rankWeight = parseInt(data.rankWeight)
+        }
+        return await degreeRepository.update(id, data)
+    },
+
+    deleteDegree: async (id) => {
+        const existing = await degreeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Bằng cấp không tồn tại!"), { statusCode: 404 })
+        }
+        return await degreeRepository.delete(id)
+    },
+
+    restoreDegree: async (id) => {
+        const existing = await degreeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Bằng cấp không tồn tại!"), { statusCode: 404 })
+        }
+        return await degreeRepository.restore(id)
+    },
+
+    getAllDegreesForAdmin: async ({ name, page = 1, limit = 30, deleted = false }) => {
+        const { items, total } = await degreeRepository.findAllForAdmin({ name, page, limit, deleted })
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     }
 }

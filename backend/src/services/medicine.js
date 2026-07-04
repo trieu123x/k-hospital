@@ -103,5 +103,13 @@ export const medicineService = {
             await uploadHelper.deleteFile(existing.imageUrl, 'medicare')
         }
         return await medicineRepository.delete(id)
+    },
+
+    restoreMedicine: async (id) => {
+        const existing = await medicineRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Thuốc không tồn tại!"), { statusCode: 404 })
+        }
+        return await medicineRepository.restore(id)
     }
 }

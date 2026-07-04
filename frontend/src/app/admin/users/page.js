@@ -5,8 +5,8 @@ import { SearchInput } from "@/components/ui/SearchInput"
 import { SelectBox } from "@/components/ui/SelectBox"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { getUsersForAdmin, deleteUser, toggleBlockUser, getTotalUsers } from "@/routers/user-api"
+import { useState, useEffect, useCallback } from "react"
+import { getUsersForAdmin, toggleBlockUser, getTotalUsers } from "@/routers/user-api"
 import { useRouter } from "next/navigation"
 import { Pagination } from "@/components/ui/Pagination"
 import { useGlobalLoading } from "@/stores/globalLoading"
@@ -26,7 +26,7 @@ export default function User() {
   const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
-  const [option, setOption] = useState("Tất cả")
+  const [option, setOption] = useState("Tất cả vai trò")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
 
@@ -64,7 +64,7 @@ export default function User() {
     return {
       limit: PAGE_SIZE,
       page,
-      role: option !== "Tất cả" ? option : undefined,
+      role: option !== "Tất cả vai trò" ? option : undefined,
       name: debouncedSearch || undefined,
     }
   }, [option, debouncedSearch, page])
@@ -72,7 +72,6 @@ export default function User() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-
       try {
         const params = buildParams()
         const res = await getUsersForAdmin(params)
@@ -97,8 +96,6 @@ export default function User() {
   useEffect(() => {
     setPage(1)
   }, [option, debouncedSearch])
-
-
 
   const handleTick = async (isChecked, row) => {
     showLoading("Đang cập nhật trạng thái...")
@@ -127,7 +124,7 @@ export default function User() {
             placeholder="Vai trò"
             value={option}
             onChange={setOption}
-            options={["Tất cả", "ADMIN", "DOCTOR", "PATIENT"]}
+            options={["Tất cả vai trò", "ADMIN", "DOCTOR", "PATIENT"]}
           />
         </div>
 
@@ -165,7 +162,6 @@ export default function User() {
             </span>
           </div>
           
-          {/* Pagination Controls */}
           {!loading && (
             <Pagination 
               currentPage={page} 

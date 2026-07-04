@@ -23,3 +23,7 @@ export const updateMedicine = async (id, data) => {
 export const deleteMedicine = async (id) => {
   return await axiosInstance.delete(`/medicines/${id}`)
 }
+
+export const restoreMedicine = async (id) => {
+  return await axiosInstance.put(`/medicines/${id}/restore`)
+}

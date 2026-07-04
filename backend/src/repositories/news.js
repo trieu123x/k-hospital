@@ -3,10 +3,12 @@ import { removeVietnameseTones } from "../helpers/string-format.js";
 
 export const newsRespository = {
     countAll: async () => {
-        return await prisma.news.count()
+        return await prisma.news.count({
+            where: { deletedAt: null }
+        })
     },
 
-    findAllForAdmin: async ({ title, date, startDate, endDate, page = 1, limit = 30 }) => {
+    findAllForAdmin: async ({ title, date, startDate, endDate, page = 1, limit = 30, deleted = false }) => {
         const cleanTitle = title ? removeVietnameseTones(title) : null;
         const searchFilter = cleanTitle ? `%${cleanTitle}%` : null
         const offset = (page - 1) * limit
@@ -23,7 +25,7 @@ export const newsRespository = {
         }
 
         const filterConditions = Prisma.sql`
-            1=1
+            ${deleted ? Prisma.sql`deleted_at IS NOT NULL` : Prisma.sql`deleted_at IS NULL`}
             ${title ? Prisma.sql`AND (title_clean LIKE ${searchFilter} OR title_clean % ${cleanTitle})` : Prisma.empty}
             ${dateCondition}
         `
@@ -83,8 +85,8 @@ export const newsRespository = {
     },
 
     findById: async (id) => {
-        return await prisma.news.findUnique({
-            where: {id},
+        return await prisma.news.findFirst({
+            where: { id, deletedAt: null },
             select: {
                 id: true,
                 title: true,
@@ -96,13 +98,22 @@ export const newsRespository = {
     },
 
     delete: async (id) => {
-        return await prisma.news.delete({
+        return await prisma.news.update({
             where: { id },
+            data: { deletedAt: new Date() },
             select: { id: true, title: true }
         })
     },
 
-    findWithFilter: async ({ title, date, startDate, endDate, page = 1, limit = 30 }) => {
+    restore: async (id) => {
+        return await prisma.news.update({
+            where: { id },
+            data: { deletedAt: null },
+            select: { id: true, title: true }
+        })
+    },
+
+    findWithFilter: async ({ title, date, startDate, endDate, page = 1, limit = 30, deleted = false }) => {
         const cleanTitle = title ? removeVietnameseTones(title) : null;
         const searchFilter = cleanTitle ? `%${cleanTitle}%` : null
         const offset = (page - 1) * limit
@@ -119,7 +130,7 @@ export const newsRespository = {
         }
 
         const filterConditions = Prisma.sql`
-            1=1
+            ${deleted ? Prisma.sql`deleted_at IS NOT NULL` : Prisma.sql`deleted_at IS NULL`}
             ${title ? Prisma.sql`AND (title_clean LIKE ${searchFilter} OR title_clean % ${cleanTitle})` : Prisma.empty}
             ${dateCondition}
         `

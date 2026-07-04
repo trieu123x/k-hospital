@@ -27,3 +27,7 @@ export const updateNews = async (newsId, data) => {
 export const deleteNews = async (newsId) => {
   return await axiosInstance.delete(`/news/delete/${newsId}`)
 }
+
+export const restoreNews = async (newsId) => {
+  return await axiosInstance.put(`/news/restore/${newsId}`)
+}

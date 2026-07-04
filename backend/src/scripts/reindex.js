@@ -9,7 +9,7 @@ async function reindex() {
 
   // 1. Re-index Diseases
   console.log("\n--- 1. Re-indexing Diseases ---");
-  const diseases = await prisma.disease.findMany();
+  const diseases = await prisma.disease.findMany({ where: { deletedAt: null } });
   console.log(`Tìm thấy ${diseases.length} bệnh.`);
   
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -43,7 +43,7 @@ async function reindex() {
 
   // 2. Re-index Medicines
   console.log("\n--- 2. Re-indexing Medicines ---");
-  const medicines = await prisma.medicine.findMany();
+  const medicines = await prisma.medicine.findMany({ where: { deletedAt: null } });
   console.log(`Tìm thấy ${medicines.length} loại thuốc.`);
   
   for (const med of medicines) {

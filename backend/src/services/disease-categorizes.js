@@ -27,5 +27,49 @@ export const diseaseCategoryService = {
             name: category.name,
             description: category.description
         }
+    },
+
+    createCategory: async (data) => {
+        if (!data.name) {
+            throw Object.assign(new Error("Tên danh mục bệnh không được để trống!"), { statusCode: 400 })
+        }
+        return await diseaseCategoryRepository.create(data)
+    },
+
+    updateCategory: async (id, data) => {
+        const existing = await diseaseCategoryRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Danh mục bệnh không tồn tại!"), { statusCode: 404 })
+        }
+        return await diseaseCategoryRepository.update(id, data)
+    },
+
+    deleteCategory: async (id) => {
+        const existing = await diseaseCategoryRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Danh mục bệnh không tồn tại!"), { statusCode: 404 })
+        }
+        return await diseaseCategoryRepository.delete(id)
+    },
+
+    restoreCategory: async (id) => {
+        const existing = await diseaseCategoryRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Danh mục bệnh không tồn tại!"), { statusCode: 404 })
+        }
+        return await diseaseCategoryRepository.restore(id)
+    },
+
+    getAllCategoriesForAdmin: async ({ name, page = 1, limit = 30, deleted = false }) => {
+        const { items, total } = await diseaseCategoryRepository.findAllForAdmin({ name, page, limit, deleted })
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     }
 }

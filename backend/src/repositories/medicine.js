@@ -3,16 +3,18 @@ import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const medicineRepository = {
     countAll: async () => {
-        return await prisma.medicine.count()
+        return await prisma.medicine.count({
+            where: { deletedAt: null }
+        })
     },
 
-    findAllForAdmin: async ({ name, typeId, page = 1, limit = 30 }) => {
+    findAllForAdmin: async ({ typeId, name, page = 1, limit = 30, deleted = false }) => {
         const cleanName = name ? removeVietnameseTones(name) : null
         const searchPattern = cleanName ? `%${cleanName}%` : null
         const offset = (page - 1) * limit
 
         const filterConditions = Prisma.sql`
-            1=1
+            ${deleted ? Prisma.sql`m.deleted_at IS NOT NULL` : Prisma.sql`m.deleted_at IS NULL`}
             ${typeId ? Prisma.sql`AND m.type_id = ${typeId}::uuid` : Prisma.empty}
             ${name ? Prisma.sql`AND (m.name_clean LIKE ${searchPattern} OR m.name_clean % ${cleanName})` : Prisma.empty}
         `
@@ -71,7 +73,7 @@ export const medicineRepository = {
         const searchPattern = cleanName ? `%${cleanName}%` : null
 
         const filterConditions = Prisma.sql`
-            1=1
+            m.deleted_at IS NULL
             ${typeId ? Prisma.sql`AND m.type_id = ${typeId}::uuid` : Prisma.empty}
             ${name ? Prisma.sql`AND (m.name_clean LIKE ${searchPattern} OR m.name_clean % ${cleanName})` : Prisma.empty}
         `
@@ -159,8 +161,16 @@ export const medicineRepository = {
     },
 
     delete: async (id) => {
-        return await prisma.medicine.delete({
-            where: { id }
+        return await prisma.medicine.update({
+            where: { id },
+            data: { deletedAt: new Date() }
+        })
+    },
+
+    restore: async (id) => {
+        return await prisma.medicine.update({
+            where: { id },
+            data: { deletedAt: null }
         })
     },
 

@@ -1,6 +1,6 @@
 import express from 'express'
 import multer from 'multer'
-import { createDisease, deleteDisease, diagnoseSymptoms, getDiseaseById, getDiseases, getDiseasesForAdmin, getTotalDiseases, updateDisease } from '../controllers/disease.js'
+import { createDisease, deleteDisease, restoreDisease, diagnoseSymptoms, getDiseaseById, getDiseases, getDiseasesForAdmin, getTotalDiseases, updateDisease } from '../controllers/disease.js'
 import { diseaseSchema } from '../validates/disease.js'
 import { validate } from '../middlewares/validate-handler.js'
 import { authenticate, authorizeAdmin } from '../middlewares/authenticate.js'
@@ -22,6 +22,7 @@ router.get('/count', authenticate, authorizeAdmin, getTotalDiseases)
 router.get('/:diseaseId', validate({ params: diseaseSchema.params }), getDiseaseById)
 router.post('', authenticate, authorizeAdmin, upload.single('image'), validate({ body: diseaseSchema.body }), createDisease)
 router.put('/:diseaseId', authenticate, authorizeAdmin, upload.single('image'), validate({ params: diseaseSchema.params, body: diseaseSchema.body }), updateDisease)
+router.put('/:diseaseId/restore', authenticate, authorizeAdmin, validate({ params: diseaseSchema.params }), restoreDisease)
 router.delete('/:diseaseId', authenticate, authorizeAdmin, validate({ params: diseaseSchema.params }), deleteDisease)
 
 export default router

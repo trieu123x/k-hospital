@@ -27,5 +27,49 @@ export const medicineTypeService = {
             name: type.name,
             description: type.description
         }
+    },
+
+    createMedicineType: async (data) => {
+        if (!data.name) {
+            throw Object.assign(new Error("Tên loại thuốc không được để trống!"), { statusCode: 400 })
+        }
+        return await medicineTypeRepository.create(data)
+    },
+
+    updateMedicineType: async (id, data) => {
+        const existing = await medicineTypeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Loại thuốc không tồn tại!"), { statusCode: 404 })
+        }
+        return await medicineTypeRepository.update(id, data)
+    },
+
+    deleteMedicineType: async (id) => {
+        const existing = await medicineTypeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Loại thuốc không tồn tại!"), { statusCode: 404 })
+        }
+        return await medicineTypeRepository.delete(id)
+    },
+
+    restoreMedicineType: async (id) => {
+        const existing = await medicineTypeRepository.findById(id)
+        if (!existing) {
+            throw Object.assign(new Error("Loại thuốc không tồn tại!"), { statusCode: 404 })
+        }
+        return await medicineTypeRepository.restore(id)
+    },
+
+    getAllMedicineTypesForAdmin: async ({ name, page = 1, limit = 30, deleted = false }) => {
+        const { items, total } = await medicineTypeRepository.findAllForAdmin({ name, page, limit, deleted })
+        return {
+            items,
+            pagination: {
+                page,
+                limit,
+                totalItems: total,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     }
 }

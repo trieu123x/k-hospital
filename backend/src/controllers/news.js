@@ -11,13 +11,15 @@ export const getTotalNews = catchError(async (req, res) => {
 
 export const getNewsForAdmin = catchError(async (req, res) => {
     const { title, page, date, startDate, endDate, limit } = req.query
+    const deleted = req.query.deleted === 'true'
     const data = await newsService.getNewsForAdmin({
         title,
         page: page ? parseInt(page) : 1,
         date,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        limit: limit ? parseInt(limit) : 30
+        limit: limit ? parseInt(limit) : 30,
+        deleted
     })
     res.status(200).json({
         success: true,
@@ -93,5 +95,15 @@ export const deleteNews = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Xóa bài viết thành công"
+    })
+})
+
+export const restoreNews = catchError(async (req, res) => {
+    const { newsId } = req.params
+
+    await newsService.restoreNews(newsId)
+    res.status(200).json({
+        success: true,
+        message: "Khôi phục bài viết thành công"
     })
 })

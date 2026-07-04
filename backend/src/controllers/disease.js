@@ -42,13 +42,15 @@ export const getDiseases = catchError(async (req, res) => {
 
 export const getDiseasesForAdmin = catchError(async (req, res) => { 
     const { categoryId, specialtyId, name, page, limit } = req.query
+    const deleted = req.query.deleted === 'true'
     
     const data = await diseaseService.getDiseasesForAdmin({ 
         categoryId, 
         specialtyId, 
         name, 
         page: page ? parseInt(page) : 1,
-        limit: limit ? parseInt(limit) : 30 
+        limit: limit ? parseInt(limit) : 30,
+        deleted
     })
 
     res.status(200).json({
@@ -90,6 +92,16 @@ export const deleteDisease = catchError(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Xóa bệnh thành công"
+    })
+})
+
+export const restoreDisease = catchError(async (req, res) => {
+    const { diseaseId } = req.params
+
+    await diseaseService.restoreDisease(diseaseId)
+    res.status(200).json({
+        success: true,
+        message: "Khôi phục bệnh thành công"
     })
 })
 

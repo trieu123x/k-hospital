@@ -32,39 +32,86 @@ export function OptionBar() {
   );
 }
 
+function NavButton({ href, children }) {
+  const pathname = usePathname();
+  
+  const checkActive = (path, linkHref) => {
+    if (path === linkHref) return true;
+    
+    // For admin pages like /admin/users -> matches /admin/users/detail
+    if (linkHref.startsWith("/admin/") && path?.startsWith(`${linkHref}/`)) {
+      return true;
+    }
+    
+    // For profile details
+    if (linkHref.endsWith("/detail") && path?.startsWith(`${linkHref}/`)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  const isActive = checkActive(pathname, href);
+
+  return (
+    <LinkButton 
+      href={href} 
+      className={`justify-start rounded-none hover:bg-[#050355] ${isActive ? "bg-[#050355]" : ""}`}
+    >
+      {children}
+    </LinkButton>
+  );
+}
+
 function AdminOption() {
   const pathname = usePathname();
   const isProfile = pathname?.startsWith("/profile");
 
   if (isProfile) {
     return (
-      <LinkButton href="/profile/admin/detail" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/admin/detail">
         Thông tin cá nhân
-      </LinkButton>
+      </NavButton>
     );
   }
 
   return (
     <>
-      <LinkButton href="/admin/users" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/admin/users">
         Quản lý tài khoản
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/admin/medicines" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/admin/medicines">
         Quản lý thông tin thuốc
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/admin/diseases" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/admin/diseases">
         Quản lý thông tin bệnh
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/admin/news" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/admin/specialties">
+        Quản lý chuyên khoa
+      </NavButton>
+
+      <NavButton href="/admin/degrees">
+        Quản lý bằng cấp
+      </NavButton>
+
+      <NavButton href="/admin/disease-categories">
+        Quản lý loại bệnh
+      </NavButton>
+
+      <NavButton href="/admin/medicine-types">
+        Quản lý loại thuốc
+      </NavButton>
+
+      <NavButton href="/admin/news">
         Quản lý tin tức
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/admin/aggregate" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/admin/aggregate">
         Tổng kết
-      </LinkButton>
+      </NavButton>
     </>
   );
 }
@@ -72,25 +119,25 @@ function AdminOption() {
 function DoctorOption() {
   return (
     <>
-      <LinkButton href="/profile/doctor/detail" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/doctor/detail">
         Thông tin cá nhân
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/doctor/medical_record" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/doctor/medical_record">
         Lịch sử khám bệnh
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/doctor/medical_record/not_done" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/doctor/medical_record/not_done">
         Yêu cầu chưa hoàn tất
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/doctor/schedules" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/doctor/schedules">
         Lịch làm việc
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/doctor/appointment" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/doctor/appointment">
         Xác nhận ca khám
-      </LinkButton>
+      </NavButton>
     </>
   );
 }
@@ -98,20 +145,21 @@ function DoctorOption() {
 function PatientOption() {
   return (
     <>
-      <LinkButton href="/profile/patient/detail" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/patient/detail">
         Thông tin cá nhân
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/patient/medical_record" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/patient/medical_record">
         Lịch sử thăm khám
-      </LinkButton>
+      </NavButton>
 
-      <LinkButton href="/profile/patient/medical_record/upcoming" className="hover:bg-[#050355] justify-start rounded-none">
+      <NavButton href="/profile/patient/medical_record/upcoming">
         Lịch thăm khám sắp tới
-      </LinkButton>
-      <LinkButton href="/profile/patient/medical_record/pending" className="hover:bg-[#050355] justify-start rounded-none">
+      </NavButton>
+
+      <NavButton href="/profile/patient/medical_record/pending">
         Yêu cầu chờ phản hồi
-      </LinkButton>
+      </NavButton>
     </>
   );
 }

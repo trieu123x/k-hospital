@@ -21,7 +21,8 @@ Tài liệu này hướng dẫn các thành viên trong nhóm cách cập nhật
 
 1. **Cập nhật Database Local:** Chạy lệnh sau để Prisma tự động quét các sự thay đổi và áp dụng vào Database của bạn:
    ```bash
-   npx prisma migrate dev
+   npx prisma migrate dev # (chỉ chạy khi dev)
+   npx prisma migrate deploy   # (chỉ chạy khi deploy lên server)
 
 
 

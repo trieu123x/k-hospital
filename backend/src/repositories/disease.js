@@ -3,7 +3,9 @@ import { removeVietnameseTones } from "../helpers/string-format.js"
 
 export const diseaseRepository = {
     countAll: async () => {
-        return await prisma.disease.count()
+        return await prisma.disease.count({
+            where: { deletedAt: null }
+        })
     },
 
     create: async (data) => {
@@ -55,7 +57,7 @@ export const diseaseRepository = {
         const offset = (page - 1) * limit
 
         const filterConditions = Prisma.sql`
-            1=1
+            deleted_at IS NULL
             ${categoryId ? Prisma.sql`AND category_id = ${categoryId}::uuid` : Prisma.empty}
             ${specialtyId ? Prisma.sql`AND specialty_id = ${specialtyId}::uuid` : Prisma.empty}
             ${name ? Prisma.sql`
@@ -99,13 +101,13 @@ export const diseaseRepository = {
         }
     },
 
-    findAllForAdmin: async ({ categoryId, specialtyId, name, page = 1, limit = 30 }) => {
+    findAllForAdmin: async ({ categoryId, specialtyId, name, page = 1, limit = 30, deleted = false }) => {
         const cleanNameLower = name ? removeVietnameseTones(name) : null
         const searchPattern = cleanNameLower ? `%${cleanNameLower}%` : null
         const offset = (page - 1) * limit
 
         const filterConditions = Prisma.sql`
-            1=1
+            ${deleted ? Prisma.sql`d.deleted_at IS NOT NULL` : Prisma.sql`d.deleted_at IS NULL`}
             ${categoryId ? Prisma.sql`AND d.category_id = ${categoryId}::uuid` : Prisma.empty}
             ${specialtyId ? Prisma.sql`AND d.specialty_id = ${specialtyId}::uuid` : Prisma.empty}
             ${name ? Prisma.sql`
@@ -209,14 +211,24 @@ export const diseaseRepository = {
                 (1 - (dc.embedding <=> ${vectorString}::vector)) AS "similarityScore"
             FROM diseases d
             JOIN disease_chunks dc ON d.id = dc.disease_id
+            WHERE d.deleted_at IS NULL
             ORDER BY d.id, (dc.embedding <=> ${vectorString}::vector)
             LIMIT ${limit}
         `
     },
 
     delete: async (id) => {
-        return await prisma.disease.delete({
+        return await prisma.disease.update({
             where: { id },
+            data: { deletedAt: new Date() },
+            select: { id: true, name: true }
+        })
+    },
+
+    restore: async (id) => {
+        return await prisma.disease.update({
+            where: { id },
+            data: { deletedAt: null },
             select: { id: true, name: true }
         })
     }

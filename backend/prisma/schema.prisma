@@ -1,9 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 // ================================
@@ -12,30 +14,36 @@ datasource db {
 
 model Specialty {
   id          String    @id @default(uuid()) @db.Uuid
-  name        String    @unique
+  name        String
   basePrice   Decimal   @map("base_price")
   description String?
   doctors     Doctor[]
   diseases    Disease[]
+
+  deletedAt DateTime? @map("deleted_at")
 
   @@map("specialties")
 }
 
 model DiseaseCategory {
   id          String    @id @default(uuid()) @db.Uuid
-  name        String    @unique
+  name        String
   description String?
   diseases    Disease[]
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   @@map("disease_categories")
 }
 
 model Degree {
   id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique // VD: Giáo sư, Tiến sĩ, CKI...
+  name        String // VD: Giáo sư, Tiến sĩ, CKI...
   description String?
   rankWeight  Int?     @map("rank_weight") // Dùng để sắp xếp thứ bậc (VD: GS = 100, TS = 90)
   doctors     Doctor[]
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   @@map("degrees")
 }
@@ -43,9 +51,11 @@ model Degree {
 // Bảng mới: Lưu trữ danh mục loại thuốc
 model MedicineType {
   id          String     @id @default(uuid()) @db.Uuid
-  name        String     @unique // VD: Thuốc uống, Thuốc bôi...
+  name        String // VD: Thuốc uống, Thuốc bôi...
   description String?
   medicines   Medicine[]
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   @@map("medicine_types")
 }
@@ -109,10 +119,10 @@ model Doctor {
 }
 
 model DoctorChunk {
-  id        String                      @id @default(uuid()) @db.Uuid
-  doctorId  String                      @map("doctor_id") @db.Uuid
-  content   String                      @db.Text
-  embedding  Unsupported("vector(3072)")?
+  id        String                       @id @default(uuid()) @db.Uuid
+  doctorId  String                       @map("doctor_id") @db.Uuid
+  content   String                       @db.Text
+  embedding Unsupported("vector(3072)")?
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
@@ -136,22 +146,24 @@ model Disease {
   symptoms      String
   homeTreatment String? @map("home_treatment")
 
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
   category  DiseaseCategory?  @relation(fields: [categoryId], references: [id])
   specialty Specialty?        @relation(fields: [specialtyId], references: [id])
   medicines DiseaseMedicine[]
   chunks    DiseaseChunk[]
 
   @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_disease_name_clean_trgm")
-  @@index([specialtyId], name: "idx_disease_specialty")
-  @@index([categoryId], name: "idx_disease_category")
+  @@index([specialtyId, deletedAt], name: "idx_disease_specialty_active")
+  @@index([categoryId, deletedAt], name: "idx_disease_category_active")
   @@map("diseases")
 }
 
 model DiseaseChunk {
-  id        String                      @id @default(uuid()) @db.Uuid
-  diseaseId String                      @map("disease_id") @db.Uuid
-  content   String                      @db.Text
-  embedding  Unsupported("vector(3072)")?
+  id        String                       @id @default(uuid()) @db.Uuid
+  diseaseId String                       @map("disease_id") @db.Uuid
+  content   String                       @db.Text
+  embedding Unsupported("vector(3072)")?
 
   disease Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
 
@@ -170,19 +182,21 @@ model Medicine {
   usageInstruction String? @map("usage_instruction")
   sideEffects      String? @map("side_effects")
 
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
   medicineType MedicineType?     @relation(fields: [typeId], references: [id])
   diseases     DiseaseMedicine[]
   chunks       MedicineChunk[]
 
-  @@index([typeId], name: "idx_medicine_type")
+  @@index([typeId, deletedAt], name: "idx_medicine_type_active")
   @@index([nameClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_medicine_name_clean_trgm") // THÊM DÒNG NÀY
   @@map("medicines")
 }
 
 model MedicineChunk {
-  id         String                      @id @default(uuid()) @db.Uuid
-  medicineId String                      @map("medicine_id") @db.Uuid
-  content    String                      @db.Text
+  id         String                       @id @default(uuid()) @db.Uuid
+  medicineId String                       @map("medicine_id") @db.Uuid
+  content    String                       @db.Text
   embedding  Unsupported("vector(3072)")?
 
   medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
@@ -306,6 +320,8 @@ model News {
   content   String
   newUrl    String?  @map("new_url")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
   @@index([titleClean(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_news_title_clean_trgm") // THÊM DÒNG NÀY
   @@map("news")

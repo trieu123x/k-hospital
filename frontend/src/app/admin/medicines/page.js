@@ -6,7 +6,7 @@ import { SelectBox } from "@/components/ui/SelectBox"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { getMedicinesForAdmin, deleteMedicine } from "@/routers/medicine-api"
+import { getMedicinesForAdmin, deleteMedicine, restoreMedicine } from "@/routers/medicine-api"
 import { getAllMedicineTypes } from "@/routers/medicine-type-api"
 import { useRouter } from "next/navigation"
 import { Pagination } from "@/components/ui/Pagination"
@@ -14,25 +14,16 @@ import { useGlobalLoading } from "@/stores/globalLoading"
 
 const PAGE_SIZE = 30
 
-const TABLE_COLUMNS = [
-  { key: "name", label: "Tên", width: "15%" },
-  { key: "medicineTypeName", label: "Loại thuốc", width: "120px" },
-  { key: "ingredients", label: "Thành phần" },
-  { key: "dosage", label: "Liều lượng" },
-  { key: "usageInstruction", label: "Hướng dẫn sử dụng" },
-  { key: "sideEffects", label: "Tác dụng phụ" },
-  { key: "action", label: "Xóa thuốc", mode: "del", width: "100px" },
-]
-
 export default function Medicines() {
   const router = useRouter()
   const { showLoading, hideLoading } = useGlobalLoading()
 
   // UI State
-  const [option, setOption] = useState("Tất cả")
+  const [option, setOption] = useState("Tất cả loại thuốc")
   const [medicineTypes, setMedicineTypes] = useState([]) // Dữ liệu types thật
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [isTrashMode, setIsTrashMode] = useState(false)
 
   // Data State
   const [medicines, setMedicines] = useState([])
@@ -71,8 +62,9 @@ export default function Medicines() {
       page,
       typeId: selectedType?.id || undefined,
       name: debouncedSearch || undefined,
+      deleted: isTrashMode
     }
-  }, [option, debouncedSearch, page])
+  }, [option, debouncedSearch, page, isTrashMode])
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -107,7 +99,7 @@ export default function Medicines() {
 
   useEffect(() => {
     setPage(1)
-  }, [option, debouncedSearch])
+  }, [option, debouncedSearch, isTrashMode])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa thuốc này không?")) return
@@ -126,6 +118,38 @@ export default function Medicines() {
     }
   }
 
+  const handleRestore = async (row) => {
+    if (!window.confirm("Bạn có chắc chắn muốn khôi phục thuốc này không?")) return
+    showLoading("Đang khôi phục thuốc...")
+    try {
+      const res = await restoreMedicine(row.id)
+      if (res.success) {
+        setMedicines(prev => prev.filter(d => d.id !== row.id))
+        setTotalCount(prev => prev - 1)
+      }
+    } catch (error) {
+      console.error("Lỗi khôi phục thuốc:", error)
+      alert("Khôi phục thất bại!")
+    } finally {
+      hideLoading()
+    }
+  }
+
+  const columns = [
+    { key: "name", label: "Tên", width: "15%" },
+    { key: "medicineTypeName", label: "Loại thuốc", width: "120px" },
+    { key: "ingredients", label: "Thành phần" },
+    { key: "dosage", label: "Liều lượng" },
+    { key: "usageInstruction", label: "Hướng dẫn sử dụng" },
+    { key: "sideEffects", label: "Tác dụng phụ" },
+    { 
+      key: "action", 
+      label: isTrashMode ? "Khôi phục" : "Xóa thuốc", 
+      mode: isTrashMode ? "restore" : "del", 
+      width: "120px" 
+    },
+  ]
+
   return (
     <div className="grow flex flex-col rasa-font bg-white h-full">
       <div className="flex h-15 px-10 items-end justify-between">
@@ -136,17 +160,30 @@ export default function Medicines() {
             placeholder="Loại thuốc"
             value={option}
             onChange={setOption}
-            options={["Tất cả", ...medicineTypes.map(t => t.name)]}
+            options={["Tất cả loại thuốc", ...medicineTypes.map(t => t.name)]}
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <LinkButton href={"/admin/medicines/detail"} className={`
-            bg-[#070575] hover:bg-[#08069b] text-white 
-            rounded-[10px] font-light 
-          `}>
-            Thêm
-          </LinkButton>
+          <button 
+            onClick={() => setIsTrashMode(!isTrashMode)}
+            className={`
+              px-4 py-1 rounded-[10px] font-light cursor-pointer rasa-font
+              transition-all duration-300 ease-in-out
+              flex items-center justify-center text-white
+              ${isTrashMode ? "bg-gray-500 hover:bg-gray-600" : "bg-[#d9534f] hover:bg-[#c9302c]"}
+            `}
+          >
+            {isTrashMode ? "Quay lại" : "Thùng rác"}
+          </button>
+          {!isTrashMode && (
+            <LinkButton href={"/admin/medicines/detail"} className={`
+              bg-[#070575] hover:bg-[#08069b] text-white 
+              rounded-[10px] font-light 
+            `}>
+              Thêm
+            </LinkButton>
+          )}
           <SearchInput
             className="w-95 py-1"
             value={search}
@@ -159,12 +196,13 @@ export default function Medicines() {
       <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
           isLoading={loading}
-          columns={TABLE_COLUMNS}
+          columns={columns}
           data={medicines}
           className="max-h-[calc(100vh-250px)] flex-1"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
-          onRowClick={(row) => router.push(`/admin/medicines/detail?id=${row.id}`)}
+          onRestore={handleRestore}
+          onRowClick={isTrashMode ? undefined : (row) => router.push(`/admin/medicines/detail?id=${row.id}`)}
         />
         <div className="relative flex items-center justify-center mt-4">
           <div className="absolute left-0">

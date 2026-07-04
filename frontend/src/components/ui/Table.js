@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react";
+import { Trash2, RotateCcw } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 export function Table({
@@ -13,6 +13,7 @@ export function Table({
   onRowClick = (rowData) => { },
   onTick = (isChecked, rowData) => { },
   onDelete = (rowData) => { },
+  onRestore = (rowData) => { },
 }) {
   return (
     <div className={twMerge(
@@ -82,7 +83,22 @@ export function Table({
                           }
                         }}
                       >
-                        {col.mode === "del" ? (
+                        {col.mode === "restore" ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRestore(row);
+                            }}
+                            className={`text-green-600 cursor-pointer
+                              opacity-80 hover:opacity-100
+                              transition-all duration-300 ease-in-out
+                              flex items-center gap-1 font-medium text-[13px]
+                            `}
+                          >
+                            <RotateCcw className="w-[16px] h-[16px]" />
+                            Khôi phục
+                          </button>
+                        ) : col.mode === "del" ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
