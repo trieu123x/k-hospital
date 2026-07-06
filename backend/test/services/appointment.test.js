@@ -25,6 +25,12 @@ vi.mock('@/configs/prisma-config.js', () => ({
   }
 }))
 
+vi.mock('@/services/user-notification.js', () => ({
+  notificationService: {
+    sendNotification: vi.fn().mockResolvedValue({})
+  }
+}))
+
 describe('appointmentService', () => {
   beforeEach(() => {
     vi.clearAllMocks()

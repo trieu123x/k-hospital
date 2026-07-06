@@ -12,6 +12,12 @@ vi.mock('@/repositories/medicine.js', () => ({
   }
 }))
 
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn().mockResolvedValue({ data: { chunks: [] } })
+  }
+}))
+
 describe('medicineService', () => {
   beforeEach(() => {
     vi.clearAllMocks()

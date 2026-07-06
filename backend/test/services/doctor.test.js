@@ -6,7 +6,14 @@ vi.mock('@/repositories/doctor.js', () => ({
   doctorRepository: {
     findAllDoctors: vi.fn(),
     findDoctorById: vi.fn(),
-    updateDoctorInfo: vi.fn()
+    updateDoctorInfo: vi.fn(),
+    createChunks: vi.fn()
+  }
+}))
+
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn().mockResolvedValue({ data: { chunks: [] } })
   }
 }))
 
@@ -27,7 +34,7 @@ vi.mock('@/configs/prisma-config.js', () => {
         // Mocking the transaction context (tx)
         const tx = {
           profile: { create: vi.fn().mockResolvedValue({}) },
-          doctor: { create: vi.fn().mockResolvedValue({ id: 'new-doc-id' }) }
+          doctor: { create: vi.fn().mockResolvedValue({ id: 'new-doc-id', profile: { fullName: 'Dr. A' } }) }
         }
         return await callback(tx)
       })
@@ -122,7 +129,7 @@ describe('doctorService', () => {
 
     it('should update and return doctor info', async () => {
       doctorRepository.findDoctorById.mockResolvedValue({ id: 1 })
-      doctorRepository.updateDoctorInfo.mockResolvedValue({ id: 1, degree: 'Phd' })
+      doctorRepository.updateDoctorInfo.mockResolvedValue({ id: 1, degree: 'Phd', profile: { fullName: 'Dr. Smith' } })
       const res = await doctorService.updateDoctorInfo(1, 1, { degree: 'Phd' })
       expect(res.degree).toBe('Phd')
     })

@@ -21,6 +21,20 @@ vi.mock('@/configs/supabase-config.js', () => ({
   }
 }))
 
+vi.mock('@/configs/prisma-config.js', () => ({
+  prisma: {
+    notification: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 })
+    },
+    medicalRecord: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 })
+    },
+    appointment: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 })
+    }
+  }
+}))
+
 describe('userService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -101,20 +115,20 @@ describe('userService', () => {
   describe('deleteUser', () => {
     it('should throw if user not found', async () => {
       userRepository.findById.mockResolvedValue(null)
-      await expect(userService.deleteUser(1)).rejects.toThrow('Không tìm thấy người dùng')
+      await expect(userService.deleteUser('test-user-uuid')).rejects.toThrow('Không tìm thấy người dùng')
     })
 
     it('should delete from supabase and DB', async () => {
-      userRepository.findById.mockResolvedValue({ id: 1 })
+      userRepository.findById.mockResolvedValue({ id: 'test-user-uuid' })
       userRepository.delete.mockResolvedValue(true)
       
       const { supabaseAdmin } = await import('@/configs/supabase-config.js')
       supabaseAdmin.auth.admin.deleteUser.mockResolvedValue({})
 
-      const res = await userService.deleteUser(1)
+      const res = await userService.deleteUser('test-user-uuid')
       expect(res).toBe(true)
-      expect(supabaseAdmin.auth.admin.deleteUser).toHaveBeenCalledWith(1)
-      expect(userRepository.delete).toHaveBeenCalledWith(1)
+      expect(supabaseAdmin.auth.admin.deleteUser).toHaveBeenCalledWith('test-user-uuid')
+      expect(userRepository.delete).toHaveBeenCalledWith('test-user-uuid')
     })
   })
 })
