@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { medicineService } from '@/services/medicine.js'
 import { medicineRepository } from '@/repositories/medicine.js'
 
+vi.mock('@/configs/supabase-config.js', () => ({
+  supabase: {},
+  supabaseAdmin: {}
+}))
+
 vi.mock('@/repositories/medicine.js', () => ({
   medicineRepository: {
     findAll: vi.fn(),

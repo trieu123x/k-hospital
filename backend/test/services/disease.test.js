@@ -4,6 +4,11 @@ import { diseaseRepository } from '@/repositories/disease.js'
 import { uploadHelper } from '@/helpers/storage-helper.js'
 
 // Mock tất cả dependencies
+vi.mock('@/configs/supabase-config.js', () => ({
+  supabase: {},
+  supabaseAdmin: {}
+}))
+
 vi.mock('@/repositories/disease.js', () => ({
   diseaseRepository: {
     create: vi.fn(),
