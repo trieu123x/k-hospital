@@ -182,6 +182,12 @@ export const diseaseRepository = {
                                         avatarUrl: true,
                                         isActive: true
                                     }
+                                },
+                                degree: {
+                                    select: {
+                                        id: true,
+                                        name: true
+                                    }
                                 }
                             }
                         }

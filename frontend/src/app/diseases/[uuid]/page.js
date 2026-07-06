@@ -169,7 +169,7 @@ export default function DiseaseDetailPage() {
                         src={med.imageUrl || "/images/Medicines.webp"}
                         alt={med.name}
                         fill
-                        className="object-contain transition-transform"
+                        className="object-cover transition-transform"
                         onError={(e) => {
                           e.currentTarget.srcset = "";
                           e.currentTarget.src = "/images/Medicines.webp";
@@ -225,7 +225,9 @@ export default function DiseaseDetailPage() {
                         }}
                       />
                     </div>
-                    <h3 className="font-bold line-clamp-2 leading-none px-2">{doc.degree} - {doc.profile?.fullName}</h3>
+                    <h3 className="font-bold line-clamp-2 leading-none px-2">
+                      {doc.degree?.name ? `${doc.degree.name} - ` : (typeof doc.degree === "string" ? `${doc.degree} - ` : "")}{doc.profile?.fullName}
+                    </h3>
                     <p className="text-[13px] mb-3 tracking-tighter px-2">
                       Chuyên khoa: {disease.specialty?.name || "Đang cập nhật"}
                     </p>

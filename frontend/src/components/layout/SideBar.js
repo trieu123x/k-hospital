@@ -105,6 +105,26 @@ export function SideBar({ setSidebarClose = () => { } }) {
             Quản lý thông tin bệnh
           </LinkButton>
 
+          <LinkButton onClick={setSidebarClose} href={ROUTES.ADMIN_SPECIALTIES}
+            className="hover:bg-[#050355] justify-start rounded-none pl-10">
+            Quản lý chuyên khoa
+          </LinkButton>
+
+          <LinkButton onClick={setSidebarClose} href={ROUTES.ADMIN_DEGREES}
+            className="hover:bg-[#050355] justify-start rounded-none pl-10">
+            Quản lý bằng cấp
+          </LinkButton>
+
+          <LinkButton onClick={setSidebarClose} href={ROUTES.ADMIN_DISEASE_CATEGORIES}
+            className="hover:bg-[#050355] justify-start rounded-none pl-10">
+            Quản lý loại bệnh
+          </LinkButton>
+
+          <LinkButton onClick={setSidebarClose} href={ROUTES.ADMIN_MEDICINE_TYPES}
+            className="hover:bg-[#050355] justify-start rounded-none pl-10">
+            Quản lý loại thuốc
+          </LinkButton>
+
           <LinkButton onClick={setSidebarClose} href={ROUTES.ADMIN_NEWS}
             className="hover:bg-[#050355] justify-start rounded-none pl-10">
             Quản lý tin tức

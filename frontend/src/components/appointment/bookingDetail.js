@@ -40,6 +40,7 @@ export function BookingDetails({ data, isConfirmed }) {
 
         <div className="md:col-span-2">Ngày khám: <strong>{data.date ? new Date(data.date).toLocaleDateString("vi-VN") : "---"}</strong></div>
         <div className="md:col-span-2">Ca khám: <strong>{formatShift(data.shift)}</strong></div>
+        <div className="md:col-span-2">Giá tiền khám: <strong>{data.specialtyPrice ? `${Number(data.specialtyPrice).toLocaleString("vi-VN")} VNĐ` : "---"}</strong></div>
 
         <div className="md:col-span-2 leading-relaxed">
           Địa điểm khám: <strong>Phòng 401, Tầng 5, Số 55, Phố Yên Ninh</strong>

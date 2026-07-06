@@ -73,7 +73,7 @@ export default function MedicineDetailPage() {
                   src={medicine.imageUrl || "/images/Medicines.webp"}
                   alt={medicine.name}
                   fill
-                  className="object-contain p-4"
+                  className="object-cover"
                   onError={(e) => {
                     e.currentTarget.srcset = "";
                     e.currentTarget.src = "/images/Medicines.webp";

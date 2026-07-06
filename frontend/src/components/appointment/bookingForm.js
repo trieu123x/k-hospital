@@ -24,6 +24,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
   const [formData, setFormData] = useState({
     specialtyId: urlSpecialtyId || "",
     specialtyName: "",
+    specialtyPrice: "",
     doctorId: urlDoctorId || "",
     doctorName: "",
     doctorAvatar: "",
@@ -56,7 +57,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
           if (urlSpecialtyId) {
             const found = res.data.find(s => s.id === urlSpecialtyId);
             if (found) {
-              setFormData(prev => ({ ...prev, specialtyName: found.name }));
+              setFormData(prev => ({ ...prev, specialtyName: found.name, specialtyPrice: found.basePrice }));
             }
           }
         }
@@ -157,6 +158,7 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       ...prev,
       specialtyId: selectedId,
       specialtyName: selectedSpec ? selectedSpec.name : "",
+      specialtyPrice: selectedSpec ? selectedSpec.basePrice : "",
       doctorId: "",
       doctorName: "",
       doctorAvatar: "",
@@ -336,6 +338,18 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
             <div className="pointer-events-none absolute top-11.5 right-2 flex items-center transition-transform duration-300 peer-focus:-rotate-180">
               <ChevronDown className="h-5 w-5 text-gray-500" />
             </div>
+          </div>
+        )}
+
+        {formData.specialtyId && (
+          <div className="flex flex-col">
+            <label className="rasa-font font-bold text-[24px] text-black">Giá tiền khám</label>
+            <input
+              type="text"
+              readOnly
+              value={formData.specialtyPrice ? `${Number(formData.specialtyPrice).toLocaleString("vi-VN")} VNĐ` : "Chưa cập nhật"}
+              className="w-full border border-gray-300 px-3 py-2 text-[15px] text-gray-700 outline-none bg-gray-100 rasa-font font-semibold cursor-not-allowed"
+            />
           </div>
         )}
 

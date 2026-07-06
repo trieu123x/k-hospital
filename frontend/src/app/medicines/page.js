@@ -104,12 +104,12 @@ export default function MedicineLookupPage() {
               className="bg-white cursor-pointer rounded-none shadow-[0_0_4px_rgba(144,144,144,0.25)] overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300"
             >
               {/* Medicine Image */}
-              <div className="relative w-full aspect-square mb-4 bg-white overflow-hidden rounded-none">
+              <div className="relative w-full aspect-square mb-1 bg-white overflow-hidden rounded-none">
                 <Image
                   src={medicine.imageUrl || "/images/Medicines.webp"}
                   alt={medicine.name}
                   fill
-                  className="object-contain p-2 group-hover:scale-105 transition-transform"
+                  className="object-cover group-hover:scale-105 transition-transform"
                   onError={(e) => {
                     e.currentTarget.srcset = "";
                     e.currentTarget.src = "/images/Medicines.webp";

@@ -116,7 +116,7 @@ export default function Home() {
         {/* Right Column: Staggered Cards */}
         <div className="flex flex-col relative gap-4 lg:gap-0 lg:pr-5">
           {/* Card 1 */}
-          <div className="bg-[#3C50CE] rounded-[30px] text-white py-3.5 px-5.5 lg:self-start lg:-translate-y-2 transition-transform duration-300">
+          <div className="bg-[#3C50CE] rounded-[30px] text-white py-3.5 px-5.5 lg:self-start lg:-translate-y-2 hover:lg:-translate-y-4 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer">
             <h3 className="text-[24px] font-bold">Đội ngũ chuyên gia đầu ngành</h3>
             <p className="text-[20px] opacity-90 leading-6 md:max-w-100 py-0.5">
               Đội ngũ bác sĩ giàu kinh nghiệm, điều trị trực tiếp với phác đồ chuẩn quốc tế
@@ -131,7 +131,7 @@ export default function Home() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-[#5CA0FF] rounded-[30px] text-white py-3.5 px-5.5 lg:self-end lg:translate-y-5 transition-transform duration-300">
+          <div className="bg-[#5CA0FF] rounded-[30px] text-white py-3.5 px-5.5 lg:self-end lg:translate-y-5 hover:lg:translate-y-3 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer">
             <h3 className="text-[24px] font-bold">Không ngừng tiến bộ</h3>
             <p className="text-[20px] opacity-90 leading-6 md:max-w-75 py-0.5">
               Luôn cập nhật các tin tức mới nhất về y tế
@@ -146,7 +146,7 @@ export default function Home() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-[#6F82FF] rounded-[30px] text-white py-3.5 px-5.5 lg:self-start lg:-translate-x-20 lg:translate-y-4 transition-transform duration-300">
+          <div className="bg-[#6F82FF] rounded-[30px] text-white py-3.5 px-5.5 lg:self-start lg:-translate-x-20 lg:translate-y-4 hover:lg:translate-y-2 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer">
             <h3 className="text-[24px] font-bold">Thông tin phong phú</h3>
             <p className="text-[20px] opacity-90 leading-6 md:max-w-90 py-0.5">
               Cung cấp từ điển khổng lồ về thông tin của các loại bệnh và các loại thuốc
@@ -162,15 +162,15 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. Sự kiện nổi bật Section */}
+      {/* 2. Tin tức nổi bật Section */}
       <div className="w-full py-16 bg-gray-50  transition-colors duration-200">
         <div className="w-full max-w-[1536px] mx-auto px-4 md:px-8 xl:px-12">
           <div className="text-left mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-[#070575]">
-              Sự kiện nổi bật
+              Tin tức nổi bật
             </h2>
             <p className="text-gray-600 text-lg mt-2 font-medium">
-              Cập nhật kiến thức y khoa bổ ích, tin tức hoạt động và sự kiện nổi bật của MediCare.
+              Cập nhật kiến thức y khoa bổ ích, tin tức hoạt động nổi bật của MediCare.
             </p>
           </div>
 
@@ -179,7 +179,7 @@ export default function Home() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#070575]"></div>
             </div>
           ) : featuredNews.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
               {/* Main featured news card (Left column, spans 5/12) */}
               <div className="lg:col-span-5 flex">
@@ -333,7 +333,7 @@ export default function Home() {
 
       {/* 4. Sẵn sàng chăm sóc sức khỏe Section */}
       <div className="w-full pb-16 px-4 md:px-8 xl:px-12 max-w-[1536px] mx-auto">
-        <div className="w-full bg-gradient-to-r from-[#070575] to-[#3C50CE] text-white py-16 px-6 md:px-12 xl:px-20 rounded-[30px] flex flex-col md:flex-row justify-between items-center gap-8 shadow-xl">
+        <div className="w-full bg-[#070575] text-white py-16 px-6 md:px-12 xl:px-20 rounded-[30px] flex flex-col md:flex-row justify-between items-center gap-8 shadow-xl">
           <div className="flex flex-col space-y-4 max-w-2xl text-left">
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
               Sẵn sàng chăm sóc sức khỏe?
