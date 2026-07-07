@@ -1,6 +1,6 @@
 # CÁCH THỰC THI:
 
-1. Lập lịch chạy liên tục theo chu kỳ ngày/tuân/tháng 
+1. Lập lịch chạy liên tục theo chu kỳ ngày/tuân/tháng (deploy thì chạy cái này)
     ```bash
     node src/index.js --schedule
     ```
