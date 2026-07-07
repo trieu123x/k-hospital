@@ -29,11 +29,19 @@ const TRANSFORMS = {
 export async function runScheduled(mode, startDate, endDate) {
   const startTime = Date.now();
   const dbUrl = process.env.DATABASE_URL;
-  const dateStr = startDate === endDate ? startDate : `${startDate}_to_${endDate}`;
-
   if (!dbUrl) {
     throw new Error('Thiếu DATABASE_URL trong .env');
   }
+
+  // Ràng buộc thời gian xử lý tối đa
+  const startObj = new Date(startDate);
+  const endObj = new Date(endDate);
+  const diffTime = Math.abs(endObj - startObj);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  if (diffDays > 31) {
+    throw new Error(`Khoảng thời gian xử lý quá dài (${diffDays} ngày). Giới hạn tối đa là 31 ngày cho mỗi lần chạy để tránh nguy cơ tràn RAM.`);
+  }
+  const dateStr = startDate === endDate ? startDate : `${startDate}_to_${endDate}`;
 
   log.banner(`MEDICARE ETL PIPELINE (${mode.toUpperCase()})`, [
     `Từ ngày       : ${startDate}`,
