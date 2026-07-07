@@ -44,7 +44,7 @@ export default function DoctorDetailPage() {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!doctor || user?.role !== 'PATIENT') return;
+    if (!doctor || (user && user.role !== 'PATIENT')) return;
 
     const timer = setTimeout(async () => {
       try {

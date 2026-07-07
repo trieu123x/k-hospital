@@ -36,7 +36,7 @@ export default function DiseaseDetailPage() {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!disease || user?.role !== 'PATIENT') return;
+    if (!disease || (user && user.role !== 'PATIENT')) return;
     
     const timer = setTimeout(async () => {
       try {

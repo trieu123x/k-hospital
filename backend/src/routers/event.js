@@ -6,8 +6,8 @@ import { authenticate, authorizeAdmin, authorizePatient } from '../middlewares/a
 
 const router = express.Router()
 
-// User tracking route (only PATIENT)
-router.post('/track', authenticate, authorizePatient, validate({ body: eventSchema.body }), createEvent)
+// User tracking route (public)
+router.post('/track', validate({ body: eventSchema.body }), createEvent)
 
 // Admin routes
 router.post('', authenticate, authorizeAdmin, validate({ body: eventSchema.body }), createEvent)
